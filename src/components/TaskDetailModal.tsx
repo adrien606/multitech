@@ -366,13 +366,24 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {task.photos.map((photo, index) => (
                   <div key={photo.id} className="space-y-2">
-                    <div className="w-full h-32 rounded-lg border overflow-hidden">
+                    <div className="w-full h-32 rounded-lg border overflow-hidden bg-gray-50">
                       <img
-                        src={`https://images.unsplash.com/photo-148859052850${5 + (index % 3)}-98d2b5aba04b?w=300&h=200&fit=crop`}
+                        src={photo.url}
                         alt={photo.filename}
                         className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => alert(`Photo: ${photo.filename}`)}
+                        onClick={() => window.open(photo.url, '_blank')}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling!.classList.remove('hidden');
+                        }}
                       />
+                      <div className="hidden w-full h-full flex items-center justify-center text-gray-500">
+                        <div className="text-center">
+                          <Camera className="w-8 h-8 mx-auto mb-2" />
+                          <p className="text-xs">Photo non disponible</p>
+                        </div>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
                       📷 {photo.filename}
@@ -393,13 +404,24 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 <Camera className="w-4 h-4" />
                 Photo de validation
               </h3>
-              <div className="w-48 h-32 rounded-lg border overflow-hidden">
+              <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50">
                 <img
-                  src="https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=300&h=200&fit=crop"
+                  src={task.proofPhoto}
                   alt="Photo de validation"
                   className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => alert('Photo de validation')}
+                  onClick={() => window.open(task.proofPhoto!, '_blank')}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.nextElementSibling!.classList.remove('hidden');
+                  }}
                 />
+                <div className="hidden w-full h-full flex items-center justify-center text-green-600">
+                  <div className="text-center">
+                    <Camera className="w-8 h-8 mx-auto mb-2" />
+                    <p className="text-xs">Photo de validation</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -432,13 +454,24 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     {/* Photo du commentaire */}
                     {comment.photo && (
                       <div className="mt-3">
-                        <div className="w-48 h-32 rounded-lg border overflow-hidden">
+                        <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50">
                           <img
-                            src="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=300&h=200&fit=crop"
+                            src={comment.photo.url}
                             alt={comment.photo.filename}
                             className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => alert(`Photo du commentaire: ${comment.photo!.filename}`)}
+                            onClick={() => window.open(comment.photo!.url, '_blank')}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling!.classList.remove('hidden');
+                            }}
                           />
+                          <div className="hidden w-full h-full flex items-center justify-center text-blue-600">
+                            <div className="text-center">
+                              <Camera className="w-8 h-8 mx-auto mb-2" />
+                              <p className="text-xs">Photo du commentaire</p>
+                            </div>
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           📷 {comment.photo.filename}
