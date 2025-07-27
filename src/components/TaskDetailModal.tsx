@@ -366,18 +366,11 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {task.photos.map((photo) => (
                   <div key={photo.id} className="space-y-2">
-                    <div className="relative w-full h-32 bg-muted rounded-lg border overflow-hidden">
-                      <img
-                        src={photo.url.startsWith('blob:') ? 'https://via.placeholder.com/300x200/e2e8f0/64748b?text=Photo' : photo.url}
-                        alt={photo.filename}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://via.placeholder.com/300x200/e2e8f0/64748b?text=Photo';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors cursor-pointer" 
-                           onClick={() => window.open(photo.url, '_blank')} />
+                    <div className="w-full h-32 bg-gray-100 rounded-lg border flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <Camera className="w-8 h-8 mx-auto mb-2" />
+                        <p className="text-xs">Photo</p>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
                       📷 {photo.filename}
@@ -398,17 +391,11 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 <Camera className="w-4 h-4" />
                 Photo de validation
               </h3>
-              <div className="relative w-48 h-32 bg-muted rounded-lg border overflow-hidden">
-                <img
-                  src={task.proofPhoto.startsWith('blob:') ? 'https://via.placeholder.com/300x200/22c55e/ffffff?text=Validée' : task.proofPhoto}
-                  alt="Photo de validation"
-                  className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => window.open(task.proofPhoto!, '_blank')}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'https://via.placeholder.com/300x200/22c55e/ffffff?text=Validée';
-                  }}
-                />
+              <div className="w-48 h-32 bg-green-100 rounded-lg border flex items-center justify-center">
+                <div className="text-center text-green-600">
+                  <Camera className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-xs">Photo de validation</p>
+                </div>
               </div>
             </div>
           )}
@@ -441,17 +428,11 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     {/* Photo du commentaire */}
                     {comment.photo && (
                       <div className="mt-3">
-                        <div className="relative w-48 h-32 bg-muted rounded-lg border overflow-hidden">
-                          <img
-                            src={comment.photo.url.startsWith('blob:') ? 'https://via.placeholder.com/300x200/3b82f6/ffffff?text=Photo' : comment.photo.url}
-                            alt={comment.photo.filename}
-                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => window.open(comment.photo!.url, '_blank')}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = 'https://via.placeholder.com/300x200/3b82f6/ffffff?text=Photo';
-                            }}
-                          />
+                        <div className="w-48 h-32 bg-blue-100 rounded-lg border flex items-center justify-center">
+                          <div className="text-center text-blue-600">
+                            <Camera className="w-8 h-8 mx-auto mb-2" />
+                            <p className="text-xs">Photo du commentaire</p>
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           📷 {comment.photo.filename}
