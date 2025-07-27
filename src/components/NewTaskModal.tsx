@@ -23,7 +23,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
     description: '',
     buildingId: '',
     dueDate: '',
-    assignedTo: agents.length > 0 ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
+    assignedTo: (agents && agents.length > 0) ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
   });
 
   const [photos, setPhotos] = useState<File[]>([]);
@@ -67,7 +67,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
       description: '',
       buildingId: '',
       dueDate: '',
-      assignedTo: agents.length > 0 ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
+      assignedTo: (agents && agents.length > 0) ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
     });
     setPhotos([]);
     setPhotoPreviewUrls([]);
@@ -125,7 +125,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
               >
-                {agents.filter(agent => agent.isActive).map(agent => (
+                {agents && agents.filter(agent => agent.isActive).map(agent => (
                   <option key={agent.id} value={`${agent.firstName} ${agent.lastName}`}>
                     {agent.firstName} {agent.lastName}
                   </option>
