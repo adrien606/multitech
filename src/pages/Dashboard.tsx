@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task, TaskStatus } from "@/types";
 import { mockTasks, mockBuildings } from "@/data/mockData";
 import { mockAgents } from "@/data/mockAgents";
-import { Plus, Search, Filter, Users } from "lucide-react";
+import { Plus, Search, Filter, Users, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
@@ -79,6 +79,12 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex gap-3">
+              <Link to="/buildings">
+                <Button variant="outline">
+                  <Building className="w-4 h-4 mr-2" />
+                  Bâtiments
+                </Button>
+              </Link>
               <Link to="/agents">
                 <Button variant="outline">
                   <Users className="w-4 h-4 mr-2" />
