@@ -39,6 +39,14 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
     const selectedBuilding = buildings.find(b => b.id === formData.buildingId);
     if (!selectedBuilding) return;
 
+    // Convertir les photos en TaskPhoto
+    const taskPhotos = photos.map((file, index) => ({
+      id: `photo_${Date.now()}_${index}`,
+      url: photoPreviewUrls[index],
+      filename: file.name,
+      uploadedAt: new Date(),
+    }));
+
     const newTask: Omit<Task, 'id' | 'createdAt'> = {
       title: formData.title,
       description: formData.description,
@@ -47,7 +55,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
       status: 'pending',
       dueDate: new Date(formData.dueDate),
       assignedTo: formData.assignedTo,
-      photos: [], // TODO: Gérer l'upload des photos
+      photos: taskPhotos, // Inclure les photos sélectionnées
       comments: [
         {
           id: `c${Date.now()}`,
@@ -61,7 +69,8 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
 
     onTaskCreate(newTask);
     
-    // Reset form
+    // Reset form et nettoyer les URLs
+    photoPreviewUrls.forEach(url => URL.revokeObjectURL(url));
     setFormData({
       title: '',
       description: '',
@@ -97,8 +106,16 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
 
   const today = new Date().toISOString().split('T')[0];
 
+  const handleClose = () => {
+    // Nettoyer les URLs d'objets avant de fermer
+    photoPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    setPhotos([]);
+    setPhotoPreviewUrls([]);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouvelle tâche de maintenance</DialogTitle>
@@ -225,7 +242,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Annuler
             </Button>
             <Button type="submit">
