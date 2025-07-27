@@ -2,6 +2,8 @@ import { useState } from "react";
 import { TaskStats } from "@/components/TaskStats";
 import { TaskCard } from "@/components/TaskCard";
 import { BuildingSelector } from "@/components/BuildingSelector";
+import { TaskDetailModal } from "@/components/TaskDetailModal";
+import { NewTaskModal } from "@/components/NewTaskModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +16,9 @@ export default function Dashboard() {
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
   const filteredTasks = tasks.filter((task) => {
     const matchesBuilding = !selectedBuilding || task.buildingId === selectedBuilding;
@@ -32,8 +37,17 @@ export default function Dashboard() {
   };
 
   const handleViewDetails = (task: Task) => {
-    // TODO: Ouvrir modal ou navigation vers détail
-    console.log("Voir détails:", task);
+    setSelectedTask(task);
+    setIsTaskDetailOpen(true);
+  };
+
+  const handleCreateTask = (newTaskData: Omit<Task, 'id' | 'createdAt'>) => {
+    const newTask: Task = {
+      ...newTaskData,
+      id: `task_${Date.now()}`,
+      createdAt: new Date(),
+    };
+    setTasks([newTask, ...tasks]);
   };
 
   return (
@@ -48,7 +62,7 @@ export default function Dashboard() {
                 Gestion des tâches d'entretien multi-bâtiments
               </p>
             </div>
-            <Button>
+            <Button onClick={() => setIsNewTaskOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle tâche
             </Button>
@@ -137,6 +151,21 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={isTaskDetailOpen}
+        onClose={() => setIsTaskDetailOpen(false)}
+        onStatusChange={handleStatusChange}
+      />
+
+      <NewTaskModal
+        isOpen={isNewTaskOpen}
+        onClose={() => setIsNewTaskOpen(false)}
+        buildings={mockBuildings}
+        onTaskCreate={handleCreateTask}
+      />
     </div>
   );
 }
