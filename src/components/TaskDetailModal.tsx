@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Task, TaskComment } from "@/types";
+import { Label } from "@/components/ui/label";
+import { Task, TaskComment, TaskPhoto } from "@/types";
 import { TaskStatusBadge } from "./TaskStatusBadge";
-import { Calendar, MapPin, User, MessageSquare, Camera, Download, Send, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, User, MessageSquare, Camera, Download, Send, ArrowLeft, Upload, X } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import jsPDF from 'jspdf';
@@ -16,11 +17,15 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onStatusChange: (taskId: string, status: Task['status']) => void;
   onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => void;
+  onAddPhotos?: (taskId: string, photos: Omit<TaskPhoto, 'id'>[], files: File[]) => void;
 }
 
-export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddComment }: TaskDetailModalProps) {
+export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddComment, onAddPhotos }: TaskDetailModalProps) {
   const [newComment, setNewComment] = useState("");
   const [showCommentForm, setShowCommentForm] = useState(false);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
   
   if (!task) return null;
 
@@ -76,6 +81,45 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
     
     setNewComment("");
     setShowCommentForm(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+      
+      // Créer les URLs de prévisualisation
+      newFiles.forEach(file => {
+        const url = URL.createObjectURL(file);
+        setPhotoPreviewUrls(prev => [...prev, url]);
+      });
+    }
+  };
+
+  const removeSelectedPhoto = (index: number) => {
+    // Libérer l'URL de l'objet
+    URL.revokeObjectURL(photoPreviewUrls[index]);
+    
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPhotoPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddPhotos = () => {
+    if (selectedFiles.length === 0 || !onAddPhotos) return;
+    
+    const newPhotos: Omit<TaskPhoto, 'id'>[] = selectedFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      filename: file.name,
+      uploadedAt: new Date(),
+    }));
+    
+    onAddPhotos(task.id, newPhotos, selectedFiles);
+    
+    // Reset
+    photoPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    setSelectedFiles([]);
+    setPhotoPreviewUrls([]);
+    setShowPhotoUpload(false);
   };
 
   return (
@@ -278,6 +322,94 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 </div>
               )}
             </div>
+
+            {/* Ajout de photos */}
+            {onAddPhotos && (
+              <div className="space-y-3">
+                {!showPhotoUpload ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowPhotoUpload(true)}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Ajouter des photos
+                  </Button>
+                ) : (
+                  <div className="space-y-3 p-4 bg-muted/20 rounded-lg">
+                    <Label htmlFor="photo-upload" className="text-sm font-medium">
+                      Sélectionner des photos
+                    </Label>
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                      <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                      <input
+                        id="photo-upload"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <Button type="button" variant="outline" asChild>
+                        <Label htmlFor="photo-upload" className="cursor-pointer">
+                          Choisir des fichiers
+                        </Label>
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Formats acceptés: JPG, PNG, GIF
+                      </p>
+                    </div>
+                    
+                    {/* Prévisualisation des photos sélectionnées */}
+                    {photoPreviewUrls.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {photoPreviewUrls.map((url, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={url}
+                              alt={`Prévisualisation ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg border"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                              onClick={() => removeSelectedPhoto(index)}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-1 truncate">
+                              {selectedFiles[index]?.name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={handleAddPhotos} 
+                        disabled={selectedFiles.length === 0}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Ajouter {selectedFiles.length} photo(s)
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowPhotoUpload(false);
+                          photoPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+                          setSelectedFiles([]);
+                          setPhotoPreviewUrls([]);
+                        }}
+                      >
+                        Annuler
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

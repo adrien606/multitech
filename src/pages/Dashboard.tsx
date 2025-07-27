@@ -33,9 +33,19 @@ export default function Dashboard() {
   });
 
   const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    setTasks(tasks.map(task => 
+    const updatedTasks = tasks.map(task => 
       task.id === taskId ? { ...task, status: newStatus } : task
-    ));
+    );
+    
+    setTasks(updatedTasks);
+    
+    // Mettre à jour selectedTask si c'est la tâche courante
+    if (selectedTask && selectedTask.id === taskId) {
+      const updatedTask = updatedTasks.find(task => task.id === taskId);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    }
   };
 
   const handleViewDetails = (task: Task) => {
@@ -59,11 +69,44 @@ export default function Dashboard() {
       createdAt: new Date(),
     };
     
-    setTasks(tasks.map(task => 
+    const updatedTasks = tasks.map(task => 
       task.id === taskId 
         ? { ...task, comments: [...task.comments, newComment] }
         : task
-    ));
+    );
+    
+    setTasks(updatedTasks);
+    
+    // Mettre à jour selectedTask si c'est la tâche courante
+    if (selectedTask && selectedTask.id === taskId) {
+      const updatedTask = updatedTasks.find(task => task.id === taskId);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    }
+  };
+
+  const handleAddPhotos = (taskId: string, newPhotos: Omit<import("@/types").TaskPhoto, 'id'>[], files: File[]) => {
+    const photosWithIds = newPhotos.map(photo => ({
+      ...photo,
+      id: `photo_${Date.now()}_${Math.random()}`,
+    }));
+    
+    const updatedTasks = tasks.map(task => 
+      task.id === taskId 
+        ? { ...task, photos: [...task.photos, ...photosWithIds] }
+        : task
+    );
+    
+    setTasks(updatedTasks);
+    
+    // Mettre à jour selectedTask si c'est la tâche courante
+    if (selectedTask && selectedTask.id === taskId) {
+      const updatedTask = updatedTasks.find(task => task.id === taskId);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    }
   };
 
   return (
@@ -189,6 +232,7 @@ export default function Dashboard() {
         onClose={() => setIsTaskDetailOpen(false)}
         onStatusChange={handleStatusChange}
         onAddComment={handleAddComment}
+        onAddPhotos={handleAddPhotos}
       />
 
       <NewTaskModal
