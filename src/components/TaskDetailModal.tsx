@@ -366,13 +366,24 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {task.photos.map((photo) => (
                   <div key={photo.id} className="space-y-2">
-                    <img
-                      src={photo.url}
-                      alt={photo.filename}
-                      className="w-full h-32 object-cover rounded-lg border"
-                    />
+                    <div className="relative w-full h-32 bg-muted rounded-lg border overflow-hidden">
+                      <img
+                        src={photo.url.startsWith('blob:') ? 'https://via.placeholder.com/300x200/e2e8f0/64748b?text=Photo' : photo.url}
+                        alt={photo.filename}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/300x200/e2e8f0/64748b?text=Photo';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors cursor-pointer" 
+                           onClick={() => window.open(photo.url, '_blank')} />
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">
-                      {photo.filename}
+                      📷 {photo.filename}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(photo.uploadedAt, 'dd/MM/yyyy HH:mm', { locale: fr })}
                     </p>
                   </div>
                 ))}
@@ -387,11 +398,18 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 <Camera className="w-4 h-4" />
                 Photo de validation
               </h3>
-              <img
-                src={task.proofPhoto}
-                alt="Photo de validation"
-                className="w-48 h-32 object-cover rounded-lg border"
-              />
+              <div className="relative w-48 h-32 bg-muted rounded-lg border overflow-hidden">
+                <img
+                  src={task.proofPhoto.startsWith('blob:') ? 'https://via.placeholder.com/300x200/22c55e/ffffff?text=Validée' : task.proofPhoto}
+                  alt="Photo de validation"
+                  className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => window.open(task.proofPhoto!, '_blank')}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://via.placeholder.com/300x200/22c55e/ffffff?text=Validée';
+                  }}
+                />
+              </div>
             </div>
           )}
 
@@ -423,12 +441,18 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     {/* Photo du commentaire */}
                     {comment.photo && (
                       <div className="mt-3">
-                        <img
-                          src={comment.photo.url}
-                          alt={comment.photo.filename}
-                          className="w-48 h-32 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => window.open(comment.photo!.url, '_blank')}
-                        />
+                        <div className="relative w-48 h-32 bg-muted rounded-lg border overflow-hidden">
+                          <img
+                            src={comment.photo.url.startsWith('blob:') ? 'https://via.placeholder.com/300x200/3b82f6/ffffff?text=Photo' : comment.photo.url}
+                            alt={comment.photo.filename}
+                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => window.open(comment.photo!.url, '_blank')}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://via.placeholder.com/300x200/3b82f6/ffffff?text=Photo';
+                            }}
+                          />
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           📷 {comment.photo.filename}
                         </p>
