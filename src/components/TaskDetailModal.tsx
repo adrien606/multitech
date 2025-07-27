@@ -26,6 +26,8 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
+  const [commentPhoto, setCommentPhoto] = useState<File | null>(null);
+  const [commentPhotoPreview, setCommentPhotoPreview] = useState<string>("");
   
   if (!task) return null;
 
@@ -179,7 +181,18 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
         
         const splitComment = doc.splitTextToSize(comment.text, 160);
         doc.text(splitComment, 25, yPos);
-        yPos += (splitComment.length * 5) + 10;
+        yPos += (splitComment.length * 5) + 5;
+        
+        // Photo du commentaire si elle existe
+        if (comment.photo) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.text(`📷 Photo jointe : ${comment.photo.filename}`, 25, yPos);
+          doc.text("[Photo disponible dans l'application]", 25, yPos + 5);
+          yPos += 15;
+        } else {
+          yPos += 5;
+        }
       });
     }
     
@@ -198,17 +211,51 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
     doc.save(fileName);
   };
 
+  const handleCommentPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setCommentPhoto(file);
+      
+      const url = URL.createObjectURL(file);
+      setCommentPhotoPreview(url);
+    }
+  };
+
+  const removeCommentPhoto = () => {
+    if (commentPhotoPreview) {
+      URL.revokeObjectURL(commentPhotoPreview);
+    }
+    setCommentPhoto(null);
+    setCommentPhotoPreview("");
+  };
+
   const handleAddComment = () => {
     if (!newComment.trim()) return;
     
-    onAddComment(task.id, {
+    const commentData: Omit<TaskComment, 'id' | 'createdAt'> = {
       text: newComment.trim(),
       author: "Agent Technique",
       type: "progress",
-    });
+    };
+
+    // Ajouter la photo si elle existe
+    if (commentPhoto && commentPhotoPreview) {
+      commentData.photo = {
+        url: commentPhotoPreview,
+        filename: commentPhoto.name,
+      };
+    }
     
+    onAddComment(task.id, commentData);
+    
+    // Reset
     setNewComment("");
     setShowCommentForm(false);
+    if (commentPhotoPreview) {
+      URL.revokeObjectURL(commentPhotoPreview);
+    }
+    setCommentPhoto(null);
+    setCommentPhotoPreview("");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,7 +418,22 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm">{comment.text}</p>
+                    <p className="text-sm mb-2">{comment.text}</p>
+                    
+                    {/* Photo du commentaire */}
+                    {comment.photo && (
+                      <div className="mt-3">
+                        <img
+                          src={comment.photo.url}
+                          alt={comment.photo.filename}
+                          className="w-48 h-32 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => window.open(comment.photo!.url, '_blank')}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          📷 {comment.photo.filename}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -432,6 +494,71 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     onChange={(e) => setNewComment(e.target.value)}
                     className="min-h-[100px]"
                   />
+                  
+                  {/* Section photo pour commentaire */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Photo (optionnel)</Label>
+                    <div className="flex gap-3">
+                      {/* Bouton prendre une photo */}
+                      <div className="flex-1">
+                        <input
+                          id="comment-camera"
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={handleCommentPhotoChange}
+                          className="hidden"
+                        />
+                        <Button type="button" variant="outline" size="sm" asChild className="w-full">
+                          <Label htmlFor="comment-camera" className="cursor-pointer">
+                            <Camera className="w-4 h-4 mr-2" />
+                            Prendre photo
+                          </Label>
+                        </Button>
+                      </div>
+                      
+                      {/* Bouton choisir depuis galerie */}
+                      <div className="flex-1">
+                        <input
+                          id="comment-gallery"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCommentPhotoChange}
+                          className="hidden"
+                        />
+                        <Button type="button" variant="outline" size="sm" asChild className="w-full">
+                          <Label htmlFor="comment-gallery" className="cursor-pointer">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Galerie
+                          </Label>
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Prévisualisation photo commentaire */}
+                    {commentPhotoPreview && (
+                      <div className="relative inline-block">
+                        <img
+                          src={commentPhotoPreview}
+                          alt="Photo du commentaire"
+                          className="w-32 h-24 object-cover rounded-lg border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                          onClick={removeCommentPhoto}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
+                          {commentPhoto?.name}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
                   <div className="flex gap-2">
                     <Button onClick={handleAddComment} disabled={!newComment.trim()}>
                       <Send className="w-4 h-4 mr-2" />
@@ -442,6 +569,11 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                       onClick={() => {
                         setShowCommentForm(false);
                         setNewComment("");
+                        if (commentPhotoPreview) {
+                          URL.revokeObjectURL(commentPhotoPreview);
+                        }
+                        setCommentPhoto(null);
+                        setCommentPhotoPreview("");
                       }}
                     >
                       Annuler

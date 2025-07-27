@@ -36,4 +36,8 @@ export interface TaskComment {
   createdAt: Date;
   author: string;
   type: 'assignment' | 'progress' | 'clarification';
+  photo?: {
+    url: string;
+    filename: string;
+  };
 }
