@@ -31,43 +31,171 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
 
   const isOverdue = new Date() > task.dueDate && task.status !== 'validated';
 
-  const handleGeneratePDF = () => {
+  const handleGeneratePDF = async () => {
     const doc = new jsPDF();
+    let yPos = 30;
     
-    // Titre
+    // En-tête
     doc.setFontSize(20);
-    doc.text('Rapport de Tâche de Maintenance', 20, 30);
+    doc.setFont("helvetica", "bold");
+    doc.text("RAPPORT DE MAINTENANCE", 20, yPos);
+    yPos += 20;
     
-    // Informations de base
-    doc.setFontSize(12);
-    doc.text(`Titre: ${task.title}`, 20, 50);
-    doc.text(`Bâtiment: ${task.buildingName}`, 20, 60);
-    doc.text(`Statut: ${task.status === 'pending' ? 'En attente' : task.status === 'progress' ? 'En cours' : 'Validée'}`, 20, 70);
-    doc.text(`Assigné à: ${task.assignedTo}`, 20, 80);
-    doc.text(`Échéance: ${format(task.dueDate, 'dd/MM/yyyy', { locale: fr })}`, 20, 90);
+    // Ligne de séparation
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 15;
+    
+    // Informations générales
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("INFORMATIONS GÉNÉRALES", 20, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Titre de la tâche : ${task.title}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Bâtiment : ${task.buildingName}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Assigné à : ${task.assignedTo}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Date d'échéance : ${format(task.dueDate, "dd/MM/yyyy", { locale: fr })}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Date de création : ${format(task.createdAt, "dd/MM/yyyy", { locale: fr })}`, 20, yPos);
+    yPos += 7;
+    
+    // Statut avec couleur
+    const statusText = task.status === "pending" ? "En attente" : 
+                      task.status === "progress" ? "En cours" : "Validée";
+    doc.text(`Statut : ${statusText}`, 20, yPos);
+    yPos += 15;
     
     // Description
-    doc.text('Description:', 20, 110);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIPTION", 20, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
     const splitDescription = doc.splitTextToSize(task.description, 170);
-    doc.text(splitDescription, 20, 120);
+    doc.text(splitDescription, 20, yPos);
+    yPos += (splitDescription.length * 5) + 10;
+    
+    // Photos
+    if (task.photos.length > 0) {
+      // Vérifier si on a besoin d'une nouvelle page
+      if (yPos > 200) {
+        doc.addPage();
+        yPos = 30;
+      }
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(`PHOTOS (${task.photos.length})`, 20, yPos);
+      yPos += 15;
+      
+      for (let i = 0; i < task.photos.length; i++) {
+        const photo = task.photos[i];
+        
+        // Vérifier si on a besoin d'une nouvelle page
+        if (yPos > 220) {
+          doc.addPage();
+          yPos = 30;
+        }
+        
+        try {
+          // Ajouter le nom du fichier
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text(`${i + 1}. ${photo.filename}`, 20, yPos);
+          doc.text(`Ajoutée le : ${format(photo.uploadedAt, "dd/MM/yyyy HH:mm", { locale: fr })}`, 20, yPos + 5);
+          yPos += 15;
+          
+          // Note: Dans un vrai projet, on chargerait l'image en base64
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.text("[Photo disponible dans l'application]", 25, yPos);
+          yPos += 20;
+          
+        } catch (error) {
+          console.warn("Erreur lors de l'ajout de la photo:", error);
+          doc.text(`[Photo non disponible: ${photo.filename}]`, 25, yPos);
+          yPos += 10;
+        }
+      }
+    }
+    
+    // Photo de preuve
+    if (task.proofPhoto) {
+      if (yPos > 220) {
+        doc.addPage();
+        yPos = 30;
+      }
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("PHOTO DE VALIDATION", 20, yPos);
+      yPos += 15;
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.text("[Photo de validation disponible dans l'application]", 25, yPos);
+      yPos += 20;
+    }
     
     // Commentaires
     if (task.comments.length > 0) {
-      doc.text('Commentaires:', 20, 150);
-      let yPos = 160;
+      if (yPos > 200) {
+        doc.addPage();
+        yPos = 30;
+      }
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(`HISTORIQUE DES COMMENTAIRES (${task.comments.length})`, 20, yPos);
+      yPos += 15;
+      
       task.comments.forEach((comment, index) => {
         if (yPos > 250) {
           doc.addPage();
           yPos = 30;
         }
-        doc.text(`${comment.author} (${format(comment.createdAt, 'dd/MM/yyyy', { locale: fr })}):`, 20, yPos);
-        const splitComment = doc.splitTextToSize(comment.text, 170);
-        doc.text(splitComment, 20, yPos + 10);
-        yPos += 30;
+        
+        // Type de commentaire
+        const typeText = comment.type === "assignment" ? "Attribution" :
+                        comment.type === "progress" ? "Progression" : "Clarification";
+        
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${index + 1}. ${comment.author} - ${typeText}`, 20, yPos);
+        yPos += 7;
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Date : ${format(comment.createdAt, "dd/MM/yyyy HH:mm", { locale: fr })}`, 25, yPos);
+        yPos += 7;
+        
+        const splitComment = doc.splitTextToSize(comment.text, 160);
+        doc.text(splitComment, 25, yPos);
+        yPos += (splitComment.length * 5) + 10;
       });
     }
     
-    doc.save(`tache_${task.id}_${format(new Date(), 'ddMMyyyy')}.pdf`);
+    // Pied de page sur toutes les pages
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Généré le ${format(new Date(), "dd/MM/yyyy à HH:mm", { locale: fr })}`, 20, 285);
+      doc.text(`Page ${i} sur ${pageCount}`, 170, 285);
+    }
+    
+    // Sauvegarder le PDF
+    const fileName = `Tache_${task.title.replace(/[^a-zA-Z0-9]/g, "_")}_${format(new Date(), "ddMMyyyy_HHmm")}.pdf`;
+    doc.save(fileName);
   };
 
   const handleAddComment = () => {
