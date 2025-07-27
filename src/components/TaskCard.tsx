@@ -18,23 +18,25 @@ export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps)
   return (
     <Card className={`transition-all hover:shadow-md ${isOverdue ? 'border-destructive/30' : ''}`}>
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h3 className="font-semibold text-card-foreground mb-1">{task.title}</h3>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-card-foreground mb-1 break-words">{task.title}</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                <span>{task.buildingName}</span>
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{task.buildingName}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+                <Calendar className="w-3 h-3 flex-shrink-0" />
                 <span className={isOverdue ? 'text-destructive' : ''}>
                   {format(task.dueDate, 'dd/MM/yyyy', { locale: fr })}
                 </span>
               </div>
             </div>
           </div>
-          <TaskStatusBadge status={task.status} />
+          <div className="flex-shrink-0">
+            <TaskStatusBadge status={task.status} />
+          </div>
         </div>
       </CardHeader>
       
@@ -43,7 +45,7 @@ export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps)
           {task.description}
         </p>
         
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {task.photos.length > 0 && (
               <div className="flex items-center gap-1">
@@ -59,11 +61,12 @@ export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps)
             )}
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onViewDetails(task)}
+              className="flex-1 sm:flex-initial"
             >
               <Eye className="w-3 h-3 mr-1" />
               Voir
@@ -73,6 +76,7 @@ export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps)
               <Button
                 size="sm"
                 onClick={() => onStatusChange(task.id, 'progress')}
+                className="flex-1 sm:flex-initial"
               >
                 Commencer
               </Button>
@@ -83,6 +87,7 @@ export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps)
                 variant="secondary"
                 size="sm"
                 onClick={() => onStatusChange(task.id, 'validated')}
+                className="flex-1 sm:flex-initial"
               >
                 Valider
               </Button>

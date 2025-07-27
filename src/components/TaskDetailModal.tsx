@@ -252,7 +252,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto mx-4">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -465,31 +465,50 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 ) : (
                   <div className="space-y-3 p-4 bg-muted/20 rounded-lg">
                     <Label htmlFor="photo-upload" className="text-sm font-medium">
-                      Sélectionner des photos
+                      Ajouter des photos
                     </Label>
-                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                      <input
-                        id="photo-upload"
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                      <Button type="button" variant="outline" asChild>
-                        <Label htmlFor="photo-upload" className="cursor-pointer">
-                          Choisir des fichiers
-                        </Label>
-                      </Button>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Formats acceptés: JPG, PNG, GIF
-                      </p>
+                    
+                    <div className="space-y-3">
+                      {/* Bouton prendre une photo */}
+                      <div className="border-2 border-dashed border-primary/25 rounded-lg p-3 text-center">
+                        <Camera className="w-5 h-5 mx-auto mb-2 text-primary" />
+                        <input
+                          id="camera-upload"
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        <Button type="button" variant="outline" size="sm" asChild>
+                          <Label htmlFor="camera-upload" className="cursor-pointer">
+                            Prendre une photo
+                          </Label>
+                        </Button>
+                      </div>
+                      
+                      {/* Bouton choisir depuis galerie */}
+                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-3 text-center">
+                        <Upload className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
+                        <input
+                          id="photo-upload"
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        <Button type="button" variant="outline" size="sm" asChild>
+                          <Label htmlFor="photo-upload" className="cursor-pointer">
+                            Choisir depuis la galerie
+                          </Label>
+                        </Button>
+                      </div>
                     </div>
                     
                     {/* Prévisualisation des photos sélectionnées */}
                     {photoPreviewUrls.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-3 mt-4">
                         {photoPreviewUrls.map((url, index) => (
                           <div key={index} className="relative">
                             <img
@@ -506,7 +525,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                             >
                               <X className="w-3 h-3" />
                             </Button>
-                            <p className="text-xs text-muted-foreground mt-1 truncate">
+                            <p className="text-xs text-muted-foreground mt-1 truncate px-1">
                               {selectedFiles[index]?.name}
                             </p>
                           </div>

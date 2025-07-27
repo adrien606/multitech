@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Building, Task } from "@/types";
 import { Agent } from "@/types/agent";
 import { BuildingSelector } from "./BuildingSelector";
-import { Calendar, Upload, X } from "lucide-react";
+import { Calendar, Upload, X, Camera } from "lucide-react";
 
 interface NewTaskModalProps {
   isOpen: boolean;
@@ -116,7 +116,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto mx-4">
         <DialogHeader>
           <DialogTitle>Nouvelle tâche de maintenance</DialogTitle>
         </DialogHeader>
@@ -193,35 +193,59 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
 
           <div className="space-y-2">
             <Label htmlFor="photos">Photos (optionnel)</Label>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
-              <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-              <input
-                id="photos"
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <Button type="button" variant="outline" asChild>
-                <Label htmlFor="photos" className="cursor-pointer">
-                  Ajouter des photos
-                </Label>
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2">
-                Formats acceptés: JPG, PNG, GIF
-              </p>
+            <div className="space-y-3">
+              {/* Bouton prendre une photo */}
+              <div className="border-2 border-dashed border-primary/25 rounded-lg p-4 text-center">
+                <Camera className="w-6 h-6 mx-auto mb-2 text-primary" />
+                <input
+                  id="camera-input"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Button type="button" variant="outline" asChild className="mb-2">
+                  <Label htmlFor="camera-input" className="cursor-pointer">
+                    Prendre une photo
+                  </Label>
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Utiliser l'appareil photo
+                </p>
+              </div>
+              
+              {/* Bouton choisir depuis galerie */}
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                <input
+                  id="photos"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Button type="button" variant="outline" asChild>
+                  <Label htmlFor="photos" className="cursor-pointer">
+                    Choisir depuis la galerie
+                  </Label>
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Sélectionner des photos existantes
+                </p>
+              </div>
             </div>
             
             {/* Prévisualisation des photos */}
             {photoPreviewUrls.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-2 gap-3 mt-4">
                 {photoPreviewUrls.map((url, index) => (
                   <div key={index} className="relative">
                     <img
                       src={url}
                       alt={`Prévisualisation ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg border"
+                      className="w-full h-32 object-cover rounded-lg border"
                     />
                     <Button
                       type="button"
@@ -232,7 +256,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
                     >
                       <X className="w-3 h-3" />
                     </Button>
-                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                    <p className="text-xs text-muted-foreground mt-1 truncate px-1">
                       {photos[index]?.name}
                     </p>
                   </div>
