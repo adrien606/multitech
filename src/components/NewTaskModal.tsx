@@ -5,26 +5,29 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Building, Task } from "@/types";
+import { Agent } from "@/types/agent";
 import { BuildingSelector } from "./BuildingSelector";
-import { Calendar, Upload } from "lucide-react";
+import { Calendar, Upload, X } from "lucide-react";
 
 interface NewTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   buildings: Building[];
+  agents: Agent[];
   onTaskCreate: (task: Omit<Task, 'id' | 'createdAt'>) => void;
 }
 
-export function NewTaskModal({ isOpen, onClose, buildings, onTaskCreate }: NewTaskModalProps) {
+export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate }: NewTaskModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     buildingId: '',
     dueDate: '',
-    assignedTo: 'Agent Technique',
+    assignedTo: agents.length > 0 ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
   });
 
   const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,16 +67,32 @@ export function NewTaskModal({ isOpen, onClose, buildings, onTaskCreate }: NewTa
       description: '',
       buildingId: '',
       dueDate: '',
-      assignedTo: 'Agent Technique',
+      assignedTo: agents.length > 0 ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
     });
     setPhotos([]);
+    setPhotoPreviewUrls([]);
     onClose();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setPhotos(Array.from(e.target.files));
+      const newFiles = Array.from(e.target.files);
+      setPhotos(prev => [...prev, ...newFiles]);
+      
+      // Créer les URLs de prévisualisation
+      newFiles.forEach(file => {
+        const url = URL.createObjectURL(file);
+        setPhotoPreviewUrls(prev => [...prev, url]);
+      });
     }
+  };
+
+  const removePhoto = (index: number) => {
+    // Libérer l'URL de l'objet
+    URL.revokeObjectURL(photoPreviewUrls[index]);
+    
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotoPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const today = new Date().toISOString().split('T')[0];
@@ -100,11 +119,18 @@ export function NewTaskModal({ isOpen, onClose, buildings, onTaskCreate }: NewTa
 
             <div className="space-y-2">
               <Label htmlFor="assignedTo">Assigné à</Label>
-              <Input
+              <select
                 id="assignedTo"
                 value={formData.assignedTo}
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
-              />
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+              >
+                {agents.filter(agent => agent.isActive).map(agent => (
+                  <option key={agent.id} value={`${agent.firstName} ${agent.lastName}`}>
+                    {agent.firstName} {agent.lastName}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -150,8 +176,8 @@ export function NewTaskModal({ isOpen, onClose, buildings, onTaskCreate }: NewTa
 
           <div className="space-y-2">
             <Label htmlFor="photos">Photos (optionnel)</Label>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+              <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
               <input
                 id="photos"
                 type="file"
@@ -160,17 +186,42 @@ export function NewTaskModal({ isOpen, onClose, buildings, onTaskCreate }: NewTa
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <Label htmlFor="photos" className="cursor-pointer">
-                <span className="text-sm text-muted-foreground">
-                  Cliquez pour ajouter des photos ou glissez-déposez
-                </span>
-              </Label>
-              {photos.length > 0 && (
-                <p className="text-sm text-primary mt-2">
-                  {photos.length} photo(s) sélectionnée(s)
-                </p>
-              )}
+              <Button type="button" variant="outline" asChild>
+                <Label htmlFor="photos" className="cursor-pointer">
+                  Ajouter des photos
+                </Label>
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Formats acceptés: JPG, PNG, GIF
+              </p>
             </div>
+            
+            {/* Prévisualisation des photos */}
+            {photoPreviewUrls.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {photoPreviewUrls.map((url, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={url}
+                      alt={`Prévisualisation ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                      onClick={() => removePhoto(index)}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      {photos[index]?.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">

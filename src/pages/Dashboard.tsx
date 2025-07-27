@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task, TaskStatus } from "@/types";
 import { mockTasks, mockBuildings } from "@/data/mockData";
-import { Plus, Search, Filter } from "lucide-react";
+import { mockAgents } from "@/data/mockAgents";
+import { Plus, Search, Filter, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
@@ -50,6 +52,20 @@ export default function Dashboard() {
     setTasks([newTask, ...tasks]);
   };
 
+  const handleAddComment = (taskId: string, commentData: Omit<import("@/types").TaskComment, 'id' | 'createdAt'>) => {
+    const newComment = {
+      ...commentData,
+      id: `comment_${Date.now()}`,
+      createdAt: new Date(),
+    };
+    
+    setTasks(tasks.map(task => 
+      task.id === taskId 
+        ? { ...task, comments: [...task.comments, newComment] }
+        : task
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -62,10 +78,18 @@ export default function Dashboard() {
                 Gestion des tâches d'entretien multi-bâtiments
               </p>
             </div>
-            <Button onClick={() => setIsNewTaskOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nouvelle tâche
-            </Button>
+            <div className="flex gap-3">
+              <Link to="/agents">
+                <Button variant="outline">
+                  <Users className="w-4 h-4 mr-2" />
+                  Agents
+                </Button>
+              </Link>
+              <Button onClick={() => setIsNewTaskOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Nouvelle tâche
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -158,12 +182,14 @@ export default function Dashboard() {
         isOpen={isTaskDetailOpen}
         onClose={() => setIsTaskDetailOpen(false)}
         onStatusChange={handleStatusChange}
+        onAddComment={handleAddComment}
       />
 
       <NewTaskModal
         isOpen={isNewTaskOpen}
         onClose={() => setIsNewTaskOpen(false)}
         buildings={mockBuildings}
+        agents={mockAgents}
         onTaskCreate={handleCreateTask}
       />
     </div>
