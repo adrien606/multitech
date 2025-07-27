@@ -1,0 +1,142 @@
+import { useState } from "react";
+import { TaskStats } from "@/components/TaskStats";
+import { TaskCard } from "@/components/TaskCard";
+import { BuildingSelector } from "@/components/BuildingSelector";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Task, TaskStatus } from "@/types";
+import { mockTasks, mockBuildings } from "@/data/mockData";
+import { Plus, Search, Filter } from "lucide-react";
+
+export default function Dashboard() {
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [selectedBuilding, setSelectedBuilding] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredTasks = tasks.filter((task) => {
+    const matchesBuilding = !selectedBuilding || task.buildingId === selectedBuilding;
+    const matchesStatus = statusFilter === "all" || task.status === statusFilter;
+    const matchesSearch = !searchQuery || 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesBuilding && matchesStatus && matchesSearch;
+  });
+
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    setTasks(tasks.map(task => 
+      task.id === taskId ? { ...task, status: newStatus } : task
+    ));
+  };
+
+  const handleViewDetails = (task: Task) => {
+    // TODO: Ouvrir modal ou navigation vers détail
+    console.log("Voir détails:", task);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Maintenance</h1>
+              <p className="text-muted-foreground mt-1">
+                Gestion des tâches d'entretien multi-bâtiments
+              </p>
+            </div>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvelle tâche
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Statistiques */}
+        <TaskStats tasks={tasks} />
+
+        {/* Filtres */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filtres
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Recherche</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher une tâche..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Bâtiment</label>
+                <BuildingSelector
+                  buildings={mockBuildings}
+                  value={selectedBuilding}
+                  onValueChange={setSelectedBuilding}
+                  placeholder="Tous les bâtiments"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Statut</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as TaskStatus | "all")}
+                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+                >
+                  <option value="all">Tous les statuts</option>
+                  <option value="pending">En attente</option>
+                  <option value="progress">En cours</option>
+                  <option value="validated">Validées</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Liste des tâches */}
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Tâches ({filteredTasks.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredTasks.length > 0 ? (
+              <div className="space-y-4">
+                {filteredTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onStatusChange={handleStatusChange}
+                    onViewDetails={handleViewDetails}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Aucune tâche trouvée avec les filtres sélectionnés.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
