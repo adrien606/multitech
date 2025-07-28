@@ -364,35 +364,42 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 Photos ({task.photos.length})
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {task.photos.map((photo, index) => (
-                  <div key={photo.id} className="space-y-2">
-                    <div className="w-full h-32 rounded-lg border overflow-hidden bg-gray-50">
-                      <img
-                        src={photo.url}
-                        alt={photo.filename}
-                        className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => window.open(photo.url, '_blank')}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling!.classList.remove('hidden');
-                        }}
-                      />
-                      <div className="hidden w-full h-full flex items-center justify-center text-gray-500">
-                        <div className="text-center">
-                          <Camera className="w-8 h-8 mx-auto mb-2" />
-                          <p className="text-xs">Photo non disponible</p>
-                        </div>
+                {task.photos.map((photo, index) => {
+                  // Vérifier si l'URL de la photo est valide
+                  const isValidUrl = photo.url && photo.url.startsWith('blob:');
+                  
+                  return (
+                    <div key={photo.id} className="space-y-2">
+                      <div className="w-full h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
+                        {isValidUrl ? (
+                          <img
+                            src={photo.url}
+                            alt={photo.filename}
+                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => window.open(photo.url, '_blank')}
+                            onError={(e) => {
+                              // Si l'image ne charge pas, afficher le placeholder
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : null}
+                        {/* Placeholder toujours visible si pas d'image valide */}
+                        {!isValidUrl && (
+                          <div className="text-center text-gray-500">
+                            <Camera className="w-8 h-8 mx-auto mb-2" />
+                            <p className="text-xs">Photo capturée</p>
+                          </div>
+                        )}
                       </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        📷 {photo.filename}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(photo.uploadedAt, 'dd/MM/yyyy HH:mm', { locale: fr })}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      📷 {photo.filename}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(photo.uploadedAt, 'dd/MM/yyyy HH:mm', { locale: fr })}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -404,24 +411,23 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 <Camera className="w-4 h-4" />
                 Photo de validation
               </h3>
-              <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50">
-                <img
-                  src={task.proofPhoto}
-                  alt="Photo de validation"
-                  className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => window.open(task.proofPhoto!, '_blank')}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    target.nextElementSibling!.classList.remove('hidden');
-                  }}
-                />
-                <div className="hidden w-full h-full flex items-center justify-center text-green-600">
-                  <div className="text-center">
+              <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
+                {task.proofPhoto.startsWith('blob:') ? (
+                  <img
+                    src={task.proofPhoto}
+                    alt="Photo de validation"
+                    className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => window.open(task.proofPhoto!, '_blank')}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="text-center text-green-600">
                     <Camera className="w-8 h-8 mx-auto mb-2" />
                     <p className="text-xs">Photo de validation</p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -454,24 +460,23 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     {/* Photo du commentaire */}
                     {comment.photo && (
                       <div className="mt-3">
-                        <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50">
-                          <img
-                            src={comment.photo.url}
-                            alt={comment.photo.filename}
-                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => window.open(comment.photo!.url, '_blank')}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling!.classList.remove('hidden');
-                            }}
-                          />
-                          <div className="hidden w-full h-full flex items-center justify-center text-blue-600">
-                            <div className="text-center">
+                        <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
+                          {comment.photo.url.startsWith('blob:') ? (
+                            <img
+                              src={comment.photo.url}
+                              alt={comment.photo.filename}
+                              className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => window.open(comment.photo!.url, '_blank')}
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-center text-blue-600">
                               <Camera className="w-8 h-8 mx-auto mb-2" />
-                              <p className="text-xs">Photo du commentaire</p>
+                              <p className="text-xs">Photo commentaire</p>
                             </div>
-                          </div>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           📷 {comment.photo.filename}
