@@ -71,6 +71,33 @@ export type Database = {
         }
         Relationships: []
       }
+      buildings: {
+        Row: {
+          address: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -97,6 +124,133 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      task_comments: {
+        Row: {
+          author: string
+          comment_type: string
+          created_at: string
+          id: string
+          photo_filename: string | null
+          photo_url: string | null
+          task_id: string
+          text: string
+        }
+        Insert: {
+          author: string
+          comment_type?: string
+          created_at?: string
+          id?: string
+          photo_filename?: string | null
+          photo_url?: string | null
+          task_id: string
+          text: string
+        }
+        Update: {
+          author?: string
+          comment_type?: string
+          created_at?: string
+          id?: string
+          photo_filename?: string | null
+          photo_url?: string | null
+          task_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_photos: {
+        Row: {
+          filename: string
+          id: string
+          task_id: string
+          uploaded_at: string
+          url: string
+        }
+        Insert: {
+          filename: string
+          id?: string
+          task_id: string
+          uploaded_at?: string
+          url: string
+        }
+        Update: {
+          filename?: string
+          id?: string
+          task_id?: string
+          uploaded_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_photos_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_to_id: string | null
+          building_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          proof_photo: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_id?: string | null
+          building_id: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          proof_photo?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_id?: string | null
+          building_id?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          proof_photo?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_id_fkey"
+            columns: ["assigned_to_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tasks_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

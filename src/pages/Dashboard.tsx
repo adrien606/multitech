@@ -1,31 +1,58 @@
 import { useState } from "react";
-import { TaskStats } from "@/components/TaskStats";
 import { TaskCard } from "@/components/TaskCard";
+import { TaskStats } from "@/components/TaskStats";
 import { BuildingSelector } from "@/components/BuildingSelector";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
 import { NewTaskModal } from "@/components/NewTaskModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Task, TaskStatus } from "@/types";
-import { mockTasks, mockBuildings } from "@/data/mockData";
 import { Plus, Search, Filter, Users, Building, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
+import { useBuildings } from "@/hooks/useBuildings";
+import { useTasks, Task, TaskStatus } from "@/hooks/useTasks";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { profile, role, signOut } = useAuth();
   const { agents, loading: agentsLoading } = useAgents();
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const { buildings, loading: buildingsLoading } = useBuildings();
+  const { tasks, loading: tasksLoading, createTask, updateTaskStatus, addComment, addPhotos } = useTasks();
+  
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
-  const filteredTasks = tasks.filter((task) => {
+  // Convertir les tâches pour compatibilité avec les types existants
+  const compatibleTasks = tasks.map(task => ({
+    ...task,
+    buildingId: task.building_id,
+    buildingName: task.building_name || 'Bâtiment inconnu',
+    assignedTo: task.assigned_to_name || 'Non assigné',
+    dueDate: new Date(task.due_date),
+    createdAt: new Date(task.created_at),
+    photos: task.photos?.map(photo => ({
+      ...photo,
+      uploadedAt: new Date(photo.uploaded_at)
+    })) || [],
+    comments: task.comments?.map(comment => ({
+      ...comment,
+      type: comment.comment_type,
+      createdAt: new Date(comment.created_at),
+      photo: comment.photo_url ? {
+        url: comment.photo_url,
+        filename: comment.photo_filename || 'photo.jpg'
+      } : undefined
+    })) || [],
+    proofPhoto: task.proof_photo
+  }));
+
+  const filteredTasks = compatibleTasks.filter((task) => {
     const matchesBuilding = !selectedBuilding || task.buildingId === selectedBuilding;
     const matchesStatus = statusFilter === "all" || task.status === statusFilter;
     const matchesSearch = !searchQuery || 
@@ -35,107 +62,149 @@ export default function Dashboard() {
     return matchesBuilding && matchesStatus && matchesSearch;
   });
 
-  const handleStatusChange = (taskId: string, newStatus: TaskStatus, comment?: string) => {
-    const updatedTasks = tasks.map(task => {
-      if (task.id === taskId) {
-        const updatedTask = { ...task, status: newStatus };
-        
-        // Ajouter un commentaire automatique si fourni
-        if (comment) {
-          const newComment = {
-            id: `comment_${Date.now()}`,
-            text: comment,
-            createdAt: new Date(),
-            author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
-            type: 'progress' as const,
-          };
-          updatedTask.comments = [...task.comments, newComment];
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus, comment?: string) => {
+    try {
+      const result = await updateTaskStatus(taskId, newStatus);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      // Ajouter un commentaire automatique si fourni
+      if (comment) {
+        await addComment(taskId, {
+          text: comment,
+          author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
+          comment_type: 'progress',
+        });
+      }
+
+      toast.success('Statut mis à jour avec succès');
+      
+      // Mettre à jour selectedTask si c'est la tâche courante
+      if (selectedTask && selectedTask.id === taskId) {
+        const updatedTask = compatibleTasks.find(task => task.id === taskId);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
         }
-        
-        return updatedTask;
       }
-      return task;
-    });
-    
-    setTasks(updatedTasks);
-    
-    // Mettre à jour selectedTask si c'est la tâche courante
-    if (selectedTask && selectedTask.id === taskId) {
-      const updatedTask = updatedTasks.find(task => task.id === taskId);
-      if (updatedTask) {
-        setSelectedTask(updatedTask);
-      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      toast.error('Erreur lors de la mise à jour du statut');
     }
   };
 
-  const handleViewDetails = (task: Task) => {
+  const handleViewDetails = (task: any) => {
     setSelectedTask(task);
     setIsTaskDetailOpen(true);
   };
 
-  const handleCreateTask = (newTaskData: Omit<Task, 'id' | 'createdAt'>) => {
-    const newTask: Task = {
-      ...newTaskData,
-      id: `task_${Date.now()}`,
-      createdAt: new Date(),
-      // Utiliser le nom complet de l'utilisateur connecté si assignedTo n'est pas défini
-      assignedTo: newTaskData.assignedTo || profile?.full_name || 'Utilisateur',
-    };
-    setTasks([newTask, ...tasks]);
-  };
+  const handleCreateTask = async (newTaskData: any) => {
+    try {
+      const agent = agents.find(a => a.full_name === newTaskData.assignedTo);
+      
+      const taskData = {
+        title: newTaskData.title,
+        description: newTaskData.description,
+        building_id: newTaskData.buildingId,
+        due_date: new Date(newTaskData.dueDate).toISOString(),
+        assigned_to_id: agent?.user_id,
+      };
 
-  const handleAddComment = (taskId: string, commentData: Omit<import("@/types").TaskComment, 'id' | 'createdAt'>) => {
-    const newComment = {
-      ...commentData,
-      id: `comment_${Date.now()}`,
-      createdAt: new Date(),
-      // Utiliser le nom complet de l'utilisateur connecté
-      author: profile?.full_name || 'Utilisateur',
-    };
-    
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, comments: [...task.comments, newComment] }
-        : task
-    );
-    
-    setTasks(updatedTasks);
-    
-    // Mettre à jour selectedTask si c'est la tâche courante
-    if (selectedTask && selectedTask.id === taskId) {
-      const updatedTask = updatedTasks.find(task => task.id === taskId);
-      if (updatedTask) {
-        setSelectedTask(updatedTask);
+      const result = await createTask(taskData);
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
+
+      // Ajouter le commentaire de création
+      if (result.data) {
+        await addComment(result.data.id, {
+          text: "Tâche créée et assignée.",
+          author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
+          comment_type: 'assignment',
+        });
+      }
+
+      toast.success('Tâche créée avec succès');
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast.error('Erreur lors de la création de la tâche');
     }
   };
 
-  const handleAddPhotos = (taskId: string, newPhotos: Omit<import("@/types").TaskPhoto, 'id'>[], files: File[]) => {
-    const photosWithIds = newPhotos.map(photo => ({
-      ...photo,
-      id: `photo_${Date.now()}_${Math.random()}`,
-    }));
-    
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, photos: [...task.photos, ...photosWithIds] }
-        : task
-    );
-    
-    setTasks(updatedTasks);
-    
-    // Mettre à jour selectedTask si c'est la tâche courante
-    if (selectedTask && selectedTask.id === taskId) {
-      const updatedTask = updatedTasks.find(task => task.id === taskId);
-      if (updatedTask) {
-        setSelectedTask(updatedTask);
+  const handleAddComment = async (taskId: string, commentData: any) => {
+    try {
+      const result = await addComment(taskId, {
+        text: commentData.text,
+        author: commentData.author,
+        comment_type: commentData.type,
+        photo_url: commentData.photo?.url,
+        photo_filename: commentData.photo?.filename,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
+
+      toast.success('Commentaire ajouté avec succès');
+      
+      // Mettre à jour selectedTask si c'est la tâche courante
+      if (selectedTask && selectedTask.id === taskId) {
+        const updatedTask = compatibleTasks.find(task => task.id === taskId);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Erreur lors de l\'ajout du commentaire');
     }
   };
 
+  const handleAddPhotos = async (taskId: string, newPhotos: any[], files: File[]) => {
+    try {
+      // Convertir en format attendu par l'API
+      const photosData = newPhotos.map(photo => ({
+        url: photo.url,
+        filename: photo.filename
+      }));
+
+      const result = await addPhotos(taskId, photosData);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success('Photos ajoutées avec succès');
+      
+      // Mettre à jour selectedTask si c'est la tâche courante
+      if (selectedTask && selectedTask.id === taskId) {
+        const updatedTask = compatibleTasks.find(task => task.id === taskId);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding photos:', error);
+      toast.error('Erreur lors de l\'ajout des photos');
+    }
+  };
+
+  const loading = tasksLoading || buildingsLoading || agentsLoading;
+  
   const handleSignOut = async () => {
     await signOut();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Chargement...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,7 +256,7 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Statistiques */}
-        <TaskStats tasks={tasks} />
+        <TaskStats tasks={compatibleTasks} />
 
         {/* Filtres */}
         <Card>
@@ -215,7 +284,7 @@ export default function Dashboard() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Bâtiment</label>
                 <BuildingSelector
-                  buildings={mockBuildings}
+                  buildings={buildings.map(b => ({ id: b.id, name: b.name, address: b.address, description: b.description, createdAt: new Date(b.created_at) }))}
                   value={selectedBuilding}
                   onValueChange={setSelectedBuilding}
                   placeholder="Tous les bâtiments"
@@ -280,7 +349,7 @@ export default function Dashboard() {
       <NewTaskModal
         isOpen={isNewTaskOpen}
         onClose={() => setIsNewTaskOpen(false)}
-        buildings={mockBuildings}
+        buildings={buildings.map(b => ({ id: b.id, name: b.name, address: b.address, description: b.description, createdAt: new Date(b.created_at) }))}
         agents={agents}
         onTaskCreate={handleCreateTask}
       />

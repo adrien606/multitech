@@ -2,15 +2,15 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BuildingModal } from "@/components/BuildingModal";
-import { Building } from "@/types";
-import { mockBuildings } from "@/data/mockData";
 import { Plus, Edit, Trash2, MapPin, Building as BuildingIcon, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import { useBuildings, Building } from "@/hooks/useBuildings";
+import { toast } from "sonner";
 
 export default function BuildingsPage() {
-  const [buildings, setBuildings] = useState<Building[]>(mockBuildings);
+  const { buildings, loading, createBuilding, updateBuilding, deleteBuilding } = useBuildings();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -27,26 +27,49 @@ export default function BuildingsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteBuilding = (buildingId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce bâtiment ? Toutes les tâches associées seront également supprimées.')) {
-      setBuildings(buildings.filter(building => building.id !== buildingId));
+  const handleDeleteBuilding = async (building: Building) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le bâtiment "${building.name}" ?`)) {
+      return;
+    }
+
+    const result = await deleteBuilding(building.id);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success('Bâtiment supprimé avec succès');
     }
   };
 
-  const handleSaveBuilding = (buildingData: Omit<Building, 'id' | 'createdAt'> | Building) => {
-    if (modalMode === 'create') {
-      const newBuilding: Building = {
-        ...(buildingData as Omit<Building, 'id' | 'createdAt'>),
-        id: `building_${Date.now()}`,
-        createdAt: new Date(),
-      };
-      setBuildings([newBuilding, ...buildings]);
-    } else {
-      setBuildings(buildings.map(building => 
-        building.id === (buildingData as Building).id ? (buildingData as Building) : building
-      ));
+  const handleSaveBuilding = async (buildingData: Pick<Building, 'name' | 'address' | 'description'>) => {
+    try {
+      let result;
+      
+      if (modalMode === 'create') {
+        result = await createBuilding(buildingData);
+      } else if (selectedBuilding) {
+        result = await updateBuilding(selectedBuilding.id, buildingData);
+      }
+
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(modalMode === 'create' ? 'Bâtiment créé avec succès' : 'Bâtiment modifié avec succès');
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error saving building:', error);
+      toast.error('Erreur lors de l\'enregistrement');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Chargement des bâtiments...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,7 +87,7 @@ export default function BuildingsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Gestion des Bâtiments</h1>
                 <p className="text-muted-foreground mt-1">
-                  Ajouter, modifier ou supprimer des bâtiments
+                  Gérer les bâtiments et leurs informations
                 </p>
               </div>
             </div>
@@ -107,10 +130,12 @@ export default function BuildingsPage() {
                   <Plus className="w-4 h-4 text-accent" />
                 </div>
                 <span className="text-2xl font-bold">
-                  {buildings.filter(b => 
-                    new Date(b.createdAt).getMonth() === new Date().getMonth() &&
-                    new Date(b.createdAt).getFullYear() === new Date().getFullYear()
-                  ).length}
+                  {buildings.filter(b => {
+                    const buildingDate = new Date(b.created_at);
+                    const now = new Date();
+                    return buildingDate.getMonth() === now.getMonth() && 
+                           buildingDate.getFullYear() === now.getFullYear();
+                  }).length}
                 </span>
               </div>
             </CardContent>
@@ -156,7 +181,7 @@ export default function BuildingsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDeleteBuilding(building.id)}
+                            onClick={() => handleDeleteBuilding(building)}
                           >
                             <Trash2 className="w-4 h-4 mr-1" />
                             Supprimer
@@ -166,7 +191,7 @@ export default function BuildingsPage() {
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="text-xs text-muted-foreground">
-                        Créé le {format(building.createdAt, 'dd/MM/yyyy', { locale: fr })}
+                        Créé le {format(new Date(building.created_at), 'dd/MM/yyyy', { locale: fr })}
                       </div>
                     </CardContent>
                   </Card>
@@ -189,7 +214,10 @@ export default function BuildingsPage() {
 
       {/* Modal */}
       <BuildingModal
-        building={selectedBuilding}
+        building={selectedBuilding ? {
+          ...selectedBuilding,
+          createdAt: new Date(selectedBuilding.created_at)
+        } : null}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveBuilding}

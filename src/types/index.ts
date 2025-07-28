@@ -1,3 +1,4 @@
+// Types pour compatibilité avec les composants existants
 export interface Building {
   id: string;
   name: string;

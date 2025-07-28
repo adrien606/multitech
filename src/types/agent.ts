@@ -1,3 +1,4 @@
+// Types pour compatibilité avec les anciens composants
 export interface Agent {
   id: string;
   firstName: string;
