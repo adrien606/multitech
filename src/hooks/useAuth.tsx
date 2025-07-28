@@ -117,11 +117,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, pinCode: string) => {
     try {
-      // For simplicity, we'll use the pin code as password
-      // In production, you might want a more sophisticated approach
+      // Convert 4-digit PIN to 6-character password by adding prefix
+      const password = `pin_${pinCode}`;
       const { error } = await supabase.auth.signInWithPassword({
         email,
-        password: pinCode,
+        password,
       });
       return { error };
     } catch (error) {
@@ -131,9 +131,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signUp = async (email: string, fullName: string, pinCode: string) => {
     try {
+      // Convert 4-digit PIN to 6-character password by adding prefix
+      const password = `pin_${pinCode}`;
       const { error } = await supabase.auth.signUp({
         email,
-        password: pinCode,
+        password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
