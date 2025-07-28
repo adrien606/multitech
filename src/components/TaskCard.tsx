@@ -2,17 +2,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Task } from "@/types";
 import { TaskStatusBadge } from "./TaskStatusBadge";
-import { Calendar, MapPin, MessageSquare, Camera, Eye, User } from "lucide-react";
+import { Calendar, MapPin, MessageSquare, Camera, Eye, User, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface TaskCardProps {
   task: Task;
   onStatusChange: (taskId: string, status: Task['status'], comment?: string) => void;
   onViewDetails: (task: Task) => void;
+  onDelete: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps) {
+export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: TaskCardProps) {
   const isOverdue = new Date() > task.dueDate && task.status !== 'validated';
 
   return (
@@ -75,6 +77,36 @@ export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps)
               <Eye className="w-3 h-3 mr-1" />
               Voir
             </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:border-destructive p-2"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer la tâche</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Êtes-vous sûr de vouloir supprimer la tâche "{task.title}" ?
+                    Cette action est irréversible et supprimera également toutes les photos et commentaires associés.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => onDelete(task.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             
             {task.status === 'pending' && (
               <Button

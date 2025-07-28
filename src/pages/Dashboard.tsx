@@ -19,7 +19,7 @@ export default function Dashboard() {
   const { profile, role, signOut } = useAuth();
   const { agents, loading: agentsLoading } = useAgents();
   const { buildings, loading: buildingsLoading } = useBuildings();
-  const { tasks, loading: tasksLoading, createTask, updateTaskStatus, addComment, addPhotos } = useTasks();
+  const { tasks, loading: tasksLoading, createTask, updateTaskStatus, addComment, addPhotos, deleteTask } = useTasks();
   
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
@@ -200,6 +200,27 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const result = await deleteTask(taskId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success('Tâche supprimée avec succès');
+      
+      // Fermer la modal si la tâche supprimée était ouverte
+      if (selectedTask && selectedTask.id === taskId) {
+        setIsTaskDetailOpen(false);
+        setSelectedTask(null);
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
   const loading = tasksLoading || buildingsLoading || agentsLoading;
   
   const handleSignOut = async () => {
@@ -326,6 +347,7 @@ export default function Dashboard() {
                     task={task}
                     onStatusChange={handleStatusChange}
                     onViewDetails={handleViewDetails}
+                    onDelete={handleDeleteTask}
                   />
                 ))}
               </div>

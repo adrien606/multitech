@@ -279,6 +279,30 @@ export const useTasks = () => {
     }
   };
 
+  const deleteTask = async (taskId: string) => {
+    try {
+      // Supprimer d'abord les photos et commentaires associés
+      await supabase.from('task_photos').delete().eq('task_id', taskId);
+      await supabase.from('task_comments').delete().eq('task_id', taskId);
+      
+      // Puis supprimer la tâche
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      // Mise à jour optimiste - retirer la tâche localement
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      
+      return { error: null };
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      return { error: err instanceof Error ? err.message : 'Erreur lors de la suppression' };
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -292,5 +316,6 @@ export const useTasks = () => {
     updateTaskStatus,
     addComment,
     addPhotos,
+    deleteTask,
   };
 };
