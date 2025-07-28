@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Users, Calendar, Shield, UserCheck, UserX, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, Calendar, Shield, UserCheck, UserX, Trash2, Crown, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserProfiles } from "@/hooks/useUserProfiles";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +46,23 @@ export default function UsersPage() {
       case 'supervisor': return 'Superviseur';
       case 'agent': return 'Agent';
       default: return 'Utilisateur';
+    }
+  };
+
+  const handleChangeRole = async (userId: string, newRole: 'admin' | 'supervisor' | 'agent', userName: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      
+      toast.success(`${userName} est maintenant ${newRole === 'admin' ? 'administrateur' : newRole === 'supervisor' ? 'superviseur' : 'agent'}`);
+      refetch();
+    } catch (error) {
+      console.error('Erreur lors du changement de rôle:', error);
+      toast.error('Erreur lors du changement de rôle');
     }
   };
 
@@ -175,40 +193,76 @@ export default function UsersPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant={getRoleBadgeVariant(profile.role)}>
+                            <Badge variant={getRoleBadgeVariant(profile.role)} className="min-w-[100px] justify-center">
                               {getRoleLabel(profile.role)}
                             </Badge>
-                            {role === 'admin' && profile.role !== 'admin' && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive hover:border-destructive"
-                                    disabled={deletingUserId === profile.user_id}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Supprimer l'utilisateur</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{profile.full_name}</strong> ?
-                                      Cette action est irréversible et supprimera toutes les données associées à cet utilisateur.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                    <AlertDialogAction 
-                                      onClick={() => handleDeleteUser(profile.user_id, profile.full_name)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            
+                            {role === 'admin' && (
+                              <div className="flex items-center gap-1">
+                                {/* Sélecteur de rôle */}
+                                <Select 
+                                  value={profile.role} 
+                                  onValueChange={(newRole: 'admin' | 'supervisor' | 'agent') => 
+                                    handleChangeRole(profile.user_id, newRole, profile.full_name)
+                                  }
+                                >
+                                  <SelectTrigger className="w-32 h-8">
+                                    <Settings className="w-3 h-3" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="admin">
+                                      <div className="flex items-center gap-2">
+                                        <Crown className="w-3 h-3" />
+                                        Admin
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="supervisor">
+                                      <div className="flex items-center gap-2">
+                                        <Shield className="w-3 h-3" />
+                                        Superviseur
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="agent">
+                                      <div className="flex items-center gap-2">
+                                        <UserCheck className="w-3 h-3" />
+                                        Agent
+                                      </div>
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                
+                                {/* Bouton de suppression */}
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:border-destructive h-8 w-8 p-0"
+                                      disabled={deletingUserId === profile.user_id}
                                     >
-                                      Supprimer
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Supprimer l'utilisateur</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{profile.full_name}</strong> ?
+                                        Cette action est irréversible et supprimera toutes les données associées à cet utilisateur.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => handleDeleteUser(profile.user_id, profile.full_name)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Supprimer
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             )}
                           </div>
                         </div>
