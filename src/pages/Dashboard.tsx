@@ -64,8 +64,23 @@ export default function Dashboard() {
 
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus, comment?: string) => {
     try {
+      // Mettre à jour selectedTask immédiatement pour la modal
+      if (selectedTask && selectedTask.id === taskId) {
+        setSelectedTask({
+          ...selectedTask,
+          status: newStatus,
+        });
+      }
+
       const result = await updateTaskStatus(taskId, newStatus);
       if (result.error) {
+        // En cas d'erreur, restaurer l'état précédent dans selectedTask
+        if (selectedTask && selectedTask.id === taskId) {
+          setSelectedTask({
+            ...selectedTask,
+            status: selectedTask.status, // Restaurer le statut original
+          });
+        }
         toast.error(result.error);
         return;
       }
@@ -81,13 +96,6 @@ export default function Dashboard() {
 
       toast.success('Statut mis à jour avec succès');
       
-      // Mettre à jour selectedTask si c'est la tâche courante
-      if (selectedTask && selectedTask.id === taskId) {
-        const updatedTask = compatibleTasks.find(task => task.id === taskId);
-        if (updatedTask) {
-          setSelectedTask(updatedTask);
-        }
-      }
     } catch (error) {
       console.error('Error updating task status:', error);
       toast.error('Erreur lors de la mise à jour du statut');
