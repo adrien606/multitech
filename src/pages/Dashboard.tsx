@@ -12,8 +12,10 @@ import { mockTasks, mockBuildings } from "@/data/mockData";
 import { mockAgents } from "@/data/mockAgents";
 import { Plus, Search, Filter, Users, Building } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Dashboard() {
+  const { profile } = useAuth();
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
@@ -58,6 +60,8 @@ export default function Dashboard() {
       ...newTaskData,
       id: `task_${Date.now()}`,
       createdAt: new Date(),
+      // Utiliser le nom complet de l'utilisateur connecté si assignedTo n'est pas défini
+      assignedTo: newTaskData.assignedTo || profile?.full_name || 'Utilisateur',
     };
     setTasks([newTask, ...tasks]);
   };
@@ -67,6 +71,8 @@ export default function Dashboard() {
       ...commentData,
       id: `comment_${Date.now()}`,
       createdAt: new Date(),
+      // Utiliser le nom complet de l'utilisateur connecté
+      author: profile?.full_name || 'Utilisateur',
     };
     
     const updatedTasks = tasks.map(task => 
