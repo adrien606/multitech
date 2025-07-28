@@ -19,21 +19,30 @@ export const useUserProfiles = () => {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Récupérer tous les profils
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles(role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      // Transformer les données pour inclure le rôle directement
-      const profilesWithRoles = data?.map((profile: any) => ({
-        ...profile,
-        role: profile.user_roles?.[0]?.role || 'agent'
-      })) || [];
+      // Récupérer tous les rôles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Combiner les données
+      const profilesWithRoles = profilesData?.map((profile: any) => {
+        const userRole = rolesData?.find(role => role.user_id === profile.user_id);
+        return {
+          ...profile,
+          role: userRole?.role || 'agent'
+        };
+      }) || [];
 
       setProfiles(profilesWithRoles);
     } catch (err) {
