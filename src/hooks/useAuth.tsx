@@ -141,7 +141,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           data: {
             full_name: fullName,
             pin_code: pinCode,
-          }
+          },
+          
         }
       });
       return { error };
