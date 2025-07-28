@@ -18,7 +18,7 @@ interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStatusChange: (taskId: string, status: Task['status'], comment?: string) => void;
-  onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => void;
+  onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, photoFile?: File) => void;
   onAddPhotos?: (taskId: string, photos: Omit<TaskPhoto, 'id'>[], files: File[]) => void;
 }
 
@@ -242,15 +242,8 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
       type: "progress",
     };
 
-    // Ajouter la photo si elle existe
-    if (commentPhoto && commentPhotoPreview) {
-      commentData.photo = {
-        url: commentPhotoPreview,
-        filename: commentPhoto.name,
-      };
-    }
-    
-    onAddComment(task.id, commentData);
+    // Passer le fichier directement plutôt que l'URL blob
+    onAddComment(task.id, commentData, commentPhoto || undefined);
     
     // Reset
     setNewComment("");
@@ -443,22 +436,21 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     {comment.photo && (
                       <div className="mt-3">
                         <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
-                          {comment.photo.url && (comment.photo.url.startsWith('blob:') || comment.photo.url.startsWith('data:')) ? (
-                            <img
-                              src={comment.photo.url}
-                              alt={comment.photo.filename}
-                              className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => window.open(comment.photo!.url, '_blank')}
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div className="text-center text-blue-600">
-                              <Camera className="w-8 h-8 mx-auto mb-2" />
-                              <p className="text-xs">Photo commentaire</p>
-                            </div>
-                          )}
+                          <img
+                            src={comment.photo.url}
+                            alt={comment.photo.filename}
+                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => window.open(comment.photo!.url, '_blank')}
+                            onError={(e) => {
+                              console.warn('Erreur de chargement de l\'image de commentaire:', comment.photo?.url);
+                              e.currentTarget.style.display = 'none';
+                              // Afficher un placeholder
+                              const placeholder = document.createElement('div');
+                              placeholder.className = 'text-center text-blue-600 w-full h-full flex flex-col items-center justify-center';
+                              placeholder.innerHTML = '<svg class="w-8 h-8 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm3.5 6L12 10.5 8.5 8 5 13h14z"/></svg><p class="text-xs">Photo indisponible</p>';
+                              e.currentTarget.parentNode?.appendChild(placeholder);
+                            }}
+                          />
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           📷 {comment.photo.filename}

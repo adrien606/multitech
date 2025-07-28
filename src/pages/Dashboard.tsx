@@ -149,16 +149,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleAddComment = async (taskId: string, commentData: any) => {
+  const handleAddComment = async (taskId: string, commentData: any, photoFile?: File) => {
     try {
-      // Extraire le fichier photo si présent dans l'URL blob
-      let photoFile: File | undefined;
-      if (commentData.photo?.url?.startsWith('blob:')) {
-        const response = await fetch(commentData.photo.url);
-        const blob = await response.blob();
-        photoFile = new File([blob], commentData.photo.filename, { type: blob.type });
-      }
-      
       const result = await addComment(taskId, {
         text: commentData.text,
         author: commentData.author,
