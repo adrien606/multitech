@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Task } from "@/types";
 import { TaskStatusBadge } from "./TaskStatusBadge";
-import { Calendar, MapPin, MessageSquare, Camera, Eye } from "lucide-react";
+import { Calendar, MapPin, MessageSquare, Camera, Eye, User } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -25,6 +25,10 @@ export function TaskCard({ task, onStatusChange, onViewDetails }: TaskCardProps)
               <div className="flex items-center gap-1">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{task.buildingName}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <User className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{task.assignedTo}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 flex-shrink-0" />
