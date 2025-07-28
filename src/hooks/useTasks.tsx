@@ -136,6 +136,15 @@ export const useTasks = () => {
 
   const updateTaskStatus = async (id: string, status: TaskStatus, proofPhoto?: string) => {
     try {
+      // Mise à jour optimiste AVANT la requête pour un changement instantané
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === id 
+            ? { ...task, status, proof_photo: proofPhoto || task.proof_photo }
+            : task
+        )
+      );
+
       const updateData: any = { status };
       if (proofPhoto) {
         updateData.proof_photo = proofPhoto;
@@ -148,19 +157,17 @@ export const useTasks = () => {
         .select()
         .single();
 
-      if (error) throw error;
-      
-      // Mise à jour optimiste - mettre à jour la tâche localement
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === id 
-            ? { ...task, status, proof_photo: proofPhoto || task.proof_photo }
-            : task
-        )
-      );
-      
-      // Refetch en arrière-plan pour synchroniser
-      fetchTasks(false);
+      if (error) {
+        // En cas d'erreur, restaurer l'état précédent
+        setTasks(prevTasks => 
+          prevTasks.map(task => 
+            task.id === id 
+              ? { ...task, status: task.status === status ? 'pending' : task.status }
+              : task
+          )
+        );
+        throw error;
+      }
       
       return { data, error: null };
     } catch (err) {
