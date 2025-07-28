@@ -4,18 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Building, Task } from "@/types";
+import { Building } from "@/types";
 import { Agent } from "@/hooks/useAgents";
 import { useAuth } from "@/hooks/useAuth";
 import { BuildingSelector } from "./BuildingSelector";
 import { Calendar, Upload, X, Camera } from "lucide-react";
+import { toast } from "sonner";
 
 interface NewTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   buildings: Building[];
   agents: Agent[];
-  onTaskCreate: (task: Omit<Task, 'id' | 'createdAt'>) => void;
+  onTaskCreate: (taskData: {
+    title: string;
+    description: string;
+    building_id: string;
+    due_date: string;
+    assigned_to_id?: string;
+  }, files?: File[]) => void;
 }
 
 export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate }: NewTaskModalProps) {
@@ -35,52 +42,21 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
     e.preventDefault();
     
     if (!formData.title || !formData.description || !formData.buildingId || !formData.dueDate) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
-    const selectedBuilding = buildings.find(b => b.id === formData.buildingId);
-    if (!selectedBuilding) return;
+    const selectedAgent = agents.find(agent => agent.full_name === formData.assignedTo);
 
-    // Convertir les photos en TaskPhoto avec data URL pour persistance
-    const taskPhotos = await Promise.all(
-      photos.map(async (file, index) => {
-        // Convertir en data URL pour conserver l'image
-        const dataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(file);
-        });
-        
-        return {
-          id: `photo_${Date.now()}_${index}`,
-          url: dataUrl, // Utiliser data URL au lieu de blob URL
-          filename: file.name,
-          uploadedAt: new Date(),
-        };
-      })
-    );
-
-    const newTask: Omit<Task, 'id' | 'createdAt'> = {
+    const taskData = {
       title: formData.title,
       description: formData.description,
-      buildingId: formData.buildingId,
-      buildingName: selectedBuilding.name,
-      status: 'pending',
-      dueDate: new Date(formData.dueDate),
-      assignedTo: formData.assignedTo,
-      photos: taskPhotos, // Inclure les photos sélectionnées
-      comments: [
-        {
-          id: `c${Date.now()}`,
-          text: "Tâche créée et assignée.",
-          createdAt: new Date(),
-          author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
-          type: 'assignment',
-        }
-      ],
+      building_id: formData.buildingId,
+      due_date: formData.dueDate,
+      assigned_to_id: selectedAgent?.id,
     };
 
-    onTaskCreate(newTask);
+    onTaskCreate(taskData, photos.length > 0 ? photos : undefined);
     
     // Reset form et nettoyer les URLs
     photoPreviewUrls.forEach(url => URL.revokeObjectURL(url));

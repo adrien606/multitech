@@ -17,19 +17,26 @@ export const useStorageUpload = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       
+      console.log('Uploading file to bucket:', bucket, 'with name:', fileName);
+      
       // Upload le fichier vers le bucket Supabase
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file);
 
       if (error) {
+        console.error('Upload error:', error);
         throw error;
       }
+
+      console.log('Upload successful:', data);
 
       // Obtenir l'URL publique du fichier
       const { data: publicUrlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(fileName);
+
+      console.log('Public URL:', publicUrlData.publicUrl);
 
       return {
         url: publicUrlData.publicUrl,

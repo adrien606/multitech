@@ -107,18 +107,14 @@ export default function Dashboard() {
     setIsTaskDetailOpen(true);
   };
 
-  const handleCreateTask = async (newTaskData: any) => {
+  const handleCreateTask = async (taskData: {
+    title: string;
+    description: string;
+    building_id: string;
+    due_date: string;
+    assigned_to_id?: string;
+  }, files?: File[]) => {
     try {
-      const agent = agents.find(a => a.full_name === newTaskData.assignedTo);
-      
-      const taskData = {
-        title: newTaskData.title,
-        description: newTaskData.description,
-        building_id: newTaskData.buildingId,
-        due_date: new Date(newTaskData.dueDate).toISOString(),
-        assigned_to_id: agent?.user_id,
-      };
-
       const result = await createTask(taskData);
       if (result.error) {
         toast.error(result.error);
@@ -132,9 +128,21 @@ export default function Dashboard() {
           author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
           comment_type: 'assignment',
         });
+
+        // Si des photos sont présentes, les ajouter
+        if (files && files.length > 0) {
+          const photoResult = await addPhotos(result.data.id, files);
+          if (photoResult.error) {
+            toast.error("Tâche créée mais erreur lors de l'ajout des photos: " + photoResult.error);
+          } else {
+            toast.success('Tâche créée avec succès avec photos');
+          }
+        } else {
+          toast.success('Tâche créée avec succès');
+        }
       }
 
-      toast.success('Tâche créée avec succès');
+      setIsNewTaskOpen(false);
     } catch (error) {
       console.error('Error creating task:', error);
       toast.error('Erreur lors de la création de la tâche');
