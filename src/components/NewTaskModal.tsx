@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Building, Task } from "@/types";
 import { Agent } from "@/hooks/useAgents";
+import { useAuth } from "@/hooks/useAuth";
 import { BuildingSelector } from "./BuildingSelector";
 import { Calendar, Upload, X, Camera } from "lucide-react";
 
@@ -18,6 +19,7 @@ interface NewTaskModalProps {
 }
 
 export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate }: NewTaskModalProps) {
+  const { profile, role } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -72,7 +74,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
           id: `c${Date.now()}`,
           text: "Tâche créée et assignée.",
           createdAt: new Date(),
-          author: "Superviseur",
+          author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
           type: 'assignment',
         }
       ],

@@ -1,14 +1,21 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, Calendar, Shield, UserCheck, UserX } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Users, Calendar, Shield, UserCheck, UserX, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserProfiles } from "@/hooks/useUserProfiles";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "sonner";
 
 export default function UsersPage() {
-  const { profiles, loading } = useUserProfiles();
+  const { profiles, loading, refetch } = useUserProfiles();
+  const { role } = useAuth();
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const adminUsers = profiles.filter(profile => profile.role === 'admin');
   const supervisorUsers = profiles.filter(profile => profile.role === 'supervisor');
@@ -38,6 +45,25 @@ export default function UsersPage() {
       case 'supervisor': return 'Superviseur';
       case 'agent': return 'Agent';
       default: return 'Utilisateur';
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    try {
+      setDeletingUserId(userId);
+      
+      // Supprimer l'utilisateur de auth.users (cascade va supprimer profiles et user_roles)
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (error) throw error;
+      
+      toast.success(`Utilisateur ${userName} supprimé avec succès`);
+      refetch(); // Recharger la liste des utilisateurs
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast.error('Erreur lors de la suppression de l\'utilisateur');
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -152,6 +178,38 @@ export default function UsersPage() {
                             <Badge variant={getRoleBadgeVariant(profile.role)}>
                               {getRoleLabel(profile.role)}
                             </Badge>
+                            {role === 'admin' && profile.role !== 'admin' && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:border-destructive"
+                                    disabled={deletingUserId === profile.user_id}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Supprimer l'utilisateur</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{profile.full_name}</strong> ?
+                                      Cette action est irréversible et supprimera toutes les données associées à cet utilisateur.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => handleDeleteUser(profile.user_id, profile.full_name)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Supprimer
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </div>
                       </CardContent>

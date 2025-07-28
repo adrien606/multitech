@@ -10,17 +10,19 @@ import { Calendar, MapPin, User, MessageSquare, Camera, Download, Send, ArrowLef
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import jsPDF from 'jspdf';
+import { useAuth } from "@/hooks/useAuth";
 
 interface TaskDetailModalProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
-  onStatusChange: (taskId: string, status: Task['status']) => void;
+  onStatusChange: (taskId: string, status: Task['status'], comment?: string) => void;
   onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => void;
   onAddPhotos?: (taskId: string, photos: Omit<TaskPhoto, 'id'>[], files: File[]) => void;
 }
 
 export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddComment, onAddPhotos }: TaskDetailModalProps) {
+  const { profile, role } = useAuth();
   const [newComment, setNewComment] = useState("");
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
@@ -234,7 +236,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
     
     const commentData: Omit<TaskComment, 'id' | 'createdAt'> = {
       text: newComment.trim(),
-      author: "Agent Technique",
+      author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
       type: "progress",
     };
 
@@ -494,20 +496,19 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
             {/* Changement de statut */}
             <div className="flex flex-wrap gap-2">
               {task.status === 'pending' && (
-                <Button onClick={() => onStatusChange(task.id, 'progress')}>
+                <Button onClick={() => onStatusChange(task.id, 'progress', `Tâche commencée par ${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`)}>
                   Commencer la tâche
                 </Button>
               )}
               
               {task.status === 'progress' && (
                 <>
-                  <Button onClick={() => onStatusChange(task.id, 'validated')}>
+                  <Button onClick={() => onStatusChange(task.id, 'validated', `Tâche validée par ${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`)}>
                     Marquer comme validée
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => onStatusChange(task.id, 'pending')}
-                  >
+                    onClick={() => onStatusChange(task.id, 'pending', `Tâche remise en attente par ${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`)}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Remettre en attente
                   </Button>
@@ -517,8 +518,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
               {task.status === 'validated' && (
                 <Button 
                   variant="outline" 
-                  onClick={() => onStatusChange(task.id, 'progress')}
-                >
+                  onClick={() => onStatusChange(task.id, 'progress', `Tâche remise en cours par ${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Remettre en cours
                 </Button>

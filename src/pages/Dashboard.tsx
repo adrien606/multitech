@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
 
 export default function Dashboard() {
-  const { profile, signOut } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const { agents, loading: agentsLoading } = useAgents();
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
@@ -35,10 +35,27 @@ export default function Dashboard() {
     return matchesBuilding && matchesStatus && matchesSearch;
   });
 
-  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId ? { ...task, status: newStatus } : task
-    );
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus, comment?: string) => {
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        const updatedTask = { ...task, status: newStatus };
+        
+        // Ajouter un commentaire automatique si fourni
+        if (comment) {
+          const newComment = {
+            id: `comment_${Date.now()}`,
+            text: comment,
+            createdAt: new Date(),
+            author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
+            type: 'progress' as const,
+          };
+          updatedTask.comments = [...task.comments, newComment];
+        }
+        
+        return updatedTask;
+      }
+      return task;
+    });
     
     setTasks(updatedTasks);
     

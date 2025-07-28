@@ -8,7 +8,7 @@ import { fr } from "date-fns/locale";
 
 interface TaskCardProps {
   task: Task;
-  onStatusChange: (taskId: string, status: Task['status']) => void;
+  onStatusChange: (taskId: string, status: Task['status'], comment?: string) => void;
   onViewDetails: (task: Task) => void;
 }
 
