@@ -42,9 +42,11 @@ export const useTasks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (showLoadingState = true) => {
     try {
-      setLoading(true);
+      if (showLoadingState) {
+        setLoading(true);
+      }
       
       // Récupérer les tâches avec les informations des bâtiments et agents
       const { data: tasksData, error: tasksError } = await supabase
@@ -111,7 +113,20 @@ export const useTasks = () => {
 
       if (error) throw error;
       
-      await fetchTasks(); // Recharger pour avoir les relations
+      // Mise à jour optimiste - ajouter la nouvelle tâche sans rechargement complet
+      const newTask: Task = {
+        ...data,
+        building_name: undefined,
+        assigned_to_name: undefined,
+        status: data.status as TaskStatus,
+        photos: [],
+        comments: []
+      };
+      setTasks(prevTasks => [newTask, ...prevTasks]);
+      
+      // Refetch en arrière-plan pour avoir les relations complètes
+      fetchTasks(false);
+      
       return { data, error: null };
     } catch (err) {
       console.error('Error creating task:', err);
@@ -135,7 +150,18 @@ export const useTasks = () => {
 
       if (error) throw error;
       
-      await fetchTasks(); // Recharger pour avoir les données mises à jour
+      // Mise à jour optimiste - mettre à jour la tâche localement
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === id 
+            ? { ...task, status, proof_photo: proofPhoto || task.proof_photo }
+            : task
+        )
+      );
+      
+      // Refetch en arrière-plan pour synchroniser
+      fetchTasks(false);
+      
       return { data, error: null };
     } catch (err) {
       console.error('Error updating task status:', err);
@@ -159,7 +185,29 @@ export const useTasks = () => {
 
       if (error) throw error;
       
-      await fetchTasks(); // Recharger pour avoir les commentaires mis à jour
+      // Mise à jour optimiste - ajouter le commentaire localement
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId 
+            ? { 
+                ...task, 
+                comments: [...(task.comments || []), {
+                  id: data.id,
+                  text: data.text,
+                  author: data.author,
+                  comment_type: data.comment_type as 'assignment' | 'progress' | 'clarification',
+                  photo_url: data.photo_url,
+                  photo_filename: data.photo_filename,
+                  created_at: data.created_at
+                }]
+              }
+            : task
+        )
+      );
+      
+      // Refetch en arrière-plan pour synchroniser
+      fetchTasks(false);
+      
       return { data, error: null };
     } catch (err) {
       console.error('Error adding comment:', err);
@@ -181,7 +229,26 @@ export const useTasks = () => {
 
       if (error) throw error;
       
-      await fetchTasks(); // Recharger pour avoir les photos mises à jour
+      // Mise à jour optimiste - ajouter les photos localement
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId 
+            ? { 
+                ...task, 
+                photos: [...(task.photos || []), ...(data || []).map(photo => ({
+                  id: photo.id,
+                  url: photo.url,
+                  filename: photo.filename,
+                  uploaded_at: photo.uploaded_at
+                }))]
+              }
+            : task
+        )
+      );
+      
+      // Refetch en arrière-plan pour synchroniser
+      fetchTasks(false);
+      
       return { data, error: null };
     } catch (err) {
       console.error('Error adding photos:', err);
