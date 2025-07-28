@@ -9,13 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task, TaskStatus } from "@/types";
 import { mockTasks, mockBuildings } from "@/data/mockData";
-import { mockAgents } from "@/data/mockAgents";
 import { Plus, Search, Filter, Users, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAgents } from "@/hooks/useAgents";
 
 export default function Dashboard() {
   const { profile } = useAuth();
+  const { agents, loading: agentsLoading } = useAgents();
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
@@ -245,7 +246,7 @@ export default function Dashboard() {
         isOpen={isNewTaskOpen}
         onClose={() => setIsNewTaskOpen(false)}
         buildings={mockBuildings}
-        agents={mockAgents}
+        agents={agents}
         onTaskCreate={handleCreateTask}
       />
     </div>

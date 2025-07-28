@@ -1,56 +1,17 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AgentModal } from "@/components/AgentModal";
-import { Agent } from "@/types/agent";
-import { mockAgents } from "@/data/mockAgents";
-import { Plus, Edit, Trash2, Phone, Mail, User, ArrowLeft } from "lucide-react";
+import { ArrowLeft, User, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAgents } from "@/hooks/useAgents";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Link } from "react-router-dom";
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<Agent[]>(mockAgents);
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const { agents, loading } = useAgents();
 
-  const handleCreateAgent = () => {
-    setSelectedAgent(null);
-    setModalMode('create');
-    setIsModalOpen(true);
-  };
-
-  const handleEditAgent = (agent: Agent) => {
-    setSelectedAgent(agent);
-    setModalMode('edit');
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteAgent = (agentId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')) {
-      setAgents(agents.filter(agent => agent.id !== agentId));
-    }
-  };
-
-  const handleSaveAgent = (agentData: Omit<Agent, 'id' | 'createdAt'> | Agent) => {
-    if (modalMode === 'create') {
-      const newAgent: Agent = {
-        ...(agentData as Omit<Agent, 'id' | 'createdAt'>),
-        id: `agent_${Date.now()}`,
-        createdAt: new Date(),
-      };
-      setAgents([newAgent, ...agents]);
-    } else {
-      setAgents(agents.map(agent => 
-        agent.id === (agentData as Agent).id ? (agentData as Agent) : agent
-      ));
-    }
-  };
-
-  const activeAgents = agents.filter(agent => agent.isActive);
-  const inactiveAgents = agents.filter(agent => !agent.isActive);
+  const activeAgents = agents.filter(agent => agent.is_active);
+  const inactiveAgents = agents.filter(agent => !agent.is_active);
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,14 +29,10 @@ export default function AgentsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Agents Techniques</h1>
                 <p className="text-muted-foreground mt-1">
-                  Gestion des agents multitechniques
+                  Liste des agents inscrits dans le système
                 </p>
               </div>
             </div>
-            <Button onClick={handleCreateAgent}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nouvel agent
-            </Button>
           </div>
         </div>
       </div>
@@ -117,57 +74,43 @@ export default function AgentsPage() {
           </Card>
         </div>
 
-        {/* Agents actifs */}
+        {/* Liste des agents */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
-              Agents actifs ({activeAgents.length})
+              Agents ({agents.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {activeAgents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activeAgents.map((agent) => (
+            {loading ? (
+              <div className="text-center py-8">
+                <p>Chargement des agents...</p>
+              </div>
+            ) : agents.length > 0 ? (
+              <div className="space-y-4">
+                {agents.map((agent) => (
                   <Card key={agent.id} className="transition-all hover:shadow-md">
-                    <CardHeader className="pb-3">
+                    <CardContent className="p-4">
                       <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold">
-                            {agent.firstName} {agent.lastName}
-                          </h3>
-                          <Badge variant="validated" className="mt-1">Actif</Badge>
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="font-medium text-foreground">{agent.full_name}</h3>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                <span>Inscrit le {format(new Date(agent.created_at), 'dd MMMM yyyy', { locale: fr })}</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditAgent(agent)}
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteAgent(agent.id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Mail className="w-3 h-3" />
-                          <span>{agent.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Phone className="w-3 h-3" />
-                          <span>{agent.phone}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground pt-2">
-                          Créé le {format(agent.createdAt, 'dd/MM/yyyy', { locale: fr })}
+                        <div className="flex items-center gap-2">
+                          <Badge variant={agent.is_active ? "default" : "secondary"}>
+                            {agent.is_active ? "Actif" : "Inactif"}
+                          </Badge>
                         </div>
                       </div>
                     </CardContent>
@@ -176,82 +119,13 @@ export default function AgentsPage() {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <p>Aucun agent actif.</p>
+                <p>Aucun agent trouvé.</p>
+                <p className="text-sm mt-2">Les agents apparaîtront ici après leur inscription avec le rôle "agent".</p>
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Agents inactifs */}
-        {inactiveAgents.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Agents inactifs ({inactiveAgents.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {inactiveAgents.map((agent) => (
-                  <Card key={agent.id} className="transition-all hover:shadow-md opacity-60">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold">
-                            {agent.firstName} {agent.lastName}
-                          </h3>
-                          <Badge variant="secondary" className="mt-1">Inactif</Badge>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditAgent(agent)}
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteAgent(agent.id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Mail className="w-3 h-3" />
-                          <span>{agent.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Phone className="w-3 h-3" />
-                          <span>{agent.phone}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground pt-2">
-                          Créé le {format(agent.createdAt, 'dd/MM/yyyy', { locale: fr })}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
-
-      {/* Modal */}
-      <AgentModal
-        agent={selectedAgent}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveAgent}
-        mode={modalMode}
-      />
     </div>
   );
 }

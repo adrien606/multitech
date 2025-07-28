@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Building, Task } from "@/types";
-import { Agent } from "@/types/agent";
+import { Agent } from "@/hooks/useAgents";
 import { BuildingSelector } from "./BuildingSelector";
 import { Calendar, Upload, X, Camera } from "lucide-react";
 
@@ -23,7 +23,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
     description: '',
     buildingId: '',
     dueDate: '',
-    assignedTo: (agents && agents.length > 0) ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
+    assignedTo: (agents && agents.length > 0) ? agents[0].full_name : 'Agent Technique',
   });
 
   const [photos, setPhotos] = useState<File[]>([]);
@@ -87,7 +87,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
       description: '',
       buildingId: '',
       dueDate: '',
-      assignedTo: (agents && agents.length > 0) ? `${agents[0].firstName} ${agents[0].lastName}` : 'Agent Technique',
+      assignedTo: (agents && agents.length > 0) ? agents[0].full_name : 'Agent Technique',
     });
     setPhotos([]);
     setPhotoPreviewUrls([]);
@@ -153,9 +153,9 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
               >
-                {agents && agents.filter(agent => agent.isActive).map(agent => (
-                  <option key={agent.id} value={`${agent.firstName} ${agent.lastName}`}>
-                    {agent.firstName} {agent.lastName}
+                {agents && agents.filter(agent => agent.is_active).map(agent => (
+                  <option key={agent.id} value={agent.full_name}>
+                    {agent.full_name}
                   </option>
                 ))}
               </select>
