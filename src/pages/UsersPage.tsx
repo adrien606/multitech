@@ -1,89 +1,22 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Users, Calendar, Shield, UserCheck, UserX, Trash2, Crown, Settings } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserProfiles } from "@/hooks/useUserProfiles";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { toast } from "sonner";
+import { useUserManagement } from "@/hooks/useUserManagement";
+import { UserCard } from "@/components/users/UserCard";
+import { UserStatsCard } from "@/components/users/UserStatsCard";
+import { UserRole } from "@/utils/userRole.utils";
 
 export default function UsersPage() {
   const { profiles, loading, refetch } = useUserProfiles();
   const { role } = useAuth();
-  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const { deletingUserId, handleChangeRole, handleDeleteUser } = useUserManagement(refetch);
 
   const adminUsers = profiles.filter(profile => profile.role === 'admin');
   const supervisorUsers = profiles.filter(profile => profile.role === 'supervisor');
   const agentUsers = profiles.filter(profile => profile.role === 'agent');
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin': return 'destructive';
-      case 'supervisor': return 'default';
-      case 'agent': return 'secondary';
-      default: return 'secondary';
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'admin': return Shield;
-      case 'supervisor': return UserCheck;
-      case 'agent': return UserX;
-      default: return Users;
-    }
-  };
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Administrateur';
-      case 'supervisor': return 'Superviseur';
-      case 'agent': return 'Agent';
-      default: return 'Utilisateur';
-    }
-  };
-
-  const handleChangeRole = async (userId: string, newRole: 'admin' | 'supervisor' | 'agent', userName: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_roles')
-        .update({ role: newRole })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      
-      toast.success(`${userName} est maintenant ${newRole === 'admin' ? 'administrateur' : newRole === 'supervisor' ? 'superviseur' : 'agent'}`);
-      refetch();
-    } catch (error) {
-      console.error('Erreur lors du changement de rôle:', error);
-      toast.error('Erreur lors du changement de rôle');
-    }
-  };
-
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    try {
-      setDeletingUserId(userId);
-      
-      // Supprimer l'utilisateur de auth.users (cascade va supprimer profiles et user_roles)
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (error) throw error;
-      
-      toast.success(`Utilisateur ${userName} supprimé avec succès`);
-      refetch(); // Recharger la liste des utilisateurs
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-      toast.error('Erreur lors de la suppression de l\'utilisateur');
-    } finally {
-      setDeletingUserId(null);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,49 +45,25 @@ export default function UsersPage() {
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total utilisateurs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{profiles.length}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Administrateurs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{adminUsers.length}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Superviseurs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{supervisorUsers.length}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Agents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-muted-foreground">{agentUsers.length}</div>
-            </CardContent>
-          </Card>
+          <UserStatsCard 
+            title="Total utilisateurs" 
+            value={profiles.length} 
+          />
+          <UserStatsCard 
+            title="Administrateurs" 
+            value={adminUsers.length} 
+            variant="destructive" 
+          />
+          <UserStatsCard 
+            title="Superviseurs" 
+            value={supervisorUsers.length} 
+            variant="primary" 
+          />
+          <UserStatsCard 
+            title="Agents" 
+            value={agentUsers.length} 
+            variant="muted" 
+          />
         </div>
 
         {/* Liste des utilisateurs */}
@@ -172,104 +81,16 @@ export default function UsersPage() {
               </div>
             ) : profiles.length > 0 ? (
               <div className="space-y-4">
-                {profiles.map((profile) => {
-                  const RoleIcon = getRoleIcon(profile.role);
-                  return (
-                    <Card key={profile.id} className="transition-all hover:shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <RoleIcon className="w-5 h-5 text-primary" />
-                            </div>
-                            <div className="space-y-1">
-                              <h3 className="font-medium text-foreground">{profile.full_name}</h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>Inscrit le {format(new Date(profile.created_at), 'dd MMMM yyyy', { locale: fr })}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={getRoleBadgeVariant(profile.role)} className="min-w-[100px] justify-center">
-                              {getRoleLabel(profile.role)}
-                            </Badge>
-                            
-                            {role === 'admin' && (
-                              <div className="flex items-center gap-1">
-                                {/* Sélecteur de rôle */}
-                                <Select 
-                                  value={profile.role} 
-                                  onValueChange={(newRole: 'admin' | 'supervisor' | 'agent') => 
-                                    handleChangeRole(profile.user_id, newRole, profile.full_name)
-                                  }
-                                >
-                                  <SelectTrigger className="w-32 h-8">
-                                    <Settings className="w-3 h-3" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="admin">
-                                      <div className="flex items-center gap-2">
-                                        <Crown className="w-3 h-3" />
-                                        Admin
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="supervisor">
-                                      <div className="flex items-center gap-2">
-                                        <Shield className="w-3 h-3" />
-                                        Superviseur
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="agent">
-                                      <div className="flex items-center gap-2">
-                                        <UserCheck className="w-3 h-3" />
-                                        Agent
-                                      </div>
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                
-                                {/* Bouton de suppression */}
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      className="text-destructive hover:text-destructive hover:border-destructive h-8 w-8 p-0"
-                                      disabled={deletingUserId === profile.user_id}
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Supprimer l'utilisateur</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{profile.full_name}</strong> ?
-                                        Cette action est irréversible et supprimera toutes les données associées à cet utilisateur.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                      <AlertDialogAction 
-                                        onClick={() => handleDeleteUser(profile.user_id, profile.full_name)}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Supprimer
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {profiles.map((profile) => (
+                  <UserCard
+                    key={profile.id}
+                    profile={profile}
+                    currentUserRole={role as UserRole}
+                    onRoleChange={handleChangeRole}
+                    onDelete={handleDeleteUser}
+                    isDeleting={deletingUserId === profile.user_id}
+                  />
+                ))}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
