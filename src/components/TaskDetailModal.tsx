@@ -365,8 +365,8 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {task.photos.map((photo, index) => {
-                  // Vérifier si l'URL de la photo est valide
-                  const isValidUrl = photo.url && photo.url.startsWith('blob:');
+                  // Vérifier si l'URL de la photo est valide (blob ou data URL)
+                  const isValidUrl = photo.url && (photo.url.startsWith('blob:') || photo.url.startsWith('data:'));
                   
                   return (
                     <div key={photo.id} className="space-y-2">
@@ -412,7 +412,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 Photo de validation
               </h3>
               <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
-                {task.proofPhoto.startsWith('blob:') ? (
+                {task.proofPhoto && (task.proofPhoto.startsWith('blob:') || task.proofPhoto.startsWith('data:')) ? (
                   <img
                     src={task.proofPhoto}
                     alt="Photo de validation"
@@ -461,7 +461,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     {comment.photo && (
                       <div className="mt-3">
                         <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
-                          {comment.photo.url.startsWith('blob:') ? (
+                          {comment.photo.url && (comment.photo.url.startsWith('blob:') || comment.photo.url.startsWith('data:')) ? (
                             <img
                               src={comment.photo.url}
                               alt={comment.photo.filename}

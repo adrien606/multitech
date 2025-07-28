@@ -29,7 +29,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title || !formData.description || !formData.buildingId || !formData.dueDate) {
@@ -39,13 +39,24 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
     const selectedBuilding = buildings.find(b => b.id === formData.buildingId);
     if (!selectedBuilding) return;
 
-    // Convertir les photos en TaskPhoto
-    const taskPhotos = photos.map((file, index) => ({
-      id: `photo_${Date.now()}_${index}`,
-      url: photoPreviewUrls[index],
-      filename: file.name,
-      uploadedAt: new Date(),
-    }));
+    // Convertir les photos en TaskPhoto avec data URL pour persistance
+    const taskPhotos = await Promise.all(
+      photos.map(async (file, index) => {
+        // Convertir en data URL pour conserver l'image
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+        
+        return {
+          id: `photo_${Date.now()}_${index}`,
+          url: dataUrl, // Utiliser data URL au lieu de blob URL
+          filename: file.name,
+          uploadedAt: new Date(),
+        };
+      })
+    );
 
     const newTask: Omit<Task, 'id' | 'createdAt'> = {
       title: formData.title,
