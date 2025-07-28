@@ -145,6 +145,12 @@ export default function Dashboard() {
                   Agents
                 </Button>
               </Link>
+              <Link to="/users">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <Users className="w-4 h-4 mr-2" />
+                  Utilisateurs
+                </Button>
+              </Link>
               <Button onClick={() => setIsNewTaskOpen(true)} className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Nouvelle tâche

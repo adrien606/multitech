@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import AgentsPage from "./pages/AgentsPage";
 import BuildingsPage from "./pages/BuildingsPage";
+import UsersPage from "./pages/UsersPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,11 @@ const App = () => (
             <Route path="/buildings" element={
               <ProtectedRoute>
                 <BuildingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <UsersPage />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
