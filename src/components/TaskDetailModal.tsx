@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import jsPDF from 'jspdf';
 import { useAuth } from "@/hooks/useAuth";
+import { useStorageUpload } from "@/hooks/useStorageUpload";
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -23,6 +24,7 @@ interface TaskDetailModalProps {
 
 export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddComment, onAddPhotos }: TaskDetailModalProps) {
   const { profile, role } = useAuth();
+  const { uploading } = useStorageUpload();
   const [newComment, setNewComment] = useState("");
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
@@ -366,42 +368,27 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 Photos ({task.photos.length})
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {task.photos.map((photo, index) => {
-                  // Vérifier si l'URL de la photo est valide (blob ou data URL)
-                  const isValidUrl = photo.url && (photo.url.startsWith('blob:') || photo.url.startsWith('data:'));
-                  
-                  return (
-                    <div key={photo.id} className="space-y-2">
-                      <div className="w-full h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
-                        {isValidUrl ? (
-                          <img
-                            src={photo.url}
-                            alt={photo.filename}
-                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => window.open(photo.url, '_blank')}
-                            onError={(e) => {
-                              // Si l'image ne charge pas, afficher le placeholder
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : null}
-                        {/* Placeholder toujours visible si pas d'image valide */}
-                        {!isValidUrl && (
-                          <div className="text-center text-gray-500">
-                            <Camera className="w-8 h-8 mx-auto mb-2" />
-                            <p className="text-xs">Photo capturée</p>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        📷 {photo.filename}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(photo.uploadedAt, 'dd/MM/yyyy HH:mm', { locale: fr })}
-                      </p>
-                    </div>
-                  );
-                })}
+                 {task.photos.map((photo, index) => (
+                   <div key={photo.id} className="space-y-2">
+                     <div className="w-full h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
+                       <img
+                         src={photo.url}
+                         alt={photo.filename}
+                         className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                         onClick={() => window.open(photo.url, '_blank')}
+                         onError={(e) => {
+                           console.warn('Erreur de chargement de l\'image:', photo.url);
+                         }}
+                       />
+                     </div>
+                     <p className="text-xs text-muted-foreground truncate">
+                       📷 {photo.filename}
+                     </p>
+                     <p className="text-xs text-muted-foreground">
+                       {format(photo.uploadedAt, 'dd/MM/yyyy HH:mm', { locale: fr })}
+                     </p>
+                   </div>
+                 ))}
               </div>
             </div>
           )}
@@ -413,24 +400,17 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 <Camera className="w-4 h-4" />
                 Photo de validation
               </h3>
-              <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
-                {task.proofPhoto && (task.proofPhoto.startsWith('blob:') || task.proofPhoto.startsWith('data:')) ? (
-                  <img
-                    src={task.proofPhoto}
-                    alt="Photo de validation"
-                    className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => window.open(task.proofPhoto!, '_blank')}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="text-center text-green-600">
-                    <Camera className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-xs">Photo de validation</p>
-                  </div>
-                )}
-              </div>
+               <div className="w-48 h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
+                 <img
+                   src={task.proofPhoto}
+                   alt="Photo de validation"
+                   className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                   onClick={() => window.open(task.proofPhoto!, '_blank')}
+                   onError={(e) => {
+                     console.warn('Erreur de chargement de l\'image de validation:', task.proofPhoto);
+                   }}
+                 />
+               </div>
             </div>
           )}
 

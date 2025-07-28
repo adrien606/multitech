@@ -143,13 +143,19 @@ export default function Dashboard() {
 
   const handleAddComment = async (taskId: string, commentData: any) => {
     try {
+      // Extraire le fichier photo si présent dans l'URL blob
+      let photoFile: File | undefined;
+      if (commentData.photo?.url?.startsWith('blob:')) {
+        const response = await fetch(commentData.photo.url);
+        const blob = await response.blob();
+        photoFile = new File([blob], commentData.photo.filename, { type: blob.type });
+      }
+      
       const result = await addComment(taskId, {
         text: commentData.text,
         author: commentData.author,
         comment_type: commentData.type,
-        photo_url: commentData.photo?.url,
-        photo_filename: commentData.photo?.filename,
-      });
+      }, photoFile);
 
       if (result.error) {
         toast.error(result.error);
@@ -173,13 +179,7 @@ export default function Dashboard() {
 
   const handleAddPhotos = async (taskId: string, newPhotos: any[], files: File[]) => {
     try {
-      // Convertir en format attendu par l'API
-      const photosData = newPhotos.map(photo => ({
-        url: photo.url,
-        filename: photo.filename
-      }));
-
-      const result = await addPhotos(taskId, photosData);
+      const result = await addPhotos(taskId, files);
       if (result.error) {
         toast.error(result.error);
         return;

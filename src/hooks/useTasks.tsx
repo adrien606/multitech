@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useStorageUpload } from './useStorageUpload';
 
 export type TaskStatus = 'pending' | 'progress' | 'validated';
 
@@ -41,6 +42,7 @@ export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { uploadFile, uploadMultipleFiles } = useStorageUpload();
 
   const fetchTasks = async (showLoadingState = true) => {
     try {
@@ -182,11 +184,20 @@ export const useTasks = () => {
     comment_type: 'assignment' | 'progress' | 'clarification';
     photo_url?: string;
     photo_filename?: string;
-  }) => {
+  }, photoFile?: File) => {
     try {
+      let finalCommentData = { ...commentData };
+      
+      // Si une photo est fournie, l'uploader d'abord
+      if (photoFile) {
+        const uploadResult = await uploadFile(photoFile, 'task-comments');
+        finalCommentData.photo_url = uploadResult.url;
+        finalCommentData.photo_filename = uploadResult.filename;
+      }
+      
       const { data, error } = await supabase
         .from('task_comments')
-        .insert([{ task_id: taskId, ...commentData }])
+        .insert([{ task_id: taskId, ...finalCommentData }])
         .select()
         .single();
 
@@ -222,11 +233,16 @@ export const useTasks = () => {
     }
   };
 
-  const addPhotos = async (taskId: string, photos: { url: string; filename: string }[]) => {
+  const addPhotos = async (taskId: string, files: File[]) => {
     try {
-      const photosData = photos.map(photo => ({
+      // Upload tous les fichiers vers Supabase Storage
+      const uploadResults = await uploadMultipleFiles(files, 'task-photos');
+      
+      // Insérer les informations des photos dans la base de données
+      const photosData = uploadResults.map(result => ({
         task_id: taskId,
-        ...photo
+        url: result.url,
+        filename: result.filename
       }));
 
       const { data, error } = await supabase
