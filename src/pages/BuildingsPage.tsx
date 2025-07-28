@@ -101,7 +101,7 @@ export default function BuildingsPage() {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -114,29 +114,6 @@ export default function BuildingsPage() {
                   <BuildingIcon className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-2xl font-bold">{buildings.length}</span>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Ajoutés ce mois
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/10">
-                  <Plus className="w-4 h-4 text-accent" />
-                </div>
-                <span className="text-2xl font-bold">
-                  {buildings.filter(b => {
-                    const buildingDate = new Date(b.created_at);
-                    const now = new Date();
-                    return buildingDate.getMonth() === now.getMonth() && 
-                           buildingDate.getFullYear() === now.getFullYear();
-                  }).length}
-                </span>
               </div>
             </CardContent>
           </Card>
