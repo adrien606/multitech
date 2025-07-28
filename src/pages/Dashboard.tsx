@@ -9,13 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task, TaskStatus } from "@/types";
 import { mockTasks, mockBuildings } from "@/data/mockData";
-import { Plus, Search, Filter, Users, Building } from "lucide-react";
+import { Plus, Search, Filter, Users, Building, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
 
 export default function Dashboard() {
-  const { profile } = useAuth();
+  const { profile, signOut } = useAuth();
   const { agents, loading: agentsLoading } = useAgents();
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
@@ -116,6 +116,10 @@ export default function Dashboard() {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -144,6 +148,14 @@ export default function Dashboard() {
               <Button onClick={() => setIsNewTaskOpen(true)} className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Nouvelle tâche
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut} 
+                className="w-full sm:w-auto text-destructive hover:text-destructive"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Se déconnecter
               </Button>
             </div>
           </div>
