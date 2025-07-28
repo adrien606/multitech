@@ -22,7 +22,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, pinCode: string) => Promise<{ error: any }>;
-  signUp: (email: string, fullName: string, pinCode: string) => Promise<{ error: any }>;
+  signUp: (email: string, fullName: string, pinCode: string, role?: 'admin' | 'supervisor' | 'agent') => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   logActivity: (action: string, entityType: string, entityId?: string, details?: any) => Promise<void>;
 }
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signUp = async (email: string, fullName: string, pinCode: string) => {
+  const signUp = async (email: string, fullName: string, pinCode: string, role: 'admin' | 'supervisor' | 'agent' = 'agent') => {
     try {
       // Convert 4-digit PIN to 6-character password by adding prefix
       const password = `pin_${pinCode}`;
@@ -141,6 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           data: {
             full_name: fullName,
             pin_code: pinCode,
+            role: role,
           },
           
         }

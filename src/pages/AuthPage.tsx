@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +13,7 @@ import { useEffect } from 'react';
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', pinCode: '' });
-  const [signupForm, setSignupForm] = useState({ email: '', fullName: '', pinCode: '', confirmPinCode: '' });
+  const [signupForm, setSignupForm] = useState({ email: '', fullName: '', pinCode: '', confirmPinCode: '', role: 'agent' as 'agent' | 'supervisor' });
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -64,7 +65,7 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupForm.email || !signupForm.fullName || !signupForm.pinCode || !signupForm.confirmPinCode) {
+    if (!signupForm.email || !signupForm.fullName || !signupForm.pinCode || !signupForm.confirmPinCode || !signupForm.role) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs",
@@ -92,7 +93,7 @@ export default function AuthPage() {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(signupForm.email, signupForm.fullName, signupForm.pinCode);
+    const { error } = await signUp(signupForm.email, signupForm.fullName, signupForm.pinCode, signupForm.role);
     
     if (error) {
       toast({
@@ -106,7 +107,7 @@ export default function AuthPage() {
         description: "Votre compte a été créé avec succès",
       });
       // Reset form
-      setSignupForm({ email: '', fullName: '', pinCode: '', confirmPinCode: '' });
+      setSignupForm({ email: '', fullName: '', pinCode: '', confirmPinCode: '', role: 'agent' });
     }
     setIsLoading(false);
   };
@@ -196,7 +197,24 @@ export default function AuthPage() {
                     onChange={(e) => setSignupForm(prev => ({ ...prev, email: e.target.value }))}
                     required
                   />
-                </div>
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="signup-role">Rôle</Label>
+                   <Select 
+                     value={signupForm.role} 
+                     onValueChange={(value: 'agent' | 'supervisor') => 
+                       setSignupForm(prev => ({ ...prev, role: value }))
+                     }
+                   >
+                     <SelectTrigger>
+                       <SelectValue placeholder="Sélectionnez votre rôle" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="agent">Agent</SelectItem>
+                       <SelectItem value="supervisor">Superviseur</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-pin">Code PIN (4 chiffres)</Label>
                   <Input
