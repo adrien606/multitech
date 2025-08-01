@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 // import { supabase } from '@/integrations/supabase/client';
 
+export interface ControlType {
+  name: string;
+  recurrence_period: number;
+  recurrence_unit: string;
+  average_cost: number;
+}
+
 export interface Provider {
   id: string;
   name: string;
@@ -18,6 +25,8 @@ export interface Provider {
   average_cost?: number;
   pending_controls?: number;
   completed_controls?: number;
+  // Contrôles effectués par ce prestataire
+  control_types?: ControlType[];
 }
 
 export const useProviders = () => {
@@ -47,6 +56,11 @@ export const useProviders = () => {
           average_cost: 770,
           pending_controls: 3,
           completed_controls: 21,
+          control_types: [
+            { name: 'Contrôle installation électrique', recurrence_period: 1, recurrence_unit: 'année', average_cost: 850 },
+            { name: 'Vérification éclairage de sécurité', recurrence_period: 6, recurrence_unit: 'mois', average_cost: 320 },
+            { name: 'Test différentiels', recurrence_period: 3, recurrence_unit: 'mois', average_cost: 180 }
+          ]
         },
         {
           id: '2',
@@ -64,6 +78,11 @@ export const useProviders = () => {
           average_cost: 844,
           pending_controls: 2,
           completed_controls: 16,
+          control_types: [
+            { name: 'Contrôle sécurité incendie', recurrence_period: 1, recurrence_unit: 'année', average_cost: 950 },
+            { name: 'Vérification extincteurs', recurrence_period: 1, recurrence_unit: 'année', average_cost: 420 },
+            { name: 'Test alarmes incendie', recurrence_period: 6, recurrence_unit: 'mois', average_cost: 280 }
+          ]
         },
         {
           id: '3',
@@ -81,6 +100,10 @@ export const useProviders = () => {
           average_cost: 800,
           pending_controls: 0,
           completed_controls: 12,
+          control_types: [
+            { name: 'Contrôle technique ascenseur', recurrence_period: 1, recurrence_unit: 'année', average_cost: 750 },
+            { name: 'Maintenance préventive', recurrence_period: 3, recurrence_unit: 'mois', average_cost: 180 }
+          ]
         },
         {
           id: '4',
@@ -98,6 +121,11 @@ export const useProviders = () => {
           average_cost: 800,
           pending_controls: 4,
           completed_controls: 4,
+          control_types: [
+            { name: 'Contrôle système CVC', recurrence_period: 6, recurrence_unit: 'mois', average_cost: 650 },
+            { name: 'Nettoyage filtres', recurrence_period: 3, recurrence_unit: 'mois', average_cost: 120 },
+            { name: 'Contrôle réfrigérant', recurrence_period: 1, recurrence_unit: 'année', average_cost: 380 }
+          ]
         },
       ];
 

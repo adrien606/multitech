@@ -65,40 +65,56 @@ export default function ProvidersControlPage() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Performance des prestataires */}
-          <Card className="lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Contrôles par prestataire */}
+          <Card>
             <CardHeader>
-              <CardTitle>Performance des prestataires</CardTitle>
-              <CardDescription>Analyse des coûts et interventions par prestataire</CardDescription>
+              <CardTitle>Contrôles par prestataire</CardTitle>
+              <CardDescription>Liste des contrôles effectués par chaque prestataire</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {providers?.filter(p => p.is_active).map((provider) => (
-                  <div key={provider.id} className="flex items-center justify-between p-4 rounded-lg border">
-                    <div className="flex items-center gap-4">
-                      <Users className="w-8 h-8 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{provider.name}</p>
-                        <p className="text-sm text-muted-foreground">{provider.specialties}</p>
+                  <div key={provider.id} className="p-4 rounded-lg border">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <Users className="w-8 h-8 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium text-lg">{provider.name}</p>
+                          <p className="text-sm text-muted-foreground">{provider.specialties}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="text-center">
+                          <p className="font-medium">{provider.total_interventions}</p>
+                          <p className="text-muted-foreground">Interventions</p>
+                        </div>
+                        <Badge variant={provider.pending_controls! > 0 ? 'destructive' : 'default'}>
+                          {provider.pending_controls} en cours
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6 text-sm">
-                      <div className="text-center">
-                        <p className="font-medium">{provider.total_interventions}</p>
-                        <p className="text-muted-foreground">Interventions</p>
+                    
+                    {/* Liste des contrôles */}
+                    <div className="ml-12">
+                      <h4 className="font-medium mb-3 text-foreground">Contrôles effectués :</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {provider.control_types?.map((controlType, index) => (
+                          <div key={index} className="p-3 bg-muted/30 rounded-md">
+                            <p className="font-medium text-sm">{controlType.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Récurrence: {controlType.recurrence_period} {controlType.recurrence_unit}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Coût moyen: {controlType.average_cost} €
+                            </p>
+                          </div>
+                        )) || (
+                          <p className="text-sm text-muted-foreground col-span-full">
+                            Aucun contrôle assigné
+                          </p>
+                        )}
                       </div>
-                      <div className="text-center">
-                        <p className="font-medium">{provider.total_amount?.toLocaleString()} €</p>
-                        <p className="text-muted-foreground">Total dépensé</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="font-medium">{provider.average_cost} €</p>
-                        <p className="text-muted-foreground">Coût moyen</p>
-                      </div>
-                      <Badge variant={provider.pending_controls! > 0 ? 'destructive' : 'default'}>
-                        {provider.pending_controls} en cours
-                      </Badge>
                     </div>
                   </div>
                 ))}
