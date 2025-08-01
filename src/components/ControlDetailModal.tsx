@@ -180,21 +180,29 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
                 {isEditing ? (
                   <div className="flex-1">
                     <Select
-                      value={editData.assigned_provider_id}
+                      value={editData.assigned_provider_id || "none"}
                       onValueChange={(value) => {
-                        const provider = providers?.find(p => p.id === value);
-                        setEditData(prev => ({
-                          ...prev,
-                          assigned_provider_id: value,
-                          provider_name: provider?.name || ''
-                        }));
+                        if (value === "none") {
+                          setEditData(prev => ({
+                            ...prev,
+                            assigned_provider_id: '',
+                            provider_name: ''
+                          }));
+                        } else {
+                          const provider = providers?.find(p => p.id === value);
+                          setEditData(prev => ({
+                            ...prev,
+                            assigned_provider_id: value,
+                            provider_name: provider?.name || ''
+                          }));
+                        }
                       }}
                     >
                       <SelectTrigger className="h-7">
                         <SelectValue placeholder="Sélectionner un prestataire" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Aucun prestataire</SelectItem>
+                        <SelectItem value="none">Aucun prestataire</SelectItem>
                         {providers?.map((provider) => (
                           <SelectItem key={provider.id} value={provider.id}>
                             {provider.name}
