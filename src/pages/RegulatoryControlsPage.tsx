@@ -14,7 +14,10 @@ import {
   Calendar,
   Plus,
   Filter,
-  Home
+  Home,
+  Euro,
+  TrendingUp,
+  Activity
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useBuildings } from '@/hooks/useBuildings';
@@ -110,12 +113,101 @@ export default function RegulatoryControlsPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Bâtiments</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Budget total</CardTitle>
+              <Euro className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{buildings?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">Sites sous contrôle</p>
+              <div className="text-2xl font-bold">
+                {providers?.reduce((total, p) => total + (p.total_amount || 0), 0).toLocaleString()} €
+              </div>
+              <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Statistiques Prestataires */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Performance des prestataires</CardTitle>
+              <CardDescription>Analyse des coûts et interventions par prestataire</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {providers?.filter(p => p.is_active).map((provider) => (
+                  <div key={provider.id} className="flex items-center justify-between p-4 rounded-lg border">
+                    <div className="flex items-center gap-4">
+                      <Users className="w-8 h-8 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{provider.name}</p>
+                        <p className="text-sm text-muted-foreground">{provider.specialties}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="text-center">
+                        <p className="font-medium">{provider.total_interventions}</p>
+                        <p className="text-muted-foreground">Interventions</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium">{provider.total_amount?.toLocaleString()} €</p>
+                        <p className="text-muted-foreground">Total dépensé</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium">{provider.average_cost} €</p>
+                        <p className="text-muted-foreground">Coût moyen</p>
+                      </div>
+                      <Badge variant={provider.pending_controls! > 0 ? 'destructive' : 'default'}>
+                        {provider.pending_controls} en cours
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Analyse financière</CardTitle>
+              <CardDescription>Répartition des coûts</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Coût moyen/intervention</span>
+                  <span className="font-medium">
+                    {Math.round(
+                      providers?.reduce((sum, p) => sum + (p.average_cost || 0), 0) / 
+                      (providers?.filter(p => p.is_active).length || 1)
+                    )} €
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Prestataire le plus cher</span>
+                  <span className="font-medium text-red-600">
+                    {providers?.reduce((max, p) => p.average_cost! > max.average_cost! ? p : max)?.average_cost} €
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Prestataire le moins cher</span>
+                  <span className="font-medium text-green-600">
+                    {providers?.filter(p => p.is_active).reduce((min, p) => p.average_cost! < min.average_cost! ? p : min)?.average_cost} €
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Économies potentielles</span>
+                  <span className="font-medium text-blue-600">
+                    {Math.round(providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) * 0.12).toLocaleString()} €
+                  </span>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>+8% d'économies avec optimisation</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -261,36 +353,83 @@ export default function RegulatoryControlsPage() {
           </TabsContent>
 
           <TabsContent value="providers" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Prestataires</CardTitle>
-                <CardDescription>Gestion des entreprises de contrôle</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {providers?.map((provider) => (
-                    <div key={provider.id} className="flex items-center justify-between p-4 rounded-lg border">
-                      <div className="flex items-center gap-4">
-                        <Users className="w-8 h-8 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{provider.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {provider.email} • {provider.phone}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{provider.specialties}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Liste des prestataires */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Prestataires actifs</CardTitle>
+                  <CardDescription>Gestion des entreprises de contrôle</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {providers?.filter(p => p.is_active).map((provider) => (
+                      <div key={provider.id} className="flex items-center justify-between p-4 rounded-lg border">
+                        <div className="flex items-center gap-4">
+                          <Users className="w-8 h-8 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{provider.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {provider.email} • {provider.phone}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{provider.specialties}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right text-sm">
+                            <p className="font-medium">{provider.total_amount?.toLocaleString()} €</p>
+                            <p className="text-muted-foreground">{provider.total_interventions} interventions</p>
+                          </div>
+                          <Button variant="ghost" size="sm">Détails</Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant={provider.is_active ? 'default' : 'secondary'}>
-                          {provider.is_active ? 'Actif' : 'Inactif'}
-                        </Badge>
-                        <Button variant="ghost" size="sm">Modifier</Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Statistiques financières */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Synthèse financière</CardTitle>
+                  <CardDescription>Vue d'ensemble des dépenses</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    {providers?.filter(p => p.is_active).map((provider) => (
+                      <div key={provider.id} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">{provider.name}</span>
+                          <span className="text-sm">{provider.total_amount?.toLocaleString()} €</span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                            style={{ 
+                              width: `${((provider.total_amount || 0) / Math.max(...(providers?.map(p => p.total_amount || 0) || [1]))) * 100}%` 
+                            }}
+                          ></div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                  
+                  <div className="pt-4 border-t space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">Total dépenses:</span>
+                      <span className="font-medium">
+                        {providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0).toLocaleString()} €
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Moyenne/prestataire:</span>
+                      <span className="font-medium">
+                        {Math.round(providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) / (providers?.filter(p => p.is_active).length || 1)).toLocaleString()} €
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-6">

@@ -12,6 +12,12 @@ export interface Provider {
   notes?: string;
   created_at: string;
   updated_at: string;
+  // Statistiques calculées
+  total_interventions?: number;
+  total_amount?: number;
+  average_cost?: number;
+  pending_controls?: number;
+  completed_controls?: number;
 }
 
 export const useProviders = () => {
@@ -23,7 +29,7 @@ export const useProviders = () => {
     try {
       setLoading(true);
       
-      // Données mock pour le développement
+      // Données mock enrichies pour le développement
       const mockProviders: Provider[] = [
         {
           id: '1',
@@ -36,6 +42,11 @@ export const useProviders = () => {
           notes: 'Prestataire de confiance, interventions rapides',
           created_at: '2024-01-01',
           updated_at: '2024-01-01',
+          total_interventions: 24,
+          total_amount: 18500,
+          average_cost: 770,
+          pending_controls: 3,
+          completed_controls: 21,
         },
         {
           id: '2',
@@ -48,6 +59,11 @@ export const useProviders = () => {
           notes: 'Spécialiste agréé, certifications à jour',
           created_at: '2024-01-01',
           updated_at: '2024-01-01',
+          total_interventions: 18,
+          total_amount: 15200,
+          average_cost: 844,
+          pending_controls: 2,
+          completed_controls: 16,
         },
         {
           id: '3',
@@ -60,6 +76,28 @@ export const useProviders = () => {
           notes: 'Contrat suspendu - recherche nouvel prestataire',
           created_at: '2024-01-01',
           updated_at: '2024-01-01',
+          total_interventions: 12,
+          total_amount: 9600,
+          average_cost: 800,
+          pending_controls: 0,
+          completed_controls: 12,
+        },
+        {
+          id: '4',
+          name: 'Climatisation Services',
+          email: 'contact@clim-services.fr',
+          phone: '01 55 66 77 88',
+          address: '321 Rue de Rivoli, 75004 Paris',
+          specialties: 'Climatisation, Ventilation, CVC',
+          is_active: true,
+          notes: 'Nouveau prestataire, en période d\'essai',
+          created_at: '2024-01-01',
+          updated_at: '2024-01-01',
+          total_interventions: 8,
+          total_amount: 6400,
+          average_cost: 800,
+          pending_controls: 4,
+          completed_controls: 4,
         },
       ];
 
