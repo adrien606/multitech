@@ -1,6 +1,11 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Calendar, 
   MapPin, 
@@ -9,11 +14,16 @@ import {
   CheckCircle,
   AlertTriangle,
   Building,
-  Repeat
+  Repeat,
+  Edit,
+  Save,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRegulatoryControls } from "@/hooks/useRegulatoryControls";
+import { useProviders } from "@/hooks/useProviders";
+import { useToast } from "@/hooks/use-toast";
 
 interface ControlDetailModalProps {
   controlId: string;
@@ -22,7 +32,17 @@ interface ControlDetailModalProps {
 }
 
 export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetailModalProps) {
-  const { controls } = useRegulatoryControls();
+  const { controls, updateControl } = useRegulatoryControls();
+  const { providers } = useProviders();
+  const { toast } = useToast();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    assigned_provider_id: '',
+    provider_name: '',
+    next_due_date: '',
+    notes: ''
+  });
   
   const control = controls?.find(c => c.id === controlId);
   
@@ -57,6 +77,72 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     }
   };
 
+  const handleEdit = () => {
+    setEditData({
+      assigned_provider_id: control.assigned_provider_id || '',
+      provider_name: control.provider_name || '',
+      next_due_date: control.next_due_date || '',
+      notes: control.notes || ''
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      const { error } = await updateControl(controlId, editData);
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Succès",
+        description: "Contrôle mis à jour avec succès",
+      });
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleComplete = async () => {
+    try {
+      const completedData = {
+        status: 'completed' as const,
+        completed_date: new Date().toISOString()
+      };
+      
+      const { error } = await updateControl(controlId, completedData);
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Succès",
+        description: "Contrôle marqué comme terminé",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto mx-4">
@@ -69,6 +155,12 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
                 <span className="ml-1">{getStatusText(control.status)}</span>
               </Badge>
             </div>
+            {!isEditing && control.status !== 'completed' && (
+              <Button variant="outline" size="sm" onClick={handleEdit}>
+                <Edit className="w-4 h-4 mr-1" />
+                Modifier
+              </Button>
+            )}
           </div>
         </DialogHeader>
 
@@ -85,7 +177,35 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               <div className="flex items-center gap-2 text-sm">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Prestataire:</span>
-                <span>{control.provider_name || 'Non assigné'}</span>
+                {isEditing ? (
+                  <div className="flex-1">
+                    <Select
+                      value={editData.assigned_provider_id}
+                      onValueChange={(value) => {
+                        const provider = providers?.find(p => p.id === value);
+                        setEditData(prev => ({
+                          ...prev,
+                          assigned_provider_id: value,
+                          provider_name: provider?.name || ''
+                        }));
+                      }}
+                    >
+                      <SelectTrigger className="h-7">
+                        <SelectValue placeholder="Sélectionner un prestataire" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Aucun prestataire</SelectItem>
+                        {providers?.map((provider) => (
+                          <SelectItem key={provider.id} value={provider.id}>
+                            {provider.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <span>{control.provider_name || 'Non assigné'}</span>
+                )}
               </div>
             </div>
             
@@ -102,12 +222,26 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Prochaine échéance:</span>
-                <span>
-                  {control.next_due_date 
-                    ? format(new Date(control.next_due_date), 'dd/MM/yyyy', { locale: fr })
-                    : 'Non programmée'
-                  }
-                </span>
+                {isEditing ? (
+                  <div className="flex-1">
+                    <Input
+                      type="date"
+                      value={editData.next_due_date ? editData.next_due_date.split('T')[0] : ''}
+                      onChange={(e) => setEditData(prev => ({
+                        ...prev,
+                        next_due_date: e.target.value ? new Date(e.target.value).toISOString() : ''
+                      }))}
+                      className="h-7"
+                    />
+                  </div>
+                ) : (
+                  <span>
+                    {control.next_due_date 
+                      ? format(new Date(control.next_due_date), 'dd/MM/yyyy', { locale: fr })
+                      : 'Non programmée'
+                    }
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-2 text-sm">
@@ -119,14 +253,23 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
           </div>
 
           {/* Notes */}
-          {control.notes && (
-            <div>
-              <h3 className="font-medium mb-2">Notes</h3>
+          <div>
+            <h3 className="font-medium mb-2">Notes</h3>
+            {isEditing ? (
+              <Textarea
+                value={editData.notes}
+                onChange={(e) => setEditData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Ajouter des notes..."
+                className="min-h-[80px]"
+              />
+            ) : control.notes ? (
               <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
                 {control.notes}
               </p>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Aucune note</p>
+            )}
+          </div>
 
           {/* Statut et informations supplémentaires */}
           <div className="bg-muted/30 p-4 rounded-lg">
@@ -162,13 +305,29 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
-              Fermer
-            </Button>
-            {control.status !== 'completed' && (
-              <Button variant="default">
-                Marquer comme terminé
-              </Button>
+            {isEditing ? (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  <X className="w-4 h-4 mr-1" />
+                  Annuler
+                </Button>
+                <Button onClick={handleSave}>
+                  <Save className="w-4 h-4 mr-1" />
+                  Enregistrer
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={onClose}>
+                  Fermer
+                </Button>
+                {control.status !== 'completed' && (
+                  <Button onClick={handleComplete}>
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Marquer comme terminé
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
