@@ -221,7 +221,7 @@ export default function Dashboard() {
     }
   };
 
-  const loading = tasksLoading || buildingsLoading || agentsLoading;
+  const loading = tasksLoading || buildingsLoading;
   
   const handleSignOut = async () => {
     await signOut();
