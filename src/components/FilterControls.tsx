@@ -33,15 +33,13 @@ export function FilterControls({
     <Card className="mb-6">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filtres
+          <div className="flex items-center gap-2">
             {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary">
                 {controlsCount} / {totalControls} contrôles
               </Badge>
             )}
-          </CardTitle>
+          </div>
           {hasActiveFilters && (
             <Button
               variant="outline"
