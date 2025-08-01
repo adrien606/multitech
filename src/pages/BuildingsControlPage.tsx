@@ -1,12 +1,21 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Building2, MapPin, Phone, Mail } from 'lucide-react';
-import { useBuildings } from '@/hooks/useBuildings';
+import { useBuildings, Building } from '@/hooks/useBuildings';
 import Navigation from '@/components/Navigation';
+import { BuildingDetailModal } from '@/components/BuildingDetailModal';
 
 export default function BuildingsControlPage() {
   const { buildings } = useBuildings();
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewDetails = (building: Building) => {
+    setSelectedBuilding(building);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,7 +59,12 @@ export default function BuildingsControlPage() {
                     <Badge variant="outline">8</Badge>
                   </div>
                   <div className="pt-3 border-t">
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleViewDetails(building)}
+                    >
                       Voir les détails
                     </Button>
                   </div>
@@ -69,6 +83,12 @@ export default function BuildingsControlPage() {
           </Card>
         )}
       </div>
+
+      <BuildingDetailModal
+        building={selectedBuilding}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }
