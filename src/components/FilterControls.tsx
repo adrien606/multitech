@@ -10,8 +10,10 @@ interface FilterControlsProps {
   buildings: Building[];
   selectedBuilding: string;
   selectedStatus: string;
+  selectedDueDate: string;
   onBuildingChange: (building: string) => void;
   onStatusChange: (status: string) => void;
+  onDueDateChange: (dueDate: string) => void;
   onClearFilters: () => void;
   controlsCount: number;
   totalControls: number;
@@ -21,13 +23,15 @@ export function FilterControls({
   buildings,
   selectedBuilding,
   selectedStatus,
+  selectedDueDate,
   onBuildingChange,
   onStatusChange,
+  onDueDateChange,
   onClearFilters,
   controlsCount,
   totalControls,
 }: FilterControlsProps) {
-  const hasActiveFilters = selectedBuilding !== 'all' || selectedStatus !== 'all';
+  const hasActiveFilters = selectedBuilding !== 'all' || selectedStatus !== 'all' || selectedDueDate !== 'all';
 
   return (
     <Card className="mb-6">
@@ -100,7 +104,7 @@ export function FilterControls({
           {/* Filtre par échéance */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Échéance</label>
-            <Select defaultValue="all">
+            <Select value={selectedDueDate} onValueChange={onDueDateChange}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Toutes les échéances" />
               </SelectTrigger>
@@ -140,6 +144,20 @@ export function FilterControls({
                   {selectedStatus === 'overdue' && 'En retard'}
                   <button
                     onClick={() => onStatusChange('all')}
+                    className="ml-1 hover:bg-muted rounded-full p-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+              {selectedDueDate !== 'all' && (
+                <Badge variant="secondary" className="gap-1">
+                  {selectedDueDate === 'week' && 'Cette semaine'}
+                  {selectedDueDate === 'month' && 'Ce mois'}
+                  {selectedDueDate === 'quarter' && 'Ce trimestre'}
+                  {selectedDueDate === 'overdue' && 'En retard'}
+                  <button
+                    onClick={() => onDueDateChange('all')}
                     className="ml-1 hover:bg-muted rounded-full p-0.5"
                   >
                     <X className="w-3 h-3" />

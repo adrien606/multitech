@@ -26,6 +26,7 @@ export default function ControlsPage() {
   // États pour les filtres
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedDueDate, setSelectedDueDate] = useState<string>('all');
   
   // État pour les modales
   const [isNewControlModalOpen, setIsNewControlModalOpen] = useState(false);
@@ -35,7 +36,29 @@ export default function ControlsPage() {
   const filteredControls = controls?.filter((control) => {
     const matchesBuilding = selectedBuilding === 'all' || control.building_id === selectedBuilding;
     const matchesStatus = selectedStatus === 'all' || control.status === selectedStatus;
-    return matchesBuilding && matchesStatus;
+    
+    // Filtrage par échéance
+    const controlDate = new Date(control.due_date);
+    const now = new Date();
+    const oneWeekFromNow = new Date();
+    oneWeekFromNow.setDate(now.getDate() + 7);
+    const oneMonthFromNow = new Date();
+    oneMonthFromNow.setMonth(now.getMonth() + 1);
+    const oneQuarterFromNow = new Date();
+    oneQuarterFromNow.setMonth(now.getMonth() + 3);
+
+    let matchesDueDate = true;
+    if (selectedDueDate === 'week') {
+      matchesDueDate = controlDate >= now && controlDate <= oneWeekFromNow;
+    } else if (selectedDueDate === 'month') {
+      matchesDueDate = controlDate >= now && controlDate <= oneMonthFromNow;
+    } else if (selectedDueDate === 'quarter') {
+      matchesDueDate = controlDate >= now && controlDate <= oneQuarterFromNow;
+    } else if (selectedDueDate === 'overdue') {
+      matchesDueDate = controlDate < now && control.status !== 'completed';
+    }
+    
+    return matchesBuilding && matchesStatus && matchesDueDate;
   }) || [];
 
   // Gestionnaire pour créer un nouveau contrôle
@@ -142,11 +165,14 @@ export default function ControlsPage() {
           buildings={buildings || []}
           selectedBuilding={selectedBuilding}
           selectedStatus={selectedStatus}
+          selectedDueDate={selectedDueDate}
           onBuildingChange={setSelectedBuilding}
           onStatusChange={setSelectedStatus}
+          onDueDateChange={setSelectedDueDate}
           onClearFilters={() => {
             setSelectedBuilding('all');
             setSelectedStatus('all');
+            setSelectedDueDate('all');
           }}
           controlsCount={filteredControls.length}
           totalControls={controls?.length || 0}
@@ -198,6 +224,7 @@ export default function ControlsPage() {
                     onClick={() => {
                       setSelectedBuilding('all');
                       setSelectedStatus('all');
+                      setSelectedDueDate('all');
                     }}
                   >
                     Effacer les filtres
