@@ -27,6 +27,7 @@ import { FilterControls } from '@/components/FilterControls';
 import { NewControlModal } from '@/components/NewControlModal';
 import { useProviders } from '@/hooks/useProviders';
 import { ControlTypesModal } from '@/components/ControlTypesModal';
+import { ControlsTimeline } from '@/components/ControlsTimeline';
 
 export default function RegulatoryControlsPage() {
   const { buildings } = useBuildings();
@@ -41,6 +42,7 @@ export default function RegulatoryControlsPage() {
   // État pour la modale de création
   const [isNewControlModalOpen, setIsNewControlModalOpen] = useState(false);
   const [isControlTypesModalOpen, setIsControlTypesModalOpen] = useState(false);
+  const [selectedControlId, setSelectedControlId] = useState<string | null>(null);
 
   // Filtrage des contrôles
   const filteredControls = controls?.filter((control) => {
@@ -549,6 +551,20 @@ export default function RegulatoryControlsPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Timeline des contrôles */}
+        <div className="mt-8">
+          <ControlsTimeline 
+            controls={filteredControls.map(control => ({
+              id: control.id,
+              control_type_name: control.control_type_name,
+              building_name: control.building_name,
+              due_date: control.due_date,
+              status: control.status,
+            }))}
+            onControlClick={(controlId) => setSelectedControlId(controlId)}
+          />
+        </div>
       </div>
 
       {/* Modale de création de contrôle */}
@@ -565,6 +581,21 @@ export default function RegulatoryControlsPage() {
         isOpen={isControlTypesModalOpen}
         onClose={() => setIsControlTypesModalOpen(false)}
       />
+
+      {/* Modale de détail du contrôle */}
+      {selectedControlId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Détail du contrôle</h3>
+            <p className="text-muted-foreground mb-4">
+              Détails du contrôle {selectedControlId}
+            </p>
+            <Button onClick={() => setSelectedControlId(null)}>
+              Fermer
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
