@@ -15,6 +15,7 @@ import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { useProviders } from '@/hooks/useProviders';
 import { FilterControls } from '@/components/FilterControls';
 import { NewControlModal } from '@/components/NewControlModal';
+import { ControlDetailModal } from '@/components/ControlDetailModal';
 import Navigation from '@/components/Navigation';
 
 export default function ControlsPage() {
@@ -26,8 +27,9 @@ export default function ControlsPage() {
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   
-  // État pour la modale de création
+  // État pour les modales
   const [isNewControlModalOpen, setIsNewControlModalOpen] = useState(false);
+  const [selectedControlId, setSelectedControlId] = useState<string | null>(null);
 
   // Filtrage des contrôles
   const filteredControls = controls?.filter((control) => {
@@ -177,7 +179,13 @@ export default function ControlsPage() {
                         {getStatusIcon(control.status)}
                         {control.status}
                       </Badge>
-                      <Button variant="ghost" size="sm">Détails</Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setSelectedControlId(control.id)}
+                      >
+                        Détails
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -208,6 +216,15 @@ export default function ControlsPage() {
           buildings={buildings || []}
           providers={providers || []}
         />
+
+        {/* Modale de détails */}
+        {selectedControlId && (
+          <ControlDetailModal
+            controlId={selectedControlId}
+            isOpen={!!selectedControlId}
+            onClose={() => setSelectedControlId(null)}
+          />
+        )}
       </div>
     </div>
   );
