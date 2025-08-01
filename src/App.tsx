@@ -11,6 +11,7 @@ import ControlsPage from "./pages/ControlsPage";
 import BuildingsControlPage from "./pages/BuildingsControlPage";
 import ProvidersControlPage from "./pages/ProvidersControlPage";
 import DocumentsControlPage from "./pages/DocumentsControlPage";
+import ControlTypesPage from "./pages/ControlTypesPage";
 import BuildingsPage from "./pages/BuildingsPage";
 import UsersPage from "./pages/UsersPage";
 import AuthPage from "./pages/AuthPage";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/regulatory-controls/buildings" element={<BuildingsControlPage />} />
             <Route path="/regulatory-controls/providers" element={<ProvidersControlPage />} />
             <Route path="/regulatory-controls/documents" element={<DocumentsControlPage />} />
+            <Route path="/regulatory-controls/types" element={<ControlTypesPage />} />
             <Route path="/buildings" element={
               <ProtectedRoute>
                 <BuildingsPage />

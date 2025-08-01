@@ -26,7 +26,7 @@ import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { FilterControls } from '@/components/FilterControls';
 import { NewControlModal } from '@/components/NewControlModal';
 import { useProviders } from '@/hooks/useProviders';
-import { ControlTypesModal } from '@/components/ControlTypesModal';
+
 import { ControlsTimeline } from '@/components/ControlsTimeline';
 
 export default function RegulatoryControlsPage() {
@@ -41,7 +41,7 @@ export default function RegulatoryControlsPage() {
   
   // État pour la modale de création
   const [isNewControlModalOpen, setIsNewControlModalOpen] = useState(false);
-  const [isControlTypesModalOpen, setIsControlTypesModalOpen] = useState(false);
+  
   const [selectedControlId, setSelectedControlId] = useState<string | null>(null);
 
   // Filtrage des contrôles
@@ -122,12 +122,11 @@ export default function RegulatoryControlsPage() {
                 Accueil
               </Link>
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsControlTypesModalOpen(true)}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Types de contrôle
+            <Button variant="outline" asChild>
+              <Link to="/regulatory-controls/types">
+                <Settings className="w-4 h-4 mr-2" />
+                Types de contrôle
+              </Link>
             </Button>
             <Button onClick={() => setIsNewControlModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -570,11 +569,6 @@ export default function RegulatoryControlsPage() {
         onControlCreate={handleCreateControl}
       />
 
-      {/* Modale de gestion des types de contrôle */}
-      <ControlTypesModal
-        isOpen={isControlTypesModalOpen}
-        onClose={() => setIsControlTypesModalOpen(false)}
-      />
 
       {/* Modale de détail du contrôle */}
       {selectedControlId && (
