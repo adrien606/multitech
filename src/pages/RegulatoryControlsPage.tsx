@@ -555,13 +555,7 @@ export default function RegulatoryControlsPage() {
         {/* Timeline des contrôles */}
         <div className="mt-8">
           <ControlsTimeline 
-            controls={filteredControls.map(control => ({
-              id: control.id,
-              control_type_name: control.control_type_name,
-              building_name: control.building_name,
-              due_date: control.due_date,
-              status: control.status,
-            }))}
+            controls={filteredControls}
             onControlClick={(controlId) => setSelectedControlId(controlId)}
           />
         </div>
