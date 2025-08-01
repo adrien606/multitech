@@ -25,6 +25,7 @@ import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { FilterControls } from '@/components/FilterControls';
 import { NewControlModal } from '@/components/NewControlModal';
 import { useProviders } from '@/hooks/useProviders';
+import { ControlsCalendar } from '@/components/ControlsCalendar';
 
 export default function RegulatoryControlsPage() {
   const { buildings } = useBuildings();
@@ -280,9 +281,10 @@ export default function RegulatoryControlsPage() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="controls">Contrôles</TabsTrigger>
+            <TabsTrigger value="calendar">Calendrier</TabsTrigger>
             <TabsTrigger value="buildings">Bâtiments</TabsTrigger>
             <TabsTrigger value="providers">Prestataires</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -400,6 +402,10 @@ export default function RegulatoryControlsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <ControlsCalendar controls={controls || []} />
           </TabsContent>
 
           <TabsContent value="buildings" className="space-y-6">
