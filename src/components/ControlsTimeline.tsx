@@ -3,8 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addWeeks, addMonths, subWeeks, subMonths, eachDayOfInterval, eachWeekOfInterval, isSameDay, isWithinInterval } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 interface Control {
   id: string;
@@ -20,6 +18,72 @@ interface ControlsTimelineProps {
 }
 
 type ViewMode = 'week' | 'month';
+
+// Fonctions utilitaires simplifiées
+const getStartOfWeek = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Lundi comme premier jour
+  return new Date(d.setDate(diff));
+};
+
+const getEndOfWeek = (date: Date) => {
+  const start = getStartOfWeek(date);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return end;
+};
+
+const getStartOfMonth = (date: Date) => {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+};
+
+const getEndOfMonth = (date: Date) => {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+};
+
+const getDaysInWeek = (date: Date) => {
+  const start = getStartOfWeek(date);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + i);
+    days.push(day);
+  }
+  return days;
+};
+
+const getWeeksInMonth = (date: Date) => {
+  const start = getStartOfMonth(date);
+  const end = getEndOfMonth(date);
+  const weeks = [];
+  let current = getStartOfWeek(start);
+  
+  while (current <= end) {
+    weeks.push(new Date(current));
+    current.setDate(current.getDate() + 7);
+  }
+  return weeks;
+};
+
+const isSameDay = (date1: Date, date2: Date) => {
+  return date1.toDateString() === date2.toDateString();
+};
+
+const isDateInWeek = (date: Date, weekStart: Date) => {
+  const weekEnd = getEndOfWeek(weekStart);
+  return date >= weekStart && date <= weekEnd;
+};
+
+const formatDate = (date: Date, format: string) => {
+  const options: any = {};
+  if (format.includes('EEE')) options.weekday = 'short';
+  if (format.includes('d')) options.day = 'numeric';
+  if (format.includes('MMM')) options.month = 'short';
+  if (format.includes('yyyy')) options.year = 'numeric';
+  
+  return date.toLocaleDateString('fr-FR', options);
+};
 
 export const ControlsTimeline: React.FC<ControlsTimelineProps> = ({ 
   controls, 
@@ -46,18 +110,18 @@ export const ControlsTimeline: React.FC<ControlsTimelineProps> = ({
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
     if (viewMode === 'week') {
-      setCurrentDate(direction === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
     } else {
-      setCurrentDate(direction === 'next' ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
+      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
     }
+    setCurrentDate(newDate);
   };
 
   const timelineData = useMemo(() => {
     if (viewMode === 'week') {
-      const weekStart = startOfWeek(currentDate, { locale: fr });
-      const weekEnd = endOfWeek(currentDate, { locale: fr });
-      const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+      const days = getDaysInWeek(currentDate);
 
       return days.map(day => {
         const dayControls = controls.filter(control => 
@@ -66,27 +130,24 @@ export const ControlsTimeline: React.FC<ControlsTimelineProps> = ({
 
         return {
           date: day,
-          label: format(day, 'EEE d', { locale: fr }),
-          fullLabel: format(day, 'EEEE d MMMM', { locale: fr }),
+          label: formatDate(day, 'EEE d'),
+          fullLabel: formatDate(day, 'EEEE d MMMM'),
           controls: dayControls,
         };
       });
     } else {
-      const monthStart = startOfMonth(currentDate);
-      const monthEnd = endOfMonth(currentDate);
-      const weeks = eachWeekOfInterval({ start: monthStart, end: monthEnd }, { locale: fr });
+      const weeks = getWeeksInMonth(currentDate);
 
       return weeks.map((weekStart, index) => {
-        const weekEnd = endOfWeek(weekStart, { locale: fr });
         const weekControls = controls.filter(control => {
           const controlDate = new Date(control.due_date);
-          return isWithinInterval(controlDate, { start: weekStart, end: weekEnd });
+          return isDateInWeek(controlDate, weekStart);
         });
 
         return {
           date: weekStart,
           label: `S${index + 1}`,
-          fullLabel: `Semaine du ${format(weekStart, 'd MMM', { locale: fr })}`,
+          fullLabel: `Semaine du ${formatDate(weekStart, 'd MMM')}`,
           controls: weekControls,
         };
       });
@@ -95,13 +156,24 @@ export const ControlsTimeline: React.FC<ControlsTimelineProps> = ({
 
   const getCurrentPeriodLabel = () => {
     if (viewMode === 'week') {
-      const weekStart = startOfWeek(currentDate, { locale: fr });
-      const weekEnd = endOfWeek(currentDate, { locale: fr });
-      return `${format(weekStart, 'd MMM', { locale: fr })} - ${format(weekEnd, 'd MMM yyyy', { locale: fr })}`;
+      const weekStart = getStartOfWeek(currentDate);
+      const weekEnd = getEndOfWeek(currentDate);
+      return `${formatDate(weekStart, 'd MMM')} - ${formatDate(weekEnd, 'd MMM yyyy')}`;
     } else {
-      return format(currentDate, 'MMMM yyyy', { locale: fr });
+      return formatDate(currentDate, 'MMMM yyyy');
     }
   };
+
+  const totalControls = timelineData.reduce((sum, period) => sum + period.controls.length, 0);
+  const completedControls = timelineData.reduce((sum, period) => 
+    sum + period.controls.filter(c => c.status === 'completed').length, 0
+  );
+  const inProgressControls = timelineData.reduce((sum, period) => 
+    sum + period.controls.filter(c => c.status === 'in_progress').length, 0
+  );
+  const overdueControls = timelineData.reduce((sum, period) => 
+    sum + period.controls.filter(c => c.status === 'overdue').length, 0
+  );
 
   return (
     <Card className="w-full">
@@ -175,7 +247,7 @@ export const ControlsTimeline: React.FC<ControlsTimelineProps> = ({
           </div>
 
           {/* Timeline */}
-          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+          <div className={`grid gap-4 ${viewMode === 'week' ? 'grid-cols-1 lg:grid-cols-7' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
             {timelineData.map((period, index) => (
               <div key={index} className="space-y-2">
                 <div className="text-center">
@@ -227,33 +299,19 @@ export const ControlsTimeline: React.FC<ControlsTimelineProps> = ({
             <h4 className="text-sm font-medium mb-2">Statistiques de la période</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <div className="text-2xl font-bold">
-                  {timelineData.reduce((sum, period) => sum + period.controls.length, 0)}
-                </div>
+                <div className="text-2xl font-bold">{totalControls}</div>
                 <div className="text-muted-foreground">Total contrôles</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">
-                  {timelineData.reduce((sum, period) => 
-                    sum + period.controls.filter(c => c.status === 'completed').length, 0
-                  )}
-                </div>
+                <div className="text-2xl font-bold text-green-600">{completedControls}</div>
                 <div className="text-muted-foreground">Terminés</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {timelineData.reduce((sum, period) => 
-                    sum + period.controls.filter(c => c.status === 'in_progress').length, 0
-                  )}
-                </div>
+                <div className="text-2xl font-bold text-blue-600">{inProgressControls}</div>
                 <div className="text-muted-foreground">En cours</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-600">
-                  {timelineData.reduce((sum, period) => 
-                    sum + period.controls.filter(c => c.status === 'overdue').length, 0
-                  )}
-                </div>
+                <div className="text-2xl font-bold text-red-600">{overdueControls}</div>
                 <div className="text-muted-foreground">En retard</div>
               </div>
             </div>
