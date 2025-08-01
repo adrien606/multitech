@@ -13,8 +13,10 @@ import {
   FileText,
   Calendar,
   Plus,
-  Filter
+  Filter,
+  Home
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { useProviders } from '@/hooks/useProviders';
@@ -54,6 +56,12 @@ export default function RegulatoryControlsPage() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" asChild>
+              <Link to="/">
+                <Home className="w-4 h-4 mr-2" />
+                Accueil
+              </Link>
+            </Button>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
               Filtres
