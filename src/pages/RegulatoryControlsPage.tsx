@@ -22,13 +22,24 @@ import {
 import { Link } from 'react-router-dom';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
+import { FilterControls } from '@/components/FilterControls';
 import { useProviders } from '@/hooks/useProviders';
 
 export default function RegulatoryControlsPage() {
   const { buildings } = useBuildings();
   const { controls, stats } = useRegulatoryControls();
   const { providers } = useProviders();
-  const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
+  
+  // États pour les filtres
+  const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+
+  // Filtrage des contrôles
+  const filteredControls = controls?.filter((control) => {
+    const matchesBuilding = selectedBuilding === 'all' || control.building_id === selectedBuilding;
+    const matchesStatus = selectedStatus === 'all' || control.status === selectedStatus;
+    return matchesBuilding && matchesStatus;
+  }) || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,16 +76,27 @@ export default function RegulatoryControlsPage() {
                 Accueil
               </Link>
             </Button>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Filtres
-            </Button>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               Nouveau contrôle
             </Button>
           </div>
         </div>
+
+        {/* Filtres */}
+        <FilterControls
+          buildings={buildings || []}
+          selectedBuilding={selectedBuilding}
+          selectedStatus={selectedStatus}
+          onBuildingChange={setSelectedBuilding}
+          onStatusChange={setSelectedStatus}
+          onClearFilters={() => {
+            setSelectedBuilding('all');
+            setSelectedStatus('all');
+          }}
+          controlsCount={filteredControls.length}
+          totalControls={controls?.length || 0}
+        />
 
         {/* Dashboard Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -288,30 +310,48 @@ export default function RegulatoryControlsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Liste des contrôles</CardTitle>
-                <CardDescription>Tous les contrôles réglementaires par bâtiment</CardDescription>
+                <CardDescription>
+                  {filteredControls.length} contrôle(s) affiché(s) sur {controls?.length || 0} total
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {controls?.map((control) => (
-                    <div key={control.id} className="flex items-center justify-between p-4 rounded-lg border">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-3 h-3 rounded-full ${getStatusColor(control.status)}`} />
-                        <div>
-                          <p className="font-medium">{control.control_type_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {control.building_name} • Échéance: {new Date(control.due_date).toLocaleDateString()}
-                          </p>
+                  {filteredControls.length > 0 ? (
+                    filteredControls.map((control) => (
+                      <div key={control.id} className="flex items-center justify-between p-4 rounded-lg border">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-3 h-3 rounded-full ${getStatusColor(control.status)}`} />
+                          <div>
+                            <p className="font-medium">{control.control_type_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {control.building_name} • Échéance: {new Date(control.due_date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant={control.status === 'completed' ? 'default' : 'secondary'}>
+                            {getStatusIcon(control.status)}
+                            {control.status}
+                          </Badge>
+                          <Button variant="ghost" size="sm">Détails</Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant={control.status === 'completed' ? 'default' : 'secondary'}>
-                          {getStatusIcon(control.status)}
-                          {control.status}
-                        </Badge>
-                        <Button variant="ghost" size="sm">Détails</Button>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>Aucun contrôle trouvé avec les filtres sélectionnés.</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => {
+                          setSelectedBuilding('all');
+                          setSelectedStatus('all');
+                        }}
+                      >
+                        Effacer les filtres
+                      </Button>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
