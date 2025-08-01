@@ -50,7 +50,7 @@ export function NewControlModal({
     building_id: '',
     control_type_name: '',
     due_date: undefined as Date | undefined,
-    assigned_provider_id: '',
+    assigned_provider_id: 'none',
     notes: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +68,7 @@ export function NewControlModal({
       building_id: formData.building_id,
       control_type_name: formData.control_type_name,
       due_date: formData.due_date.toISOString(),
-      assigned_provider_id: formData.assigned_provider_id || undefined,
+      assigned_provider_id: formData.assigned_provider_id === 'none' ? undefined : formData.assigned_provider_id || undefined,
       notes: formData.notes || undefined,
     };
 
@@ -79,7 +79,7 @@ export function NewControlModal({
       building_id: '',
       control_type_name: '',
       due_date: undefined,
-      assigned_provider_id: '',
+      assigned_provider_id: 'none',
       notes: '',
     });
     
@@ -92,7 +92,7 @@ export function NewControlModal({
       building_id: '',
       control_type_name: '',
       due_date: undefined,
-      assigned_provider_id: '',
+      assigned_provider_id: 'none',
       notes: '',
     });
     onClose();
@@ -206,7 +206,7 @@ export function NewControlModal({
                   <SelectValue placeholder="Aucun prestataire" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun prestataire</SelectItem>
+                  <SelectItem value="none">Aucun prestataire</SelectItem>
                   {providers.filter(p => p.is_active).map((provider) => (
                     <SelectItem key={provider.id} value={provider.id}>
                       <div className="flex flex-col">
