@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -150,6 +150,9 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <DialogTitle className="text-xl mb-2">{control.control_type_name}</DialogTitle>
+              <DialogDescription className="sr-only">
+                Détails du contrôle réglementaire {control.control_type_name}
+              </DialogDescription>
               <Badge variant={control.status === 'completed' ? 'default' : 'secondary'} className="mb-4">
                 {getStatusIcon(control.status)}
                 <span className="ml-1">{getStatusText(control.status)}</span>
