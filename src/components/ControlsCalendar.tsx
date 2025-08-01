@@ -21,6 +21,7 @@ interface ControlsCalendarProps {
 }
 
 export function ControlsCalendar({ controls }: ControlsCalendarProps) {
+  console.log('ControlsCalendar rendered with controls:', controls.length);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   // Obtenir les contrôles pour la date sélectionnée
@@ -64,6 +65,7 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
   const controlsForSelectedDate = selectedDate ? getControlsForDate(selectedDate) : [];
   const datesWithControls = getDatesWithControls();
 
+  console.log('Rendering calendar with datesWithControls:', datesWithControls.length);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Calendrier */}
@@ -83,7 +85,6 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
             selected={selectedDate}
             onSelect={setSelectedDate}
             className="rounded-md border pointer-events-auto"
-            locale={fr}
             modifiers={{
               hasControls: datesWithControls
             }}
@@ -102,7 +103,7 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {selectedDate ? format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr }) : 'Aucune date sélectionnée'}
+            {selectedDate ? selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Aucune date sélectionnée'}
           </CardTitle>
           <CardDescription>
             {controlsForSelectedDate.length} contrôle(s) prévu(s)

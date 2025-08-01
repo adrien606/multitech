@@ -16,6 +16,7 @@ import { useProviders } from '@/hooks/useProviders';
 import { FilterControls } from '@/components/FilterControls';
 import { NewControlModal } from '@/components/NewControlModal';
 import { ControlDetailModal } from '@/components/ControlDetailModal';
+import { ControlsCalendar } from '@/components/ControlsCalendar';
 import Navigation from '@/components/Navigation';
 
 export default function ControlsPage() {
@@ -168,6 +169,11 @@ export default function ControlsPage() {
               <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Calendrier des contrôles */}
+        <div className="mb-8">
+          <ControlsCalendar controls={controls || []} />
         </div>
 
         {/* Filtres */}
