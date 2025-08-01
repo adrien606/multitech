@@ -140,7 +140,7 @@ export default function RegulatoryControlsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {providers?.reduce((total, p) => total + (p.total_amount || 0), 0).toLocaleString()} €
+                {(providers?.reduce((total, p) => total + (p.total_amount || 0), 0) || 0).toLocaleString()} €
               </div>
               <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
             </CardContent>
@@ -198,28 +198,28 @@ export default function RegulatoryControlsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Coût moyen/intervention</span>
                   <span className="font-medium">
-                    {Math.round(
-                      providers?.reduce((sum, p) => sum + (p.average_cost || 0), 0) / 
-                      (providers?.filter(p => p.is_active).length || 1)
-                    )} €
+                    {providers && providers.length > 0 ? Math.round(
+                      providers.reduce((sum, p) => sum + (p.average_cost || 0), 0) / 
+                      (providers.filter(p => p.is_active).length || 1)
+                    ) : 0} €
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Prestataire le plus cher</span>
                   <span className="font-medium text-red-600">
-                    {providers?.reduce((max, p) => p.average_cost! > max.average_cost! ? p : max)?.average_cost} €
+                    {providers && providers.length > 0 ? providers.reduce((max, p) => p.average_cost! > max.average_cost! ? p : max, providers[0])?.average_cost : 0} €
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Prestataire le moins cher</span>
                   <span className="font-medium text-green-600">
-                    {providers?.filter(p => p.is_active).reduce((min, p) => p.average_cost! < min.average_cost! ? p : min)?.average_cost} €
+                    {providers?.filter(p => p.is_active).length > 0 ? providers.filter(p => p.is_active).reduce((min, p) => p.average_cost! < min.average_cost! ? p : min, providers.filter(p => p.is_active)[0])?.average_cost : 0} €
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Économies potentielles</span>
                   <span className="font-medium text-blue-600">
-                    {Math.round(providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) * 0.12).toLocaleString()} €
+                    {Math.round((providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0) * 0.12).toLocaleString()} €
                   </span>
                 </div>
               </div>
@@ -457,13 +457,13 @@ export default function RegulatoryControlsPage() {
                     <div className="flex justify-between">
                       <span className="text-sm">Total dépenses:</span>
                       <span className="font-medium">
-                        {providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0).toLocaleString()} €
+                        {(providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0).toLocaleString()} €
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">Moyenne/prestataire:</span>
                       <span className="font-medium">
-                        {Math.round(providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) / (providers?.filter(p => p.is_active).length || 1)).toLocaleString()} €
+                        {Math.round((providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0) / (providers?.filter(p => p.is_active).length || 1)).toLocaleString()} €
                       </span>
                     </div>
                   </div>
