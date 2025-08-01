@@ -33,7 +33,7 @@ export default function AuthPage() {
   } = useToast();
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [user, navigate]);
   const handleLogin = async (e: React.FormEvent) => {
@@ -69,7 +69,7 @@ export default function AuthPage() {
         title: "Connexion réussie",
         description: "Bienvenue !"
       });
-      navigate('/');
+      navigate('/dashboard');
     }
     setIsLoading(false);
   };
