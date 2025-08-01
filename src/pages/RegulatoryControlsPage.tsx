@@ -17,7 +17,8 @@ import {
   Home,
   Euro,
   TrendingUp,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useBuildings } from '@/hooks/useBuildings';
@@ -25,6 +26,7 @@ import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { FilterControls } from '@/components/FilterControls';
 import { NewControlModal } from '@/components/NewControlModal';
 import { useProviders } from '@/hooks/useProviders';
+import { ControlTypesModal } from '@/components/ControlTypesModal';
 
 export default function RegulatoryControlsPage() {
   const { buildings } = useBuildings();
@@ -38,6 +40,7 @@ export default function RegulatoryControlsPage() {
   
   // État pour la modale de création
   const [isNewControlModalOpen, setIsNewControlModalOpen] = useState(false);
+  const [isControlTypesModalOpen, setIsControlTypesModalOpen] = useState(false);
 
   // Filtrage des contrôles
   const filteredControls = controls?.filter((control) => {
@@ -116,6 +119,13 @@ export default function RegulatoryControlsPage() {
                 <Home className="w-4 h-4 mr-2" />
                 Accueil
               </Link>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsControlTypesModalOpen(true)}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Types de contrôle
             </Button>
             <Button onClick={() => setIsNewControlModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -548,6 +558,12 @@ export default function RegulatoryControlsPage() {
         buildings={buildings || []}
         providers={providers || []}
         onControlCreate={handleCreateControl}
+      />
+
+      {/* Modale de gestion des types de contrôle */}
+      <ControlTypesModal
+        isOpen={isControlTypesModalOpen}
+        onClose={() => setIsControlTypesModalOpen(false)}
       />
     </div>
   );
