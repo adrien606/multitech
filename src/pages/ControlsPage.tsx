@@ -92,6 +92,16 @@ export default function ControlsPage() {
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Terminé';
+      case 'in_progress': return 'En cours';
+      case 'overdue': return 'En retard';
+      case 'pending': return 'En attente';
+      default: return status;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -203,7 +213,7 @@ export default function ControlsPage() {
                     <div className="flex items-center gap-3">
                       <Badge variant={control.status === 'completed' ? 'default' : 'secondary'}>
                         {getStatusIcon(control.status)}
-                        {control.status}
+                        {getStatusText(control.status)}
                       </Badge>
                       <Button 
                         variant="ghost" 
