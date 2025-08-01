@@ -23,16 +23,20 @@ import { Link } from 'react-router-dom';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { FilterControls } from '@/components/FilterControls';
+import { NewControlModal } from '@/components/NewControlModal';
 import { useProviders } from '@/hooks/useProviders';
 
 export default function RegulatoryControlsPage() {
   const { buildings } = useBuildings();
-  const { controls, stats } = useRegulatoryControls();
+  const { controls, stats, createControl } = useRegulatoryControls();
   const { providers } = useProviders();
   
   // États pour les filtres
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  
+  // État pour la modale de création
+  const [isNewControlModalOpen, setIsNewControlModalOpen] = useState(false);
 
   // Filtrage des contrôles
   const filteredControls = controls?.filter((control) => {
@@ -40,6 +44,20 @@ export default function RegulatoryControlsPage() {
     const matchesStatus = selectedStatus === 'all' || control.status === selectedStatus;
     return matchesBuilding && matchesStatus;
   }) || [];
+
+  // Gestionnaire pour créer un nouveau contrôle
+  const handleCreateControl = async (controlData: any) => {
+    try {
+      const { data, error } = await createControl(controlData);
+      if (error) {
+        console.error('Erreur lors de la création du contrôle:', error);
+        return;
+      }
+      console.log('Contrôle créé avec succès:', data);
+    } catch (error) {
+      console.error('Erreur lors de la création du contrôle:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -76,7 +94,7 @@ export default function RegulatoryControlsPage() {
                 Accueil
               </Link>
             </Button>
-            <Button>
+            <Button onClick={() => setIsNewControlModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Nouveau contrôle
             </Button>
@@ -495,6 +513,15 @@ export default function RegulatoryControlsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modale de création de contrôle */}
+      <NewControlModal
+        isOpen={isNewControlModalOpen}
+        onClose={() => setIsNewControlModalOpen(false)}
+        buildings={buildings || []}
+        providers={providers || []}
+        onControlCreate={handleCreateControl}
+      />
     </div>
   );
 }
