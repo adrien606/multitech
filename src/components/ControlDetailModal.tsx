@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +17,18 @@ import {
   Repeat,
   Edit,
   Save,
-  X
+  X,
+  Upload,
+  FileText,
+  Download,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRegulatoryControls } from "@/hooks/useRegulatoryControls";
 import { useProviders } from "@/hooks/useProviders";
 import { useToast } from "@/hooks/use-toast";
+import { useStorageUpload } from "@/hooks/useStorageUpload";
 
 interface ControlDetailModalProps {
   controlId: string;
@@ -35,8 +40,18 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
   const { controls, updateControl } = useRegulatoryControls();
   const { providers } = useProviders();
   const { toast } = useToast();
+  const { uploadFile, uploading } = useStorageUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isEditing, setIsEditing] = useState(false);
+  const [documents, setDocuments] = useState<Array<{
+    id: string;
+    file_name: string;
+    file_url: string;
+    document_type: string;
+    file_size: number;
+    uploaded_at: string;
+  }>>([]);
   const [editData, setEditData] = useState({
     assigned_provider_id: '',
     provider_name: '',
@@ -141,6 +156,70 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
         variant: "destructive",
       });
     }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const result = await uploadFile(file, 'control-documents');
+      
+      // Ici on devrait aussi sauvegarder l'info en base de données
+      // Pour l'instant on simule avec le state local
+      const newDocument = {
+        id: Math.random().toString(),
+        file_name: file.name,
+        file_url: result.url,
+        document_type: getDocumentType(file.name),
+        file_size: file.size,
+        uploaded_at: new Date().toISOString()
+      };
+      
+      setDocuments(prev => [...prev, newDocument]);
+      
+      toast({
+        title: "Succès",
+        description: "Document uploadé avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de l'upload du document",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getDocumentType = (filename: string): string => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'pdf': return 'PDF';
+      case 'doc':
+      case 'docx': return 'Word';
+      case 'xls':
+      case 'xlsx': return 'Excel';
+      case 'jpg':
+      case 'jpeg':
+      case 'png': return 'Image';
+      default: return 'Autre';
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const removeDocument = (documentId: string) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    toast({
+      title: "Succès",
+      description: "Document supprimé",
+    });
   };
 
   return (
@@ -279,6 +358,67 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               </p>
             ) : (
               <p className="text-sm text-muted-foreground italic">Aucune note</p>
+            )}
+          </div>
+
+          {/* Documents */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium">Documents</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Upload className="w-4 h-4 mr-1" />
+                {uploading ? 'Upload...' : 'Ajouter'}
+              </Button>
+            </div>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              onChange={handleFileUpload}
+            />
+
+            {documents.length > 0 ? (
+              <div className="space-y-2">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{doc.file_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {doc.document_type} • {formatFileSize(doc.file_size)} • 
+                          {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(doc.file_url, '_blank')}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDocument(doc.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Aucun document attaché</p>
             )}
           </div>
 
