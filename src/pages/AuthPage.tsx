@@ -147,7 +147,7 @@ export default function AuthPage() {
       confirmPinCode: numericValue
     }));
   };
-  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4 bg-red-500">
+  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">MultiTech</CardTitle>
