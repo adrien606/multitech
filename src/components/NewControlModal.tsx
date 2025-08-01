@@ -12,7 +12,6 @@ import { fr } from 'date-fns/locale';
 import { CalendarIcon, Building2, Shield } from 'lucide-react';
 import { Building } from '@/hooks/useBuildings';
 import { Provider } from '@/hooks/useProviders';
-import { useControlTypes } from '@/hooks/useControlTypes';
 import { cn } from '@/lib/utils';
 
 interface NewControlModalProps {
@@ -29,6 +28,16 @@ interface NewControlModalProps {
   }) => void;
 }
 
+const controlTypes = [
+  'Vérification périodique ascenseurs',
+  'Contrôle incendie annuel',
+  'Vérification électrique',
+  'Contrôle climatisation',
+  'Vérification gaz',
+  'Contrôle sécurité',
+  'Inspection sanitaire',
+  'Contrôle accessibilité',
+];
 
 export function NewControlModal({
   isOpen,
@@ -37,7 +46,6 @@ export function NewControlModal({
   providers,
   onControlCreate,
 }: NewControlModalProps) {
-  const { controlTypes } = useControlTypes();
   const [formData, setFormData] = useState({
     building_id: '',
     control_type_name: '',
@@ -145,13 +153,8 @@ export function NewControlModal({
                 </SelectTrigger>
                 <SelectContent>
                   {controlTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.name}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{type.name}</span>
-                        {type.description && (
-                          <span className="text-xs text-muted-foreground">{type.description}</span>
-                        )}
-                      </div>
+                    <SelectItem key={type} value={type}>
+                      {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
