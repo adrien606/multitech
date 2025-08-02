@@ -1,25 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-
-// Interface temporaire pour les contrôles réglementaires depuis la DB
-interface RegulatoryControlDB {
-  id: string;
-  building_id: string;
-  control_type_id: string;
-  due_date: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'overdue';
-  assigned_provider_id?: string;
-  notes?: string;
-  completed_date?: string;
-  next_due_date?: string;
-  estimated_cost?: number;
-  actual_cost?: number;
-  created_at: string;
-  updated_at: string;
-  buildings?: { name: string };
-  control_types?: { name: string };
-  providers?: { name: string };
-}
+// import { supabase } from '@/integrations/supabase/client';
 
 export interface RegulatoryControl {
   id: string;
@@ -53,51 +33,80 @@ export const useRegulatoryControls = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Charger les données depuis localStorage
+  const loadFromStorage = () => {
+    try {
+      const stored = localStorage.getItem('regulatory_controls');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Sauvegarder dans localStorage
+  const saveToStorage = (controlsData: RegulatoryControl[]) => {
+    try {
+      localStorage.setItem('regulatory_controls', JSON.stringify(controlsData));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    }
+  };
 
   const fetchControls = async () => {
     try {
       setLoading(true);
       
-      // Récupérer les contrôles depuis Supabase avec les informations des bâtiments et types de contrôles
-      const { data: controlsData, error } = await supabase
-        .from('regulatory_controls')
-        .select(`
-          *,
-          buildings (
-            name
-          ),
-          control_types (
-            name
-          ),
-          providers (
-            name
-          )
-        `)
-        .order('due_date', { ascending: true }) as { data: RegulatoryControlDB[] | null, error: any };
-
-      if (error) {
-        throw error;
+      // Essayer de charger depuis localStorage d'abord
+      const storedControls = loadFromStorage();
+      
+      let controlsData: RegulatoryControl[];
+      
+      if (storedControls && storedControls.length > 0) {
+        controlsData = storedControls;
+      } else {
+        // Données mock pour le développement (seulement si rien en localStorage)
+        controlsData = [
+          {
+            id: '1',
+            building_id: '1',
+            building_name: 'Tour Montparnasse',
+            control_type_id: '1',
+            control_type_name: 'Vérification périodique ascenseurs',
+            due_date: '2024-03-15',
+            status: 'pending',
+            created_at: '2024-01-01',
+            updated_at: '2024-01-01',
+          },
+          {
+            id: '2',
+            building_id: '2',
+            building_name: 'Immeuble Haussmann',
+            control_type_id: '2',
+            control_type_name: 'Contrôle incendie annuel',
+            due_date: '2024-02-20',
+            status: 'overdue',
+            created_at: '2024-01-01',
+            updated_at: '2024-01-01',
+          },
+          {
+            id: '3',
+            building_id: '1',
+            building_name: 'Tour Montparnasse',
+            control_type_id: '3',
+            control_type_name: 'Vérification électrique',
+            due_date: '2024-04-10',
+            status: 'in_progress',
+            provider_name: 'Électricité Plus',
+            created_at: '2024-01-01',
+            updated_at: '2024-01-01',
+          },
+        ];
+        
+        // Sauvegarder les données mock initiales
+        saveToStorage(controlsData);
       }
 
-      // Transformer les données pour correspondre à l'interface
-      const transformedControls: RegulatoryControl[] = (controlsData || []).map((control: RegulatoryControlDB) => ({
-        id: control.id,
-        building_id: control.building_id,
-        building_name: control.buildings?.name || 'Bâtiment inconnu',
-        control_type_id: control.control_type_id,
-        control_type_name: control.control_types?.name || 'Type inconnu',
-        due_date: control.due_date,
-        status: control.status as any,
-        assigned_provider_id: control.assigned_provider_id,
-        provider_name: control.providers?.name,
-        notes: control.notes,
-        completed_date: control.completed_date,
-        next_due_date: control.next_due_date,
-        created_at: control.created_at,
-        updated_at: control.updated_at,
-      }));
-
-      setControls(transformedControls);
+      setControls(controlsData);
 
       // Calculer les statistiques
       const now = new Date();
@@ -105,14 +114,14 @@ export const useRegulatoryControls = () => {
       oneWeekFromNow.setDate(now.getDate() + 7);
 
       const calculatedStats: ControlStats = {
-        total: transformedControls.length,
-        pending: transformedControls.filter(c => c.status === 'pending').length,
-        in_progress: transformedControls.filter(c => c.status === 'in_progress').length,
-        completed: transformedControls.filter(c => c.status === 'completed').length,
-        overdue: transformedControls.filter(c => 
+        total: controlsData.length,
+        pending: controlsData.filter(c => c.status === 'pending').length,
+        in_progress: controlsData.filter(c => c.status === 'in_progress').length,
+        completed: controlsData.filter(c => c.status === 'completed').length,
+        overdue: controlsData.filter(c => 
           c.status !== 'completed' && new Date(c.due_date) < now
         ).length,
-        upcoming: transformedControls.filter(c => 
+        upcoming: controlsData.filter(c => 
           c.status !== 'completed' && 
           new Date(c.due_date) >= now && 
           new Date(c.due_date) <= oneWeekFromNow
@@ -130,27 +139,39 @@ export const useRegulatoryControls = () => {
 
   const createControl = async (controlData: Partial<RegulatoryControl>) => {
     try {
-      const { data, error } = await supabase
-        .from('regulatory_controls')
-        .insert({
-          building_id: controlData.building_id,
-          control_type_id: controlData.control_type_id,
-          due_date: controlData.due_date,
-          status: controlData.status || 'pending',
-          assigned_provider_id: controlData.assigned_provider_id,
-          notes: controlData.notes,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      // Rafraîchir les données
-      await fetchControls();
+      // Mock pour le développement - génération d'un UUID simulé
+      const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0;
+          const v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      };
       
-      return { data, error: null };
+      const newControl: RegulatoryControl = {
+        id: generateUUID(),
+        building_id: controlData.building_id || '',
+        building_name: controlData.building_name || '',
+        control_type_id: controlData.control_type_id || '',
+        control_type_name: controlData.control_type_name || '',
+        due_date: controlData.due_date || '',
+        status: controlData.status || 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      setControls(prev => {
+        const newControls = [newControl, ...prev];
+        saveToStorage(newControls);
+        return newControls;
+      });
+      
+      // Recalculer les stats après ajout
+      setTimeout(() => {
+        fetchControls();
+      }, 100);
+      
+      return { data: newControl, error: null };
     } catch (err) {
       console.error('Error creating regulatory control:', err);
       return { data: null, error: err instanceof Error ? err.message : 'Erreur lors de la création' };
@@ -159,27 +180,39 @@ export const useRegulatoryControls = () => {
 
   const updateControl = async (id: string, controlData: Partial<RegulatoryControl>) => {
     try {
-      const { data, error } = await supabase
-        .from('regulatory_controls')
-        .update({
-          status: controlData.status,
-          notes: controlData.notes,
-          completed_date: controlData.completed_date,
-          next_due_date: controlData.next_due_date,
-          assigned_provider_id: controlData.assigned_provider_id,
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      // Rafraîchir les données
-      await fetchControls();
+      let updatedControlsForStats: RegulatoryControl[] = [];
       
-      return { data, error: null };
+      setControls(prev => {
+        updatedControlsForStats = prev.map(control => 
+          control.id === id ? { ...control, ...controlData, updated_at: new Date().toISOString() } : control
+        );
+        saveToStorage(updatedControlsForStats);
+        return updatedControlsForStats;
+      });
+      
+      // Recalculer les stats avec les données mises à jour
+      const now = new Date();
+      const oneWeekFromNow = new Date();
+      oneWeekFromNow.setDate(now.getDate() + 7);
+
+      const calculatedStats: ControlStats = {
+        total: updatedControlsForStats.length,
+        pending: updatedControlsForStats.filter(c => c.status === 'pending').length,
+        in_progress: updatedControlsForStats.filter(c => c.status === 'in_progress').length,
+        completed: updatedControlsForStats.filter(c => c.status === 'completed').length,
+        overdue: updatedControlsForStats.filter(c => 
+          c.status !== 'completed' && new Date(c.due_date) < now
+        ).length,
+        upcoming: updatedControlsForStats.filter(c => 
+          c.status !== 'completed' && 
+          new Date(c.due_date) >= now && 
+          new Date(c.due_date) <= oneWeekFromNow
+        ).length,
+      };
+
+      setStats(calculatedStats);
+      
+      return { data: controlData, error: null };
     } catch (err) {
       console.error('Error updating regulatory control:', err);
       return { data: null, error: err instanceof Error ? err.message : 'Erreur lors de la mise à jour' };
@@ -188,18 +221,11 @@ export const useRegulatoryControls = () => {
 
   const deleteControl = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('regulatory_controls')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-
-      // Rafraîchir les données
-      await fetchControls();
-      
+      setControls(prev => {
+        const filteredControls = prev.filter(control => control.id !== id);
+        saveToStorage(filteredControls);
+        return filteredControls;
+      });
       return { error: null };
     } catch (err) {
       console.error('Error deleting regulatory control:', err);
