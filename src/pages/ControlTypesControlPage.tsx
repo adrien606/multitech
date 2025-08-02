@@ -81,22 +81,11 @@ export default function ControlTypesControlPage() {
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/regulatory-controls/controls')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour aux contrôles
-            </Button>
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Gestion des Types de Contrôles</h2>
-              <p className="text-muted-foreground mt-1">
-                Gérez les types de contrôles disponibles pour vos contrôles réglementaires
-              </p>
-            </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Gestion des Types de Contrôles</h2>
+            <p className="text-muted-foreground mt-1">
+              Gérez les types de contrôles disponibles pour vos contrôles réglementaires
+            </p>
           </div>
           <Button onClick={handleCreate} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
