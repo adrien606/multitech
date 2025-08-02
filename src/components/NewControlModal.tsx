@@ -12,6 +12,7 @@ import { fr } from 'date-fns/locale';
 import { CalendarIcon, Building2, Shield } from 'lucide-react';
 import { Building } from '@/hooks/useBuildings';
 import { Provider } from '@/hooks/useProviders';
+import { useControlTypes } from '@/hooks/useControlTypes';
 import { cn } from '@/lib/utils';
 
 interface NewControlModalProps {
@@ -21,23 +22,13 @@ interface NewControlModalProps {
   providers: Provider[];
   onControlCreate: (controlData: {
     building_id: string;
-    control_type_name: string;
+    control_type_id: string;
     due_date: string;
     assigned_provider_id?: string;
     notes?: string;
   }) => void;
 }
 
-const controlTypes = [
-  'Vérification périodique ascenseurs',
-  'Contrôle incendie annuel',
-  'Vérification électrique',
-  'Contrôle climatisation',
-  'Vérification gaz',
-  'Contrôle sécurité',
-  'Inspection sanitaire',
-  'Contrôle accessibilité',
-];
 
 export function NewControlModal({
   isOpen,
@@ -46,9 +37,10 @@ export function NewControlModal({
   providers,
   onControlCreate,
 }: NewControlModalProps) {
+  const { controlTypes } = useControlTypes();
   const [formData, setFormData] = useState({
     building_id: '',
-    control_type_name: '',
+    control_type_id: '',
     due_date: undefined as Date | undefined,
     assigned_provider_id: 'none',
     notes: '',
@@ -58,7 +50,7 @@ export function NewControlModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.building_id || !formData.control_type_name || !formData.due_date) {
+    if (!formData.building_id || !formData.control_type_id || !formData.due_date) {
       return;
     }
 
@@ -66,7 +58,7 @@ export function NewControlModal({
 
     const controlData = {
       building_id: formData.building_id,
-      control_type_name: formData.control_type_name,
+      control_type_id: formData.control_type_id,
       due_date: formData.due_date.toISOString(),
       assigned_provider_id: formData.assigned_provider_id === 'none' ? undefined : formData.assigned_provider_id || undefined,
       notes: formData.notes || undefined,
@@ -77,7 +69,7 @@ export function NewControlModal({
     // Reset form
     setFormData({
       building_id: '',
-      control_type_name: '',
+      control_type_id: '',
       due_date: undefined,
       assigned_provider_id: 'none',
       notes: '',
@@ -90,7 +82,7 @@ export function NewControlModal({
   const handleClose = () => {
     setFormData({
       building_id: '',
-      control_type_name: '',
+      control_type_id: '',
       due_date: undefined,
       assigned_provider_id: 'none',
       notes: '',
@@ -144,17 +136,17 @@ export function NewControlModal({
             <div className="space-y-2">
               <Label htmlFor="control-type">Type de contrôle *</Label>
               <Select 
-                value={formData.control_type_name} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, control_type_name: value }))}
+                value={formData.control_type_id} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, control_type_id: value }))}
                 required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Type de contrôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  {controlTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  {controlTypes.filter(type => type.is_active).map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -238,7 +230,7 @@ export function NewControlModal({
             </Button>
             <Button 
               type="submit" 
-              disabled={isSubmitting || !formData.building_id || !formData.control_type_name || !formData.due_date}
+              disabled={isSubmitting || !formData.building_id || !formData.control_type_id || !formData.due_date}
               className="bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? 'Création...' : 'Créer le contrôle'}

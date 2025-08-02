@@ -66,7 +66,13 @@ export default function ControlsPage() {
   }) || [];
 
   // Gestionnaire pour créer un nouveau contrôle
-  const handleCreateControl = async (controlData: any) => {
+  const handleCreateControl = async (controlData: { 
+    building_id: string; 
+    control_type_id: string; 
+    due_date: string; 
+    assigned_provider_id?: string; 
+    notes?: string; 
+  }) => {
     try {
       const { data, error } = await createControl(controlData);
       if (error) {
