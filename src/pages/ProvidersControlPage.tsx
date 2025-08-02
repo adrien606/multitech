@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -144,7 +144,7 @@ export default function ProvidersControlPage() {
                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Spécialités</TableHead>
+                  <TableHead>Description</TableHead>
                   <TableHead>Adresse</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
@@ -171,22 +171,9 @@ export default function ProvidersControlPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {(provider as any).provider_specialities?.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {(provider as any).provider_specialities.slice(0, 2).map((ps: any) => (
-                            <Badge key={ps.id} variant="outline" className="text-xs">
-                              {ps.speciality.name}
-                            </Badge>
-                          ))}
-                          {(provider as any).provider_specialities.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{(provider as any).provider_specialities.length - 2}
-                            </Badge>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Aucune</span>
-                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {provider.description || 'Aucune description'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {provider.address && (
