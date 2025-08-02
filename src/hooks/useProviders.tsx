@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,7 +23,13 @@ export function useProviders() {
     try {
       const { data, error } = await supabase
         .from('providers')
-        .select('*')
+        .select(`
+          *,
+          provider_specialities(
+            id,
+            speciality:specialities(*)
+          )
+        `)
         .order('name');
 
       if (error) throw error;

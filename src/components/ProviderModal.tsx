@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Provider } from '@/hooks/useProviders';
+import { useSpecialities } from '@/hooks/useSpecialities';
 
 interface ProviderModalProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface ProviderModalProps {
 }
 
 export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading }: ProviderModalProps) {
+  const { specialities } = useSpecialities();
   const [formData, setFormData] = useState({
     name: provider?.name || '',
     email: provider?.email || '',
@@ -25,9 +27,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
     description: provider?.description || '',
     is_active: provider?.is_active ?? true,
   });
-  // Temporarily disable specialities until the hook issue is resolved
-  const [selectedSpecialities] = useState<string[]>([]);
-  const specialities: any[] = []; // Temporary empty array
+  const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
 
   // Mettre à jour le formulaire quand les données du provider changent
   useEffect(() => {
@@ -40,9 +40,9 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         description: provider.description || '',
         is_active: provider.is_active ?? true,
       });
-      // Temporarily disable specialities loading
-      // const providerSpecialityIds = (provider as any).provider_specialities?.map((ps: any) => ps.speciality.id) || [];
-      // setSelectedSpecialities(providerSpecialityIds);
+      // Charger les spécialités du prestataire
+      const providerSpecialityIds = (provider as any).provider_specialities?.map((ps: any) => ps.speciality.id) || [];
+      setSelectedSpecialities(providerSpecialityIds);
     } else {
       // Reset pour un nouveau prestataire
       setFormData({
@@ -53,7 +53,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         description: '',
         is_active: true,
       });
-      // setSelectedSpecialities([]);
+      setSelectedSpecialities([]);
     }
   }, [provider]);
 
@@ -76,7 +76,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         description: '',
         is_active: true,
       });
-      // setSelectedSpecialities([]);
+      setSelectedSpecialities([]);
     } catch (error) {
       // Error is handled in the hook
     }
@@ -164,6 +164,33 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
               placeholder="Décrivez les services du prestataire..."
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Spécialités</Label>
+            <div className="grid grid-cols-2 gap-3 max-h-32 overflow-y-auto border rounded-md p-3">
+              {specialities.map((speciality) => (
+                <div key={speciality.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`speciality-${speciality.id}`}
+                    checked={selectedSpecialities.includes(speciality.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedSpecialities(prev => [...prev, speciality.id]);
+                      } else {
+                        setSelectedSpecialities(prev => prev.filter(id => id !== speciality.id));
+                      }
+                    }}
+                  />
+                  <Label 
+                    htmlFor={`speciality-${speciality.id}`}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {speciality.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
