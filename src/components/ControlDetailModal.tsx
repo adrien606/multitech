@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRegulatoryControls } from "@/hooks/useRegulatoryControls";
 import { useProviders } from "@/hooks/useProviders";
+import { useBuildings } from "@/hooks/useBuildings";
 import { useToast } from "@/hooks/use-toast";
 import { useStorageUpload } from "@/hooks/useStorageUpload";
 
@@ -39,6 +40,7 @@ interface ControlDetailModalProps {
 export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetailModalProps) {
   const { controls, updateControl } = useRegulatoryControls();
   const { providers } = useProviders();
+  const { buildings } = useBuildings();
   const { toast } = useToast();
   const { uploadFile, uploading } = useStorageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +54,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     uploaded_at: string;
   }>>([]);
   const [editData, setEditData] = useState({
+    building_id: '',
+    building_name: '',
     assigned_provider_id: '',
     provider_name: '',
     next_due_date: '',
@@ -66,6 +70,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
   useEffect(() => {
     if (control) {
       setEditData({
+        building_id: control.building_id || '',
+        building_name: control.building_name || '',
         assigned_provider_id: control.assigned_provider_id || '',
         provider_name: control.provider_name || '',
         next_due_date: control.next_due_date || '',
@@ -116,6 +122,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
 
   const handleEdit = () => {
     setEditData({
+      building_id: control.building_id || '',
+      building_name: control.building_name || '',
       assigned_provider_id: control.assigned_provider_id || '',
       provider_name: control.provider_name || '',
       next_due_date: control.next_due_date || '',
@@ -270,7 +278,33 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               <div className="flex items-center gap-2 text-sm">
                 <Building className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Bâtiment:</span>
-                <span>{control.building_name}</span>
+                <div className="flex-1">
+                  <Select
+                    value={editData.building_id || "none"}
+                    onValueChange={(value) => {
+                      if (value === "none") {
+                        handleFieldChange('building_id', '');
+                        handleFieldChange('building_name', '');
+                      } else {
+                        const building = buildings?.find(b => b.id === value);
+                        handleFieldChange('building_id', value);
+                        handleFieldChange('building_name', building?.name || '');
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="Sélectionner un bâtiment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun bâtiment</SelectItem>
+                      {buildings?.map((building) => (
+                        <SelectItem key={building.id} value={building.id}>
+                          {building.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="flex items-center gap-2 text-sm">
