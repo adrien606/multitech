@@ -1,6 +1,26 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// Interface temporaire pour les contrôles réglementaires depuis la DB
+interface RegulatoryControlDB {
+  id: string;
+  building_id: string;
+  control_type_id: string;
+  due_date: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'overdue';
+  assigned_provider_id?: string;
+  notes?: string;
+  completed_date?: string;
+  next_due_date?: string;
+  estimated_cost?: number;
+  actual_cost?: number;
+  created_at: string;
+  updated_at: string;
+  buildings?: { name: string };
+  control_types?: { name: string };
+  providers?: { name: string };
+}
+
 export interface RegulatoryControl {
   id: string;
   building_id: string;
@@ -33,24 +53,6 @@ export const useRegulatoryControls = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Charger les données depuis localStorage
-  const loadFromStorage = () => {
-    try {
-      const stored = localStorage.getItem('regulatory_controls');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  };
-
-  // Sauvegarder dans localStorage
-  const saveToStorage = (controlsData: RegulatoryControl[]) => {
-    try {
-      localStorage.setItem('regulatory_controls', JSON.stringify(controlsData));
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-    }
-  };
 
   const fetchControls = async () => {
     try {
@@ -71,14 +73,14 @@ export const useRegulatoryControls = () => {
             name
           )
         `)
-        .order('due_date', { ascending: true });
+        .order('due_date', { ascending: true }) as { data: RegulatoryControlDB[] | null, error: any };
 
       if (error) {
         throw error;
       }
 
       // Transformer les données pour correspondre à l'interface
-      const transformedControls: RegulatoryControl[] = (controlsData || []).map(control => ({
+      const transformedControls: RegulatoryControl[] = (controlsData || []).map((control: RegulatoryControlDB) => ({
         id: control.id,
         building_id: control.building_id,
         building_name: control.buildings?.name || 'Bâtiment inconnu',
