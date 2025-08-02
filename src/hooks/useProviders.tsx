@@ -23,7 +23,13 @@ export function useProviders() {
     try {
       const { data, error } = await supabase
         .from('providers')
-        .select('*')
+        .select(`
+          *,
+          provider_specialities(
+            id,
+            speciality:specialities(*)
+          )
+        `)
         .order('name');
 
       if (error) throw error;

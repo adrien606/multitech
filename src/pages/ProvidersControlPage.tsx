@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Plus, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 import { useProviders } from '@/hooks/useProviders';
+import { useSpecialities } from '@/hooks/useSpecialities';
 import { ProviderModal } from '@/components/ProviderModal';
 import { ProviderDeleteDialog } from '@/components/ProviderDeleteDialog';
 import Navigation from '@/components/Navigation';
@@ -12,6 +13,7 @@ import type { Provider } from '@/hooks/useProviders';
 
 export default function ProvidersControlPage() {
   const { providers, loading, createProvider, updateProvider, deleteProvider } = useProviders();
+  const { updateProviderSpecialities } = useSpecialities();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
@@ -32,14 +34,23 @@ export default function ProvidersControlPage() {
     setDeleteDialogOpen(true);
   };
 
-  const handleSave = async (providerData: Omit<Provider, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleSave = async (providerData: Omit<Provider, 'id' | 'created_at' | 'updated_at'>, specialityIds: string[]) => {
     setActionLoading(true);
     try {
+      let providerId: string;
       if (selectedProvider) {
-        await updateProvider(selectedProvider.id, providerData);
+        const updatedProvider = await updateProvider(selectedProvider.id, providerData);
+        providerId = updatedProvider.id;
       } else {
-        await createProvider(providerData);
+        const newProvider = await createProvider(providerData);
+        providerId = newProvider.id;
       }
+      
+      // Update specialities
+      await updateProviderSpecialities(providerId, specialityIds);
+      
+      setModalOpen(false);
+      setSelectedProvider(null);
     } finally {
       setActionLoading(false);
     }
@@ -135,8 +146,8 @@ export default function ProvidersControlPage() {
                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead>Spécialités</TableHead>
                   <TableHead>Adresse</TableHead>
-                  <TableHead>Description</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -162,17 +173,30 @@ export default function ProvidersControlPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {provider.address && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="w-3 h-3" />
-                          <span className="truncate max-w-[200px]">{provider.address}</span>
+                      {(provider as any).provider_specialities?.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {(provider as any).provider_specialities.slice(0, 2).map((ps: any) => (
+                            <Badge key={ps.id} variant="outline" className="text-xs">
+                              {ps.speciality.name}
+                            </Badge>
+                          ))}
+                          {(provider as any).provider_specialities.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{(provider as any).provider_specialities.length - 2}
+                            </Badge>
+                          )}
                         </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Aucune</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="truncate max-w-[200px] text-sm">
-                        {provider.description || '-'}
-                      </span>
+                      {provider.address && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="w-3 h-3" />
+                          <span className="truncate max-w-[150px]">{provider.address}</span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={provider.is_active ? 'default' : 'secondary'}>
