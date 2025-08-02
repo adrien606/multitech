@@ -38,7 +38,7 @@ interface ControlDetailModalProps {
 }
 
 export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetailModalProps) {
-  const { controls, updateControl, createControl } = useRegulatoryControls();
+  const { controls, updateControl } = useRegulatoryControls();
   const { providers } = useProviders();
   const { buildings } = useBuildings();
   const { toast } = useToast();
@@ -135,10 +135,7 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
 
   const handleSave = async () => {
     try {
-      const { next_due_date, ...updateData } = editData;
-      
-      // Mise à jour du contrôle actuel
-      const { error } = await updateControl(controlId, updateData);
+      const { error } = await updateControl(controlId, editData);
       if (error) {
         toast({
           title: "Erreur",
@@ -148,41 +145,10 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
         return;
       }
       
-      // Si une prochaine échéance est définie, créer un nouveau contrôle
-      if (next_due_date && next_due_date.trim() !== '') {
-        const newControlData = {
-          building_id: editData.building_id,
-          building_name: editData.building_name,
-          control_type_id: control.control_type_id,
-          control_type_name: control.control_type_name,
-          due_date: next_due_date.split('T')[0], // Convertir la date au format requis
-          status: 'pending' as const,
-          notes: `Contrôle de suivi généré automatiquement depuis le contrôle ${control.id}`,
-          assigned_provider_id: editData.assigned_provider_id,
-          provider_name: editData.provider_name
-        };
-        
-        const { error: createError } = await createControl(newControlData);
-        if (createError) {
-          toast({
-            title: "Erreur",
-            description: `Contrôle mis à jour mais erreur lors de la création du nouveau contrôle: ${createError}`,
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        toast({
-          title: "Succès",
-          description: "Contrôle mis à jour et nouveau contrôle créé pour la prochaine échéance",
-        });
-      } else {
-        toast({
-          title: "Succès",
-          description: "Contrôle mis à jour avec succès",
-        });
-      }
-      
+      toast({
+        title: "Succès",
+        description: "Contrôle mis à jour avec succès",
+      });
       setHasChanges(false);
     } catch (error) {
       toast({
