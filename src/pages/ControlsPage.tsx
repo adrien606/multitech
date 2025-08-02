@@ -194,6 +194,7 @@ export default function ControlsPage() {
         <div className="mb-8">
           <ControlsCalendar 
             controls={controls || []} 
+            buildings={buildings || []}
             onControlClick={(controlId) => setSelectedControlId(controlId)}
           />
         </div>

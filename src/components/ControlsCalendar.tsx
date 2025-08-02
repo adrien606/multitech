@@ -6,22 +6,31 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Clock, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarIcon, Clock, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { RegulatoryControl } from '@/types/regulatory-controls';
+import { Building } from '@/hooks/useBuildings';
 
 interface ControlsCalendarProps {
   controls: RegulatoryControl[];
+  buildings: Building[];
   onControlClick?: (controlId: string) => void;
 }
 
-export function ControlsCalendar({ controls, onControlClick }: ControlsCalendarProps) {
+export function ControlsCalendar({ controls, buildings, onControlClick }: ControlsCalendarProps) {
   console.log('ControlsCalendar rendered with controls:', controls.length);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('all');
+
+  // Filtrer les contrôles par bâtiment
+  const filteredControls = selectedBuildingId === 'all' 
+    ? controls 
+    : controls.filter(control => control.building_id === selectedBuildingId);
 
   // Obtenir les contrôles pour une date donnée
   const getControlsForDate = (date: Date) => {
-    return controls.filter(control => 
+    return filteredControls.filter(control => 
       isSameDay(new Date(control.due_date), date)
     );
   };
@@ -192,6 +201,33 @@ export function ControlsCalendar({ controls, onControlClick }: ControlsCalendarP
           </div>
           
           <div className="flex items-center gap-3">
+            <div className="w-56">
+              <Select value={selectedBuildingId} onValueChange={setSelectedBuildingId}>
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                    <SelectValue placeholder="Filtrer par bâtiment" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex flex-col">
+                      <span className="font-medium">Tous les bâtiments</span>
+                      <span className="text-xs text-muted-foreground">Afficher tous les contrôles</span>
+                    </div>
+                  </SelectItem>
+                  {buildings.map((building) => (
+                    <SelectItem key={building.id} value={building.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{building.name}</span>
+                        <span className="text-xs text-muted-foreground">{building.address}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'month' | 'week')}>
               <TabsList>
                 <TabsTrigger value="month" className="text-xs">Mois</TabsTrigger>

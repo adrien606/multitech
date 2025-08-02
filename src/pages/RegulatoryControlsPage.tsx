@@ -414,6 +414,7 @@ export default function RegulatoryControlsPage() {
           <TabsContent value="calendar" className="space-y-6">
             <ControlsCalendar 
               controls={controls || []} 
+              buildings={buildings || []}
               onControlClick={(controlId) => setSelectedControlId(controlId)}
             />
           </TabsContent>
