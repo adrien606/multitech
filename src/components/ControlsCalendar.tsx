@@ -81,10 +81,10 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
     const weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
     return (
-      <div className="grid grid-cols-7 gap-2 p-4 bg-gradient-to-br from-background to-muted/20 rounded-lg">
+      <div className="grid grid-cols-7 gap-1">
         {/* En-têtes des jours */}
         {weekDays.map((day) => (
-          <div key={day} className="p-3 text-center text-sm font-semibold text-primary bg-primary/5 rounded-lg">
+          <div key={day} className="p-2 text-center text-xs font-medium text-muted-foreground border-b">
             {day}
           </div>
         ))}
@@ -98,34 +98,32 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[140px] p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
-                isCurrentMonth 
-                  ? 'bg-card border-border hover:border-primary/30' 
-                  : 'bg-muted/30 border-muted-foreground/20'
-              } ${isToday ? 'ring-2 ring-primary ring-offset-2 bg-primary/5' : ''}`}
+              className={`min-h-[80px] p-1 border-b border-r border-border transition-colors hover:bg-muted/30 ${
+                !isCurrentMonth ? 'bg-muted/10' : ''
+              } ${isToday ? 'bg-primary/5' : ''}`}
             >
-              <div className={`text-lg font-bold mb-2 ${
+              <div className={`text-sm font-medium mb-1 ${
                 isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'
-              } ${isToday ? 'text-primary' : ''}`}>
+              } ${isToday ? 'text-primary font-semibold' : ''}`}>
                 {format(day, 'd')}
               </div>
               
-              <div className="space-y-1">
-                {dayControls.slice(0, 3).map((control) => (
+              <div className="space-y-0.5">
+                {dayControls.slice(0, 2).map((control) => (
                   <div
                     key={control.id}
-                    className={`text-xs p-2 rounded-md border transition-all duration-200 cursor-pointer ${getStatusColor(control.status)} shadow-sm`}
+                    className={`text-xs px-1 py-0.5 rounded cursor-pointer ${getStatusColor(control.status)}`}
                     title={`${control.control_type_name} - ${control.building_name}`}
                   >
                     <div className="flex items-center gap-1">
                       {getStatusIcon(control.status)}
-                      <span className="truncate font-medium">{control.control_type_name}</span>
+                      <span className="truncate text-xs">{control.control_type_name}</span>
                     </div>
                   </div>
                 ))}
-                {dayControls.length > 3 && (
-                  <div className="text-xs text-primary font-medium bg-primary/10 p-1 rounded text-center">
-                    +{dayControls.length - 3} autre(s)
+                {dayControls.length > 2 && (
+                  <div className="text-xs text-muted-foreground px-1">
+                    +{dayControls.length - 2}
                   </div>
                 )}
               </div>
@@ -142,7 +140,7 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     
     return (
-      <div className="grid grid-cols-7 gap-3 p-4 bg-gradient-to-br from-background to-muted/20 rounded-lg">
+      <div className="grid grid-cols-7 gap-1">
         {weekDays.map((day) => {
           const dayControls = getControlsForDate(day);
           const isToday = isSameDay(day, new Date());
@@ -150,29 +148,27 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[450px] p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-lg ${
-                isToday 
-                  ? 'ring-2 ring-primary ring-offset-2 bg-primary/5 border-primary' 
-                  : 'bg-card border-border hover:border-primary/30'
+              className={`min-h-[300px] p-2 border-r border-border transition-colors hover:bg-muted/30 ${
+                isToday ? 'bg-primary/5' : ''
               }`}
             >
-              <div className={`text-xl font-bold mb-4 pb-2 border-b ${
-                isToday ? 'text-primary border-primary/30' : 'text-foreground border-border'
+              <div className={`text-sm font-semibold mb-2 pb-1 border-b border-border ${
+                isToday ? 'text-primary' : 'text-foreground'
               }`}>
-                {format(day, 'EEE d', { locale: fr })}
+                {format(day, 'EEE d')}
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {dayControls.map((control) => (
                   <div
                     key={control.id}
-                    className={`text-sm p-3 rounded-lg border transition-all duration-200 cursor-pointer hover:shadow-md ${getStatusColor(control.status)}`}
+                    className={`text-xs p-1.5 rounded cursor-pointer ${getStatusColor(control.status)}`}
                   >
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1 mb-1">
                       {getStatusIcon(control.status)}
-                      <span className="font-semibold">{control.control_type_name}</span>
+                      <span className="font-medium truncate">{control.control_type_name}</span>
                     </div>
-                    <div className="text-xs opacity-75">{control.building_name}</div>
+                    <div className="text-xs opacity-60 truncate">{control.building_name}</div>
                   </div>
                 ))}
               </div>
@@ -186,49 +182,47 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
   console.log('Rendering calendar with controls:', controls.length);
   
   return (
-    <Card className="overflow-hidden shadow-lg border-0 bg-gradient-to-br from-card via-card to-muted/30">
-      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+    <Card className="overflow-hidden border">
+      <CardHeader className="border-b bg-background pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <CalendarIcon className="w-6 h-6 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-lg font-medium">
+              <CalendarIcon className="w-5 h-5 text-muted-foreground" />
               Calendrier des contrôles
             </CardTitle>
-            <CardDescription className="text-base font-medium">
-              {format(currentDate, 'MMMM yyyy', { locale: fr })}
+            <CardDescription className="text-sm">
+              {format(currentDate, 'MMMM yyyy')}
             </CardDescription>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'month' | 'week')}>
-              <TabsList className="bg-primary/10">
-                <TabsTrigger value="month" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Mois</TabsTrigger>
-                <TabsTrigger value="week" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Semaine</TabsTrigger>
+              <TabsList>
+                <TabsTrigger value="month" className="text-xs">Mois</TabsTrigger>
+                <TabsTrigger value="week" className="text-xs">Semaine</TabsTrigger>
               </TabsList>
             </Tabs>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => viewMode === 'month' ? navigateMonth('prev') : navigateWeek('prev')}
-                className="hover:bg-primary/10"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setCurrentDate(new Date())}
-                className="hover:bg-primary/10 font-medium"
+                className="text-xs px-2"
               >
                 Aujourd'hui
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => viewMode === 'month' ? navigateMonth('next') : navigateWeek('next')}
-                className="hover:bg-primary/10"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -237,7 +231,7 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
         </div>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="p-0">
         {viewMode === 'month' ? renderMonthView() : renderWeekView()}
       </CardContent>
     </Card>
