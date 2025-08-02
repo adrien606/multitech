@@ -33,49 +33,80 @@ export const useRegulatoryControls = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Charger les données depuis localStorage
+  const loadFromStorage = () => {
+    try {
+      const stored = localStorage.getItem('regulatory_controls');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Sauvegarder dans localStorage
+  const saveToStorage = (controlsData: RegulatoryControl[]) => {
+    try {
+      localStorage.setItem('regulatory_controls', JSON.stringify(controlsData));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    }
+  };
+
   const fetchControls = async () => {
     try {
       setLoading(true);
       
-      // Données mock pour le développement
-      const mockControls: RegulatoryControl[] = [
-        {
-          id: '1',
-          building_id: '1',
-          building_name: 'Tour Montparnasse',
-          control_type_id: '1',
-          control_type_name: 'Vérification périodique ascenseurs',
-          due_date: '2024-03-15',
-          status: 'pending',
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
-        },
-        {
-          id: '2',
-          building_id: '2',
-          building_name: 'Immeuble Haussmann',
-          control_type_id: '2',
-          control_type_name: 'Contrôle incendie annuel',
-          due_date: '2024-02-20',
-          status: 'overdue',
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
-        },
-        {
-          id: '3',
-          building_id: '1',
-          building_name: 'Tour Montparnasse',
-          control_type_id: '3',
-          control_type_name: 'Vérification électrique',
-          due_date: '2024-04-10',
-          status: 'in_progress',
-          provider_name: 'Électricité Plus',
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
-        },
-      ];
+      // Essayer de charger depuis localStorage d'abord
+      const storedControls = loadFromStorage();
+      
+      let controlsData: RegulatoryControl[];
+      
+      if (storedControls && storedControls.length > 0) {
+        controlsData = storedControls;
+      } else {
+        // Données mock pour le développement (seulement si rien en localStorage)
+        controlsData = [
+          {
+            id: '1',
+            building_id: '1',
+            building_name: 'Tour Montparnasse',
+            control_type_id: '1',
+            control_type_name: 'Vérification périodique ascenseurs',
+            due_date: '2024-03-15',
+            status: 'pending',
+            created_at: '2024-01-01',
+            updated_at: '2024-01-01',
+          },
+          {
+            id: '2',
+            building_id: '2',
+            building_name: 'Immeuble Haussmann',
+            control_type_id: '2',
+            control_type_name: 'Contrôle incendie annuel',
+            due_date: '2024-02-20',
+            status: 'overdue',
+            created_at: '2024-01-01',
+            updated_at: '2024-01-01',
+          },
+          {
+            id: '3',
+            building_id: '1',
+            building_name: 'Tour Montparnasse',
+            control_type_id: '3',
+            control_type_name: 'Vérification électrique',
+            due_date: '2024-04-10',
+            status: 'in_progress',
+            provider_name: 'Électricité Plus',
+            created_at: '2024-01-01',
+            updated_at: '2024-01-01',
+          },
+        ];
+        
+        // Sauvegarder les données mock initiales
+        saveToStorage(controlsData);
+      }
 
-      setControls(mockControls);
+      setControls(controlsData);
 
       // Calculer les statistiques
       const now = new Date();
@@ -83,14 +114,14 @@ export const useRegulatoryControls = () => {
       oneWeekFromNow.setDate(now.getDate() + 7);
 
       const calculatedStats: ControlStats = {
-        total: mockControls.length,
-        pending: mockControls.filter(c => c.status === 'pending').length,
-        in_progress: mockControls.filter(c => c.status === 'in_progress').length,
-        completed: mockControls.filter(c => c.status === 'completed').length,
-        overdue: mockControls.filter(c => 
+        total: controlsData.length,
+        pending: controlsData.filter(c => c.status === 'pending').length,
+        in_progress: controlsData.filter(c => c.status === 'in_progress').length,
+        completed: controlsData.filter(c => c.status === 'completed').length,
+        overdue: controlsData.filter(c => 
           c.status !== 'completed' && new Date(c.due_date) < now
         ).length,
-        upcoming: mockControls.filter(c => 
+        upcoming: controlsData.filter(c => 
           c.status !== 'completed' && 
           new Date(c.due_date) >= now && 
           new Date(c.due_date) <= oneWeekFromNow
@@ -108,9 +139,17 @@ export const useRegulatoryControls = () => {
 
   const createControl = async (controlData: Partial<RegulatoryControl>) => {
     try {
-      // Mock pour le développement
+      // Mock pour le développement - génération d'un UUID simulé
+      const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0;
+          const v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      };
+      
       const newControl: RegulatoryControl = {
-        id: Math.random().toString(),
+        id: generateUUID(),
         building_id: controlData.building_id || '',
         building_name: controlData.building_name || '',
         control_type_id: controlData.control_type_id || '',
@@ -121,7 +160,17 @@ export const useRegulatoryControls = () => {
         updated_at: new Date().toISOString(),
       };
       
-      setControls(prev => [newControl, ...prev]);
+      setControls(prev => {
+        const newControls = [newControl, ...prev];
+        saveToStorage(newControls);
+        return newControls;
+      });
+      
+      // Recalculer les stats après ajout
+      setTimeout(() => {
+        fetchControls();
+      }, 100);
+      
       return { data: newControl, error: null };
     } catch (err) {
       console.error('Error creating regulatory control:', err);
@@ -131,9 +180,42 @@ export const useRegulatoryControls = () => {
 
   const updateControl = async (id: string, controlData: Partial<RegulatoryControl>) => {
     try {
-      setControls(prev => prev.map(control => 
-        control.id === id ? { ...control, ...controlData, updated_at: new Date().toISOString() } : control
-      ));
+      setControls(prev => {
+        const updatedControls = prev.map(control => 
+          control.id === id ? { ...control, ...controlData, updated_at: new Date().toISOString() } : control
+        );
+        saveToStorage(updatedControls);
+        return updatedControls;
+      });
+      
+      // Recalculer les stats après mise à jour
+      setTimeout(() => {
+        const updatedControls = controls.map(control => 
+          control.id === id ? { ...control, ...controlData, updated_at: new Date().toISOString() } : control
+        );
+        
+        const now = new Date();
+        const oneWeekFromNow = new Date();
+        oneWeekFromNow.setDate(now.getDate() + 7);
+
+        const calculatedStats: ControlStats = {
+          total: updatedControls.length,
+          pending: updatedControls.filter(c => c.status === 'pending').length,
+          in_progress: updatedControls.filter(c => c.status === 'in_progress').length,
+          completed: updatedControls.filter(c => c.status === 'completed').length,
+          overdue: updatedControls.filter(c => 
+            c.status !== 'completed' && new Date(c.due_date) < now
+          ).length,
+          upcoming: updatedControls.filter(c => 
+            c.status !== 'completed' && 
+            new Date(c.due_date) >= now && 
+            new Date(c.due_date) <= oneWeekFromNow
+          ).length,
+        };
+
+        setStats(calculatedStats);
+      }, 100);
+      
       return { data: controlData, error: null };
     } catch (err) {
       console.error('Error updating regulatory control:', err);
@@ -143,7 +225,11 @@ export const useRegulatoryControls = () => {
 
   const deleteControl = async (id: string) => {
     try {
-      setControls(prev => prev.filter(control => control.id !== id));
+      setControls(prev => {
+        const filteredControls = prev.filter(control => control.id !== id);
+        saveToStorage(filteredControls);
+        return filteredControls;
+      });
       return { error: null };
     } catch (err) {
       console.error('Error deleting regulatory control:', err);
