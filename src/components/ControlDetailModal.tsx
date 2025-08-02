@@ -155,9 +155,11 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
           building_name: editData.building_name,
           control_type_id: control.control_type_id,
           control_type_name: control.control_type_name,
-          due_date: next_due_date,
+          due_date: next_due_date.split('T')[0], // Convertir la date au format requis
           status: 'pending' as const,
-          notes: `Contrôle de suivi généré automatiquement depuis le contrôle ${control.id}`
+          notes: `Contrôle de suivi généré automatiquement depuis le contrôle ${control.id}`,
+          assigned_provider_id: editData.assigned_provider_id,
+          provider_name: editData.provider_name
         };
         
         const { error: createError } = await createControl(newControlData);
