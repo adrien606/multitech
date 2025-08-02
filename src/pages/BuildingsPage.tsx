@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BuildingModal } from "@/components/BuildingModal";
-import { Plus, Edit, Trash2, MapPin, Building as BuildingIcon, ArrowLeft } from "lucide-react";
+import { BuildingDetailModal } from "@/components/BuildingDetailModal";
+import { Plus, Edit, Trash2, MapPin, Building as BuildingIcon, ArrowLeft, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "react-router-dom";
@@ -14,6 +15,8 @@ export default function BuildingsPage() {
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [detailBuilding, setDetailBuilding] = useState<Building | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const handleCreateBuilding = () => {
     setSelectedBuilding(null);
@@ -25,6 +28,11 @@ export default function BuildingsPage() {
     setSelectedBuilding(building);
     setModalMode('edit');
     setIsModalOpen(true);
+  };
+
+  const handleViewBuilding = (building: Building) => {
+    setDetailBuilding(building);
+    setIsDetailModalOpen(true);
   };
 
   const handleDeleteBuilding = async (building: Building) => {
@@ -150,6 +158,14 @@ export default function BuildingsPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleViewBuilding(building)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Voir détails
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleEditBuilding(building)}
                           >
                             <Edit className="w-4 h-4 mr-1" />
@@ -189,7 +205,7 @@ export default function BuildingsPage() {
         </Card>
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       <BuildingModal
         building={selectedBuilding ? {
           ...selectedBuilding,
@@ -199,6 +215,12 @@ export default function BuildingsPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveBuilding}
         mode={modalMode}
+      />
+      
+      <BuildingDetailModal
+        building={detailBuilding}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
       />
     </div>
   );

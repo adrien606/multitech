@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, MapPin, Calendar, CheckCircle, AlertTriangle, Clock } from "lucide-react";
 import { Building } from "@/hooks/useBuildings";
+import { useRegulatoryControls } from "@/hooks/useRegulatoryControls";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -13,16 +14,12 @@ interface BuildingDetailModalProps {
 }
 
 export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetailModalProps) {
+  const { controls } = useRegulatoryControls();
+  
   if (!building) return null;
 
-  // Mock data pour les contrôles - à remplacer par de vraies données
-  const mockControls = [
-    { id: 1, title: "Contrôle extinction", status: "completed", dueDate: "2024-01-15" },
-    { id: 2, title: "Vérification alarme", status: "pending", dueDate: "2024-02-01" },
-    { id: 3, title: "Inspection électrique", status: "overdue", dueDate: "2024-01-20" },
-    { id: 4, title: "Contrôle chauffage", status: "in_progress", dueDate: "2024-02-05" },
-    { id: 5, title: "Test évacuation", status: "completed", dueDate: "2024-01-10" },
-  ];
+  // Filtrer les contrôles pour ce bâtiment
+  const buildingControls = controls.filter(control => control.building_id === building.id);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -54,9 +51,9 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
     }
   };
 
-  const activeControls = mockControls.filter(c => c.status !== 'completed').length;
-  const overdueControls = mockControls.filter(c => c.status === 'overdue').length;
-  const completedThisMonth = mockControls.filter(c => c.status === 'completed').length;
+  const activeControls = buildingControls.filter(c => c.status !== 'completed').length;
+  const overdueControls = buildingControls.filter(c => c.status === 'overdue').length;
+  const completedThisMonth = buildingControls.filter(c => c.status === 'completed').length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -130,20 +127,29 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockControls.map((control) => (
+                {buildingControls.length > 0 ? buildingControls.map((control) => (
                   <div key={control.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
-                      <h4 className="font-medium">{control.title}</h4>
+                      <h4 className="font-medium">{control.control_type_name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Échéance: {format(new Date(control.dueDate), 'dd/MM/yyyy', { locale: fr })}
+                        Échéance: {format(new Date(control.due_date), 'dd/MM/yyyy', { locale: fr })}
                       </p>
+                      {control.provider_name && (
+                        <p className="text-xs text-muted-foreground">
+                          Prestataire: {control.provider_name}
+                        </p>
+                      )}
                     </div>
                     <Badge variant={getStatusVariant(control.status)}>
                       {getStatusIcon(control.status)}
                       {getStatusText(control.status)}
                     </Badge>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <p>Aucun contrôle associé à ce bâtiment</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
