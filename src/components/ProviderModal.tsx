@@ -166,36 +166,6 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
             />
           </div>
 
-          {/* Temporarily disabled specialities section */}
-          {/* 
-          <div className="space-y-2">
-            <Label>Spécialités</Label>
-            <div className="grid grid-cols-2 gap-3 max-h-32 overflow-y-auto border rounded-md p-3">
-              {specialities.map((speciality) => (
-                <div key={speciality.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`speciality-${speciality.id}`}
-                    checked={selectedSpecialities.includes(speciality.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedSpecialities(prev => [...prev, speciality.id]);
-                      } else {
-                        setSelectedSpecialities(prev => prev.filter(id => id !== speciality.id));
-                      }
-                    }}
-                  />
-                  <Label 
-                    htmlFor={`speciality-${speciality.id}`}
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {speciality.name}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-          */
-
           <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
