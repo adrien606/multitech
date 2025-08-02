@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,6 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
   const { uploadFile, uploading } = useStorageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [isEditing, setIsEditing] = useState(false);
   const [documents, setDocuments] = useState<Array<{
     id: string;
     file_name: string;
@@ -59,12 +58,33 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     notes: '',
     status: 'pending' as 'pending' | 'in_progress' | 'completed' | 'overdue'
   });
+  const [hasChanges, setHasChanges] = useState(false);
   
   const control = controls?.find(c => c.id === controlId);
   
   if (!control) return null;
 
+  // Initialiser les données d'édition quand le contrôle change
+  useEffect(() => {
+    if (control) {
+      setEditData({
+        assigned_provider_id: control.assigned_provider_id || '',
+        provider_name: control.provider_name || '',
+        next_due_date: control.next_due_date || '',
+        notes: control.notes || '',
+        status: control.status
+      });
+      setHasChanges(false);
+    }
+  }, [control]);
+
   const isOverdue = new Date() > new Date(control.due_date) && control.status !== 'completed';
+
+  // Fonction pour détecter les changements
+  const handleFieldChange = (field: string, value: any) => {
+    setEditData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -101,7 +121,7 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
       notes: control.notes || '',
       status: control.status
     });
-    setIsEditing(true);
+    setHasChanges(false);
   };
 
   const handleSave = async () => {
@@ -120,7 +140,7 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
         title: "Succès",
         description: "Contrôle mis à jour avec succès",
       });
-      setIsEditing(false);
+      setHasChanges(false);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -235,16 +255,10 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
                 Détails du contrôle réglementaire {control.control_type_name}
               </DialogDescription>
               <Badge variant={control.status === 'completed' ? 'default' : 'secondary'} className="mb-4">
-                {getStatusIcon(control.status)}
-                <span className="ml-1">{getStatusText(control.status)}</span>
+                {getStatusIcon(editData.status)}
+                <span className="ml-1">{getStatusText(editData.status)}</span>
               </Badge>
             </div>
-            {!isEditing && control.status !== 'completed' && (
-              <Button variant="outline" size="sm" onClick={handleEdit}>
-                <Edit className="w-4 h-4 mr-1" />
-                Modifier
-              </Button>
-            )}
           </div>
         </DialogHeader>
 
@@ -261,43 +275,33 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               <div className="flex items-center gap-2 text-sm">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Prestataire:</span>
-                {isEditing ? (
-                  <div className="flex-1">
-                    <Select
-                      value={editData.assigned_provider_id || "none"}
-                      onValueChange={(value) => {
-                        if (value === "none") {
-                          setEditData(prev => ({
-                            ...prev,
-                            assigned_provider_id: '',
-                            provider_name: ''
-                          }));
-                        } else {
-                          const provider = providers?.find(p => p.id === value);
-                          setEditData(prev => ({
-                            ...prev,
-                            assigned_provider_id: value,
-                            provider_name: provider?.name || ''
-                          }));
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="h-7">
-                        <SelectValue placeholder="Sélectionner un prestataire" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Aucun prestataire</SelectItem>
-                        {providers?.map((provider) => (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            {provider.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <span>{control.provider_name || 'Non assigné'}</span>
-                )}
+                <div className="flex-1">
+                  <Select
+                    value={editData.assigned_provider_id || "none"}
+                    onValueChange={(value) => {
+                      if (value === "none") {
+                        handleFieldChange('assigned_provider_id', '');
+                        handleFieldChange('provider_name', '');
+                      } else {
+                        const provider = providers?.find(p => p.id === value);
+                        handleFieldChange('assigned_provider_id', value);
+                        handleFieldChange('provider_name', provider?.name || '');
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="Sélectionner un prestataire" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun prestataire</SelectItem>
+                      {providers?.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             
@@ -314,26 +318,14 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Prochaine échéance:</span>
-                {isEditing ? (
-                  <div className="flex-1">
-                    <Input
-                      type="date"
-                      value={editData.next_due_date ? editData.next_due_date.split('T')[0] : ''}
-                      onChange={(e) => setEditData(prev => ({
-                        ...prev,
-                        next_due_date: e.target.value ? new Date(e.target.value).toISOString() : ''
-                      }))}
-                      className="h-7"
-                    />
-                  </div>
-                ) : (
-                  <span>
-                    {control.next_due_date 
-                      ? format(new Date(control.next_due_date), 'dd/MM/yyyy', { locale: fr })
-                      : 'Non programmée'
-                    }
-                  </span>
-                )}
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={editData.next_due_date ? editData.next_due_date.split('T')[0] : ''}
+                    onChange={(e) => handleFieldChange('next_due_date', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                    className="h-8"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm">
@@ -345,66 +337,53 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
           </div>
 
           {/* Statut */}
-          {isEditing && (
-            <div>
-              <h3 className="font-medium mb-2">Statut</h3>
-              <Select
-                value={editData.status}
-                onValueChange={(value) => setEditData(prev => ({ 
-                  ...prev, 
-                  status: value as 'pending' | 'in_progress' | 'completed' | 'overdue' 
-                }))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner un statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      En attente
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="in_progress">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      En cours
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="completed">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      Terminé
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="overdue">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4" />
-                      En retard
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div>
+            <h3 className="font-medium mb-2">Statut</h3>
+            <Select
+              value={editData.status}
+              onValueChange={(value) => handleFieldChange('status', value as 'pending' | 'in_progress' | 'completed' | 'overdue')}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner un statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    En attente
+                  </div>
+                </SelectItem>
+                <SelectItem value="in_progress">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    En cours
+                  </div>
+                </SelectItem>
+                <SelectItem value="completed">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Terminé
+                  </div>
+                </SelectItem>
+                <SelectItem value="overdue">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    En retard
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Notes */}
           <div>
             <h3 className="font-medium mb-2">Notes</h3>
-            {isEditing ? (
-              <Textarea
-                value={editData.notes}
-                onChange={(e) => setEditData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Ajouter des notes..."
-                className="min-h-[80px]"
-              />
-            ) : control.notes ? (
-              <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                {control.notes}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Aucune note</p>
-            )}
+            <Textarea
+              value={editData.notes}
+              onChange={(e) => handleFieldChange('notes', e.target.value)}
+              placeholder="Ajouter des notes..."
+              className="min-h-[80px]"
+            />
           </div>
 
           {/* Documents */}
@@ -501,31 +480,25 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            {isEditing ? (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  <X className="w-4 h-4 mr-1" />
-                  Annuler
-                </Button>
+          <div className="flex justify-between items-center pt-4 border-t">
+            <div className="flex items-center gap-2">
+              {hasChanges && (
+                <Badge variant="secondary" className="text-xs">
+                  Modifications non sauvegardées
+                </Badge>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onClose}>
+                Fermer
+              </Button>
+              {hasChanges && (
                 <Button onClick={handleSave}>
                   <Save className="w-4 h-4 mr-1" />
                   Enregistrer
                 </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={onClose}>
-                  Fermer
-                </Button>
-                {control.status !== 'completed' && (
-                  <Button onClick={handleComplete}>
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Marquer comme terminé
-                  </Button>
-                )}
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
