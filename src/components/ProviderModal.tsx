@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Provider } from '@/hooks/useProviders';
-import { useSpecialities } from '@/hooks/useSpecialities';
 
 interface ProviderModalProps {
   open: boolean;
@@ -18,7 +17,6 @@ interface ProviderModalProps {
 }
 
 export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading }: ProviderModalProps) {
-  const { specialities } = useSpecialities();
   const [formData, setFormData] = useState({
     name: provider?.name || '',
     email: provider?.email || '',
@@ -27,7 +25,9 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
     description: provider?.description || '',
     is_active: provider?.is_active ?? true,
   });
-  const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
+  // Temporarily disable specialities until the hook issue is resolved
+  const [selectedSpecialities] = useState<string[]>([]);
+  const specialities: any[] = []; // Temporary empty array
 
   // Mettre à jour le formulaire quand les données du provider changent
   useEffect(() => {
@@ -40,9 +40,9 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         description: provider.description || '',
         is_active: provider.is_active ?? true,
       });
-      // Charger les spécialités du prestataire
-      const providerSpecialityIds = (provider as any).provider_specialities?.map((ps: any) => ps.speciality.id) || [];
-      setSelectedSpecialities(providerSpecialityIds);
+      // Temporarily disable specialities loading
+      // const providerSpecialityIds = (provider as any).provider_specialities?.map((ps: any) => ps.speciality.id) || [];
+      // setSelectedSpecialities(providerSpecialityIds);
     } else {
       // Reset pour un nouveau prestataire
       setFormData({
@@ -53,7 +53,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         description: '',
         is_active: true,
       });
-      setSelectedSpecialities([]);
+      // setSelectedSpecialities([]);
     }
   }, [provider]);
 
@@ -76,7 +76,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         description: '',
         is_active: true,
       });
-      setSelectedSpecialities([]);
+      // setSelectedSpecialities([]);
     } catch (error) {
       // Error is handled in the hook
     }
@@ -166,6 +166,8 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
             />
           </div>
 
+          {/* Temporarily disabled specialities section */}
+          {/* 
           <div className="space-y-2">
             <Label>Spécialités</Label>
             <div className="grid grid-cols-2 gap-3 max-h-32 overflow-y-auto border rounded-md p-3">
@@ -192,6 +194,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
               ))}
             </div>
           </div>
+          */
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button

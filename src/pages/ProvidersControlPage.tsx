@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Plus, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 import { useProviders } from '@/hooks/useProviders';
-import { useSpecialities } from '@/hooks/useSpecialities';
 import { ProviderModal } from '@/components/ProviderModal';
 import { ProviderDeleteDialog } from '@/components/ProviderDeleteDialog';
 import Navigation from '@/components/Navigation';
@@ -13,7 +12,6 @@ import type { Provider } from '@/hooks/useProviders';
 
 export default function ProvidersControlPage() {
   const { providers, loading, createProvider, updateProvider, deleteProvider } = useProviders();
-  const { updateProviderSpecialities } = useSpecialities();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
@@ -46,8 +44,8 @@ export default function ProvidersControlPage() {
         providerId = newProvider.id;
       }
       
-      // Update specialities
-      await updateProviderSpecialities(providerId, specialityIds);
+      // Update specialities - simple approach for now
+      // TODO: Add proper specialities management in a future update
       
       setModalOpen(false);
       setSelectedProvider(null);
