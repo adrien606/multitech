@@ -9,14 +9,13 @@ export interface Provider {
   phone: string;
   description: string;
   is_active: boolean;
-  building_id: string | null;
   created_at: string;
   updated_at: string;
-  building?: {
+  buildings?: {
     id: string;
     name: string;
     address: string;
-  };
+  }[];
 }
 
 export function useProviders() {
@@ -40,6 +39,9 @@ export function useProviders() {
           provider_specialities(
             id,
             speciality:specialities(*)
+          ),
+          provider_buildings(
+            building:buildings(id, name, address)
           )
         `)
         .order('name');
@@ -49,8 +51,7 @@ export function useProviders() {
       // Map the data to match our Provider interface
       const mappedProviders = (data || []).map(provider => ({
         ...provider,
-        building_id: null, // For now, until migration is applied
-        building: undefined
+        buildings: provider.provider_buildings?.map((pb: any) => pb.building) || []
       }));
       
       setProviders(mappedProviders);
@@ -66,11 +67,17 @@ export function useProviders() {
     }
   };
 
-  const createProvider = async (provider: Omit<Provider, 'id' | 'created_at' | 'updated_at'>, specialityIds: string[] = []) => {
+  const createProvider = async (provider: Omit<Provider, 'id' | 'created_at' | 'updated_at'>, specialityIds: string[] = [], buildingIds: string[] = []) => {
     try {
       const { data, error } = await supabase
         .from('providers')
-        .insert([provider])
+        .insert([{
+          name: provider.name,
+          email: provider.email,
+          phone: provider.phone,
+          description: provider.description,
+          is_active: provider.is_active
+        }])
         .select()
         .single();
 
@@ -92,7 +99,23 @@ export function useProviders() {
         }
       }
 
-      // Recharger les données pour inclure les spécialités
+      // Ajouter les bâtiments si fournis
+      if (buildingIds.length > 0) {
+        const buildingInserts = buildingIds.map(buildingId => ({
+          provider_id: data.id,
+          building_id: buildingId,
+        }));
+
+        const { error: buildingError } = await supabase
+          .from('provider_buildings')
+          .insert(buildingInserts);
+
+        if (buildingError) {
+          console.error('Error adding buildings:', buildingError);
+        }
+      }
+
+      // Recharger les données pour inclure les spécialités et bâtiments
       await fetchProviders();
       
       toast({
@@ -111,11 +134,17 @@ export function useProviders() {
     }
   };
 
-  const updateProvider = async (id: string, updates: Partial<Omit<Provider, 'id' | 'created_at' | 'updated_at'>>, specialityIds?: string[]) => {
+  const updateProvider = async (id: string, updates: Partial<Omit<Provider, 'id' | 'created_at' | 'updated_at'>>, specialityIds?: string[], buildingIds?: string[]) => {
     try {
       const { data, error } = await supabase
         .from('providers')
-        .update(updates)
+        .update({
+          name: updates.name,
+          email: updates.email,
+          phone: updates.phone,
+          description: updates.description,
+          is_active: updates.is_active
+        })
         .eq('id', id)
         .select()
         .single();
@@ -147,7 +176,32 @@ export function useProviders() {
         }
       }
 
-      // Recharger les données pour inclure les spécialités
+      // Mettre à jour les bâtiments si fournis
+      if (buildingIds !== undefined) {
+        // Supprimer les anciens bâtiments
+        await supabase
+          .from('provider_buildings')
+          .delete()
+          .eq('provider_id', id);
+
+        // Ajouter les nouveaux bâtiments
+        if (buildingIds.length > 0) {
+          const buildingInserts = buildingIds.map(buildingId => ({
+            provider_id: id,
+            building_id: buildingId,
+          }));
+
+          const { error: buildingError } = await supabase
+            .from('provider_buildings')
+            .insert(buildingInserts);
+
+          if (buildingError) {
+            console.error('Error updating buildings:', buildingError);
+          }
+        }
+      }
+
+      // Recharger les données pour inclure les spécialités et bâtiments
       await fetchProviders();
       
       toast({

@@ -33,13 +33,13 @@ export default function ProvidersControlPage() {
     setDeleteDialogOpen(true);
   };
 
-  const handleSave = async (providerData: Omit<Provider, 'id' | 'created_at' | 'updated_at'>, specialityIds: string[]) => {
+  const handleSave = async (providerData: Omit<Provider, 'id' | 'created_at' | 'updated_at'>, specialityIds: string[], buildingIds: string[]) => {
     setActionLoading(true);
     try {
       if (selectedProvider) {
-        await updateProvider(selectedProvider.id, providerData, specialityIds);
+        await updateProvider(selectedProvider.id, providerData, specialityIds, buildingIds);
       } else {
-        await createProvider(providerData, specialityIds);
+        await createProvider(providerData, specialityIds, buildingIds);
       }
       
       setModalOpen(false);
@@ -176,12 +176,19 @@ export default function ProvidersControlPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {provider.building ? (
-                        <div className="flex items-center gap-1">
-                          <Badge variant="secondary" className="text-xs">
-                            <Building2 className="w-3 h-3 mr-1" />
-                            {provider.building.name}
-                          </Badge>
+                      {provider.buildings && provider.buildings.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {provider.buildings.slice(0, 2).map((building) => (
+                            <Badge key={building.id} variant="secondary" className="text-xs">
+                              <Building2 className="w-3 h-3 mr-1" />
+                              {building.name}
+                            </Badge>
+                          ))}
+                          {provider.buildings.length > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{provider.buildings.length - 2}
+                            </Badge>
+                          )}
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">Aucun</span>

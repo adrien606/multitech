@@ -152,6 +152,42 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_buildings: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          provider_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          provider_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_buildings_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_buildings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_specialities: {
         Row: {
           created_at: string
