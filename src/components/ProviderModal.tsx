@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,30 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
     description: provider?.description || '',
     is_active: provider?.is_active ?? true,
   });
+
+  // Mettre à jour le formulaire quand les données du provider changent
+  useEffect(() => {
+    if (provider) {
+      setFormData({
+        name: provider.name || '',
+        email: provider.email || '',
+        phone: provider.phone || '',
+        address: provider.address || '',
+        description: provider.description || '',
+        is_active: provider.is_active ?? true,
+      });
+    } else {
+      // Reset pour un nouveau prestataire
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        description: '',
+        is_active: true,
+      });
+    }
+  }, [provider]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
