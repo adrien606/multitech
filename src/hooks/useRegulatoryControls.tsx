@@ -180,41 +180,37 @@ export const useRegulatoryControls = () => {
 
   const updateControl = async (id: string, controlData: Partial<RegulatoryControl>) => {
     try {
+      let updatedControlsForStats: RegulatoryControl[] = [];
+      
       setControls(prev => {
-        const updatedControls = prev.map(control => 
+        updatedControlsForStats = prev.map(control => 
           control.id === id ? { ...control, ...controlData, updated_at: new Date().toISOString() } : control
         );
-        saveToStorage(updatedControls);
-        return updatedControls;
+        saveToStorage(updatedControlsForStats);
+        return updatedControlsForStats;
       });
       
-      // Recalculer les stats après mise à jour
-      setTimeout(() => {
-        const updatedControls = controls.map(control => 
-          control.id === id ? { ...control, ...controlData, updated_at: new Date().toISOString() } : control
-        );
-        
-        const now = new Date();
-        const oneWeekFromNow = new Date();
-        oneWeekFromNow.setDate(now.getDate() + 7);
+      // Recalculer les stats avec les données mises à jour
+      const now = new Date();
+      const oneWeekFromNow = new Date();
+      oneWeekFromNow.setDate(now.getDate() + 7);
 
-        const calculatedStats: ControlStats = {
-          total: updatedControls.length,
-          pending: updatedControls.filter(c => c.status === 'pending').length,
-          in_progress: updatedControls.filter(c => c.status === 'in_progress').length,
-          completed: updatedControls.filter(c => c.status === 'completed').length,
-          overdue: updatedControls.filter(c => 
-            c.status !== 'completed' && new Date(c.due_date) < now
-          ).length,
-          upcoming: updatedControls.filter(c => 
-            c.status !== 'completed' && 
-            new Date(c.due_date) >= now && 
-            new Date(c.due_date) <= oneWeekFromNow
-          ).length,
-        };
+      const calculatedStats: ControlStats = {
+        total: updatedControlsForStats.length,
+        pending: updatedControlsForStats.filter(c => c.status === 'pending').length,
+        in_progress: updatedControlsForStats.filter(c => c.status === 'in_progress').length,
+        completed: updatedControlsForStats.filter(c => c.status === 'completed').length,
+        overdue: updatedControlsForStats.filter(c => 
+          c.status !== 'completed' && new Date(c.due_date) < now
+        ).length,
+        upcoming: updatedControlsForStats.filter(c => 
+          c.status !== 'completed' && 
+          new Date(c.due_date) >= now && 
+          new Date(c.due_date) <= oneWeekFromNow
+        ).length,
+      };
 
-        setStats(calculatedStats);
-      }, 100);
+      setStats(calculatedStats);
       
       return { data: controlData, error: null };
     } catch (err) {
