@@ -8,7 +8,8 @@ import {
   Clock, 
   Plus,
   Calendar,
-  Euro
+  Euro,
+  Settings
 } from 'lucide-react';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
@@ -116,10 +117,20 @@ export default function ControlsPage() {
               Suivi et planification des contrôles réglementaires
             </p>
           </div>
-          <Button onClick={() => setIsNewControlModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau contrôle
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = '/regulatory-controls/control-types'}
+              className="flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Types de contrôles
+            </Button>
+            <Button onClick={() => setIsNewControlModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouveau contrôle
+            </Button>
+          </div>
         </div>
 
         {/* Dashboard Cards */}
