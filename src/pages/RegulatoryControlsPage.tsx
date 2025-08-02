@@ -450,7 +450,14 @@ export default function RegulatoryControlsPage() {
                         <Button 
                           className="w-full mt-4" 
                           variant="outline"
-                          onClick={() => setSelectedBuilding(building.id)}
+                          onClick={() => {
+                            setSelectedBuilding(building.id);
+                            // Basculer vers l'onglet contrôles pour voir la liste filtrée
+                            const tabsElement = document.querySelector('[data-radix-tabs-value="controls"]');
+                            if (tabsElement) {
+                              (tabsElement as HTMLElement).click();
+                            }
+                          }}
                         >
                           Voir les contrôles ({buildingControls.length})
                         </Button>
