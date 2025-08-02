@@ -211,7 +211,7 @@ export function NewControlModal({
                     <SelectItem key={provider.id} value={provider.id}>
                       <div className="flex flex-col">
                         <span className="font-medium">{provider.name}</span>
-                        <span className="text-xs text-muted-foreground">{provider.specialties}</span>
+                        <span className="text-xs text-muted-foreground">{provider.description || 'Aucune description'}</span>
                       </div>
                     </SelectItem>
                   ))}

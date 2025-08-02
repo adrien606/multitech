@@ -1,179 +1,122 @@
 import { useState, useEffect } from 'react';
-// import { supabase } from '@/integrations/supabase/client';
-
-export interface ControlType {
-  name: string;
-  recurrence_period: number;
-  recurrence_unit: string;
-  average_cost: number;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Provider {
   id: string;
   name: string;
   email: string;
   phone: string;
-  address?: string;
-  specialties: string;
+  address: string;
+  description: string;
   is_active: boolean;
-  notes?: string;
   created_at: string;
   updated_at: string;
-  // Statistiques calculées
-  total_interventions?: number;
-  total_amount?: number;
-  average_cost?: number;
-  pending_controls?: number;
-  completed_controls?: number;
-  // Contrôles effectués par ce prestataire
-  control_types?: ControlType[];
 }
 
-export const useProviders = () => {
+export function useProviders() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchProviders = async () => {
     try {
-      setLoading(true);
-      
-      // Données mock enrichies pour le développement
-      const mockProviders: Provider[] = [
-        {
-          id: '1',
-          name: 'Électricité Plus',
-          email: 'contact@electricite-plus.fr',
-          phone: '01 23 45 67 89',
-          address: '123 Rue de la Paix, 75001 Paris',
-          specialties: 'Électricité, Éclairage, Maintenance préventive',
-          is_active: true,
-          notes: 'Prestataire de confiance, interventions rapides',
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
-          total_interventions: 24,
-          total_amount: 18500,
-          average_cost: 770,
-          pending_controls: 3,
-          completed_controls: 21,
-          control_types: [
-            { name: 'Contrôle installation électrique', recurrence_period: 1, recurrence_unit: 'année', average_cost: 850 },
-            { name: 'Vérification éclairage de sécurité', recurrence_period: 6, recurrence_unit: 'mois', average_cost: 320 },
-            { name: 'Test différentiels', recurrence_period: 3, recurrence_unit: 'mois', average_cost: 180 }
-          ]
-        },
-        {
-          id: '2',
-          name: 'Sécurité Incendie Pro',
-          email: 'info@securite-incendie.com',
-          phone: '01 98 76 54 32',
-          address: '456 Avenue des Champs, 75008 Paris',
-          specialties: 'Contrôles incendie, Extincteurs, Alarmes',
-          is_active: true,
-          notes: 'Spécialiste agréé, certifications à jour',
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
-          total_interventions: 18,
-          total_amount: 15200,
-          average_cost: 844,
-          pending_controls: 2,
-          completed_controls: 16,
-          control_types: [
-            { name: 'Contrôle sécurité incendie', recurrence_period: 1, recurrence_unit: 'année', average_cost: 950 },
-            { name: 'Vérification extincteurs', recurrence_period: 1, recurrence_unit: 'année', average_cost: 420 },
-            { name: 'Test alarmes incendie', recurrence_period: 6, recurrence_unit: 'mois', average_cost: 280 }
-          ]
-        },
-        {
-          id: '3',
-          name: 'Ascenseurs Excellence',
-          email: 'service@ascenseurs-excellence.fr',
-          phone: '01 11 22 33 44',
-          address: '789 Boulevard Haussmann, 75009 Paris',
-          specialties: 'Ascenseurs, Monte-charges, Escalators',
-          is_active: false,
-          notes: 'Contrat suspendu - recherche nouvel prestataire',
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
-          total_interventions: 12,
-          total_amount: 9600,
-          average_cost: 800,
-          pending_controls: 0,
-          completed_controls: 12,
-          control_types: [
-            { name: 'Contrôle technique ascenseur', recurrence_period: 1, recurrence_unit: 'année', average_cost: 750 },
-            { name: 'Maintenance préventive', recurrence_period: 3, recurrence_unit: 'mois', average_cost: 180 }
-          ]
-        },
-        {
-          id: '4',
-          name: 'Climatisation Services',
-          email: 'contact@clim-services.fr',
-          phone: '01 55 66 77 88',
-          address: '321 Rue de Rivoli, 75004 Paris',
-          specialties: 'Climatisation, Ventilation, CVC',
-          is_active: true,
-          notes: 'Nouveau prestataire, en période d\'essai',
-          created_at: '2024-01-01',
-          updated_at: '2024-01-01',
-          total_interventions: 8,
-          total_amount: 6400,
-          average_cost: 800,
-          pending_controls: 4,
-          completed_controls: 4,
-          control_types: [
-            { name: 'Contrôle système CVC', recurrence_period: 6, recurrence_unit: 'mois', average_cost: 650 },
-            { name: 'Nettoyage filtres', recurrence_period: 3, recurrence_unit: 'mois', average_cost: 120 },
-            { name: 'Contrôle réfrigérant', recurrence_period: 1, recurrence_unit: 'année', average_cost: 380 }
-          ]
-        },
-      ];
+      const { data, error } = await supabase
+        .from('providers')
+        .select('*')
+        .order('name');
 
-      setProviders(mockProviders);
-    } catch (err) {
-      console.error('Error fetching providers:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des prestataires');
+      if (error) throw error;
+      setProviders(data || []);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les prestataires",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const createProvider = async (providerData: Omit<Provider, 'id' | 'created_at' | 'updated_at'>) => {
+  const createProvider = async (provider: Omit<Provider, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const newProvider: Provider = {
-        ...providerData,
-        id: Math.random().toString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      
-      setProviders(prev => [newProvider, ...prev]);
-      return { data: newProvider, error: null };
-    } catch (err) {
-      console.error('Error creating provider:', err);
-      return { data: null, error: err instanceof Error ? err.message : 'Erreur lors de la création' };
+      const { data, error } = await supabase
+        .from('providers')
+        .insert([provider])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProviders(prev => [...prev, data]);
+      toast({
+        title: "Succès",
+        description: "Prestataire créé avec succès",
+      });
+      return data;
+    } catch (error) {
+      console.error('Error creating provider:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer le prestataire",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
-  const updateProvider = async (id: string, providerData: Partial<Omit<Provider, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateProvider = async (id: string, updates: Partial<Omit<Provider, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
-      setProviders(prev => prev.map(provider => 
-        provider.id === id ? { ...provider, ...providerData, updated_at: new Date().toISOString() } : provider
-      ));
-      return { data: providerData, error: null };
-    } catch (err) {
-      console.error('Error updating provider:', err);
-      return { data: null, error: err instanceof Error ? err.message : 'Erreur lors de la mise à jour' };
+      const { data, error } = await supabase
+        .from('providers')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProviders(prev => prev.map(p => p.id === id ? data : p));
+      toast({
+        title: "Succès",
+        description: "Prestataire mis à jour avec succès",
+      });
+      return data;
+    } catch (error) {
+      console.error('Error updating provider:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le prestataire",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
   const deleteProvider = async (id: string) => {
     try {
-      setProviders(prev => prev.filter(provider => provider.id !== id));
-      return { error: null };
-    } catch (err) {
-      console.error('Error deleting provider:', err);
-      return { error: err instanceof Error ? err.message : 'Erreur lors de la suppression' };
+      const { error } = await supabase
+        .from('providers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setProviders(prev => prev.filter(p => p.id !== id));
+      toast({
+        title: "Succès",
+        description: "Prestataire supprimé avec succès",
+      });
+    } catch (error) {
+      console.error('Error deleting provider:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le prestataire",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -184,10 +127,9 @@ export const useProviders = () => {
   return {
     providers,
     loading,
-    error,
-    refetch: fetchProviders,
     createProvider,
     updateProvider,
     deleteProvider,
+    refetch: fetchProviders,
   };
-};
+}

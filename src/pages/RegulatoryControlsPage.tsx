@@ -185,7 +185,7 @@ export default function RegulatoryControlsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {(providers?.reduce((total, p) => total + (p.total_amount || 0), 0) || 0).toLocaleString()} €
+                0 €
               </div>
               <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
             </CardContent>
@@ -207,24 +207,24 @@ export default function RegulatoryControlsPage() {
                       <Users className="w-8 h-8 text-muted-foreground" />
                       <div>
                         <p className="font-medium">{provider.name}</p>
-                        <p className="text-sm text-muted-foreground">{provider.specialties}</p>
+                        <p className="text-sm text-muted-foreground">{provider.description || 'Aucune description'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-6 text-sm">
                       <div className="text-center">
-                        <p className="font-medium">{provider.total_interventions}</p>
+                        <p className="font-medium">0</p>
                         <p className="text-muted-foreground">Interventions</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-medium">{provider.total_amount?.toLocaleString()} €</p>
+                        <p className="font-medium">0 €</p>
                         <p className="text-muted-foreground">Total dépensé</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-medium">{provider.average_cost} €</p>
+                        <p className="font-medium">0 €</p>
                         <p className="text-muted-foreground">Coût moyen</p>
                       </div>
-                      <Badge variant={provider.pending_controls! > 0 ? 'destructive' : 'default'}>
-                        {provider.pending_controls} en cours
+                      <Badge variant="default">
+                        0 en cours
                       </Badge>
                     </div>
                   </div>
@@ -243,28 +243,25 @@ export default function RegulatoryControlsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Coût moyen/intervention</span>
                   <span className="font-medium">
-                    {providers && providers.length > 0 ? Math.round(
-                      providers.reduce((sum, p) => sum + (p.average_cost || 0), 0) / 
-                      (providers.filter(p => p.is_active).length || 1)
-                    ) : 0} €
+                    0 €
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Prestataire le plus cher</span>
                   <span className="font-medium text-red-600">
-                    {providers && providers.length > 0 ? providers.reduce((max, p) => p.average_cost! > max.average_cost! ? p : max, providers[0])?.average_cost : 0} €
+                    0 €
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Prestataire le moins cher</span>
                   <span className="font-medium text-green-600">
-                    {providers?.filter(p => p.is_active).length > 0 ? providers.filter(p => p.is_active).reduce((min, p) => p.average_cost! < min.average_cost! ? p : min, providers.filter(p => p.is_active)[0])?.average_cost : 0} €
+                    0 €
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Économies potentielles</span>
                   <span className="font-medium text-blue-600">
-                    {Math.round((providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0) * 0.12).toLocaleString()} €
+                    0 €
                   </span>
                 </div>
               </div>
@@ -462,13 +459,13 @@ export default function RegulatoryControlsPage() {
                             <p className="text-sm text-muted-foreground">
                               {provider.email} • {provider.phone}
                             </p>
-                            <p className="text-xs text-muted-foreground">{provider.specialties}</p>
+                            <p className="text-xs text-muted-foreground">{provider.description || 'Aucune description'}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right text-sm">
-                            <p className="font-medium">{provider.total_amount?.toLocaleString()} €</p>
-                            <p className="text-muted-foreground">{provider.total_interventions} interventions</p>
+                            <p className="font-medium">0 €</p>
+                            <p className="text-muted-foreground">0 interventions</p>
                           </div>
                           <Button variant="ghost" size="sm">Détails</Button>
                         </div>
@@ -490,13 +487,14 @@ export default function RegulatoryControlsPage() {
                       <div key={provider.id} className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium">{provider.name}</span>
-                          <span className="text-sm">{provider.total_amount?.toLocaleString()} €</span>
+                          <span className="text-sm">{provider.name}</span>
+                          <span className="text-sm">0 €</span>
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
                           <div 
                             className="bg-primary h-2 rounded-full" 
                             style={{ 
-                              width: `${((provider.total_amount || 0) / Math.max(...(providers?.map(p => p.total_amount || 0) || [1]))) * 100}%` 
+                              width: `0%`
                             }}
                           ></div>
                         </div>
@@ -508,13 +506,13 @@ export default function RegulatoryControlsPage() {
                     <div className="flex justify-between">
                       <span className="text-sm">Total dépenses:</span>
                       <span className="font-medium">
-                        {(providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0).toLocaleString()} €
+                        0 €
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">Moyenne/prestataire:</span>
                       <span className="font-medium">
-                        {Math.round((providers?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0) / (providers?.filter(p => p.is_active).length || 1)).toLocaleString()} €
+                        0 €
                       </span>
                     </div>
                   </div>

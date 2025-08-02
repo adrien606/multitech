@@ -164,7 +164,7 @@ export default function ControlsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {(providers?.reduce((total, p) => total + (p.total_amount || 0), 0) || 0).toLocaleString()} €
+                0 €
               </div>
               <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
             </CardContent>
