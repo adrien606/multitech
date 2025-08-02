@@ -7,14 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CalendarIcon, Clock, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-
-interface RegulatoryControl {
-  id: string;
-  building_name: string;
-  control_type_name: string;
-  due_date: string;
-  status: string;
-}
+import type { RegulatoryControl } from '@/types/regulatory-controls';
 
 interface ControlsCalendarProps {
   controls: RegulatoryControl[];
