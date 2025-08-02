@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Filter, X } from 'lucide-react';
+import { Building2, Filter, X, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import { Building } from '@/hooks/useBuildings';
 
 interface FilterControlsProps {
@@ -32,6 +32,24 @@ export function FilterControls({
   totalControls,
 }: FilterControlsProps) {
   const hasActiveFilters = selectedBuilding !== 'all' || selectedStatus !== 'all' || selectedDueDate !== 'all';
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="w-3 h-3" />;
+      case 'overdue': return <AlertTriangle className="w-3 h-3" />;
+      default: return <Clock className="w-3 h-3" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Terminé';
+      case 'in_progress': return 'En cours';
+      case 'overdue': return 'En retard';
+      case 'pending': return 'En attente';
+      default: return status;
+    }
+  };
 
   return (
     <Card className="mb-6">
@@ -138,10 +156,8 @@ export function FilterControls({
               )}
               {selectedStatus !== 'all' && (
                 <Badge variant="secondary" className="gap-1">
-                  {selectedStatus === 'pending' && 'En attente'}
-                  {selectedStatus === 'in_progress' && 'En cours'}
-                  {selectedStatus === 'completed' && 'Terminé'}
-                  {selectedStatus === 'overdue' && 'En retard'}
+                  {getStatusIcon(selectedStatus)}
+                  {getStatusText(selectedStatus)}
                   <button
                     onClick={() => onStatusChange('all')}
                     className="ml-1 hover:bg-muted rounded-full p-0.5"
