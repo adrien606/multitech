@@ -186,7 +186,10 @@ export default function ControlsPage() {
 
         {/* Calendrier des contrôles */}
         <div className="mb-8">
-          <ControlsCalendar controls={controls || []} />
+          <ControlsCalendar 
+            controls={controls || []} 
+            onControlClick={(controlId) => setSelectedControlId(controlId)}
+          />
         </div>
 
         {/* Filtres */}

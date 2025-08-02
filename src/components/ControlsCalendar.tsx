@@ -18,9 +18,10 @@ interface RegulatoryControl {
 
 interface ControlsCalendarProps {
   controls: RegulatoryControl[];
+  onControlClick?: (controlId: string) => void;
 }
 
-export function ControlsCalendar({ controls }: ControlsCalendarProps) {
+export function ControlsCalendar({ controls, onControlClick }: ControlsCalendarProps) {
   console.log('ControlsCalendar rendered with controls:', controls.length);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
@@ -114,6 +115,7 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
                     key={control.id}
                     className={`text-xs px-1 py-0.5 rounded cursor-pointer ${getStatusColor(control.status)}`}
                     title={`${control.control_type_name} - ${control.building_name}`}
+                    onClick={() => onControlClick?.(control.id)}
                   >
                     <div className="flex items-center gap-1">
                       {getStatusIcon(control.status)}
@@ -163,6 +165,7 @@ export function ControlsCalendar({ controls }: ControlsCalendarProps) {
                   <div
                     key={control.id}
                     className={`text-xs p-1.5 rounded cursor-pointer ${getStatusColor(control.status)}`}
+                    onClick={() => onControlClick?.(control.id)}
                   >
                     <div className="flex items-center gap-1 mb-1">
                       {getStatusIcon(control.status)}
