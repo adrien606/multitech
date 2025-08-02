@@ -6,8 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Provider } from '@/hooks/useProviders';
 import { useSpecialities } from '@/hooks/useSpecialities';
+import { useBuildings } from '@/hooks/useBuildings';
 
 interface ProviderModalProps {
   open: boolean;
@@ -19,11 +21,13 @@ interface ProviderModalProps {
 
 export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading }: ProviderModalProps) {
   const { specialities } = useSpecialities();
+  const { buildings } = useBuildings();
   const [formData, setFormData] = useState({
     name: provider?.name || '',
     email: provider?.email || '',
     phone: provider?.phone || '',
     description: provider?.description || '',
+    building_id: provider?.building_id || '',
     is_active: provider?.is_active ?? true,
   });
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
@@ -36,6 +40,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         email: provider.email || '',
         phone: provider.phone || '',
         description: provider.description || '',
+        building_id: provider.building_id || '',
         is_active: provider.is_active ?? true,
       });
       // Charger les spécialités du prestataire
@@ -48,6 +53,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         email: '',
         phone: '',
         description: '',
+        building_id: '',
         is_active: true,
       });
       setSelectedSpecialities([]);
@@ -70,6 +76,7 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         email: '',
         phone: '',
         description: '',
+        building_id: '',
         is_active: true,
       });
       setSelectedSpecialities([]);
@@ -129,16 +136,34 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
               />
             </div>
             
-            <div className="space-y-2 flex items-end">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-                />
-                <Label htmlFor="is_active">Prestataire actif</Label>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="building">Bâtiment</Label>
+              <Select 
+                value={formData.building_id} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, building_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un bâtiment" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Aucun bâtiment</SelectItem>
+                  {buildings.map((building) => (
+                    <SelectItem key={building.id} value={building.id}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is_active"
+              checked={formData.is_active}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+            />
+            <Label htmlFor="is_active">Prestataire actif</Label>
           </div>
 
 

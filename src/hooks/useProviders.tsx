@@ -9,8 +9,14 @@ export interface Provider {
   phone: string;
   description: string;
   is_active: boolean;
+  building_id: string | null;
   created_at: string;
   updated_at: string;
+  building?: {
+    id: string;
+    name: string;
+    address: string;
+  };
 }
 
 export function useProviders() {
@@ -24,6 +30,7 @@ export function useProviders() {
         .from('providers')
         .select(`
           *,
+          building:buildings(id, name, address),
           provider_specialities(
             id,
             speciality:specialities(*)

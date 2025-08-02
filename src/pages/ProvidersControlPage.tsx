@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, Plus, Edit, Trash2, Phone, Mail, Settings } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Phone, Mail, Settings, Building2 } from 'lucide-react';
 import { useProviders, Provider } from '@/hooks/useProviders';
 import { ProviderModal } from '@/components/ProviderModal';
 import { ProviderDeleteDialog } from '@/components/ProviderDeleteDialog';
@@ -149,6 +149,7 @@ export default function ProvidersControlPage() {
                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead>Bâtiment</TableHead>
                   <TableHead>Spécialités</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
@@ -173,6 +174,18 @@ export default function ProvidersControlPage() {
                           </div>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {provider.building ? (
+                        <div className="flex items-center gap-1">
+                          <Badge variant="secondary" className="text-xs">
+                            <Building2 className="w-3 h-3 mr-1" />
+                            {provider.building.name}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Aucun</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {(provider as any).provider_specialities?.length > 0 ? (
@@ -220,7 +233,7 @@ export default function ProvidersControlPage() {
                 ))}
                 {providers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       Aucun prestataire trouvé. Commencez par en ajouter un.
                     </TableCell>
                   </TableRow>
