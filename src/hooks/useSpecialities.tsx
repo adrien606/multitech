@@ -11,14 +11,6 @@ export interface Speciality {
   updated_at: string;
 }
 
-export interface ProviderSpeciality {
-  id: string;
-  provider_id: string;
-  speciality_id: string;
-  created_at: string;
-  speciality: Speciality;
-}
-
 export function useSpecialities() {
   const [specialities, setSpecialities] = useState<Speciality[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +21,6 @@ export function useSpecialities() {
       const { data, error } = await supabase
         .from('specialities')
         .select('*')
-        .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
@@ -126,64 +117,6 @@ export function useSpecialities() {
     }
   };
 
-  const getProviderSpecialities = async (providerId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('provider_specialities')
-        .select(`
-          id,
-          provider_id,
-          speciality_id,
-          created_at,
-          speciality:specialities(*)
-        `)
-        .eq('provider_id', providerId);
-
-      if (error) throw error;
-      return data as ProviderSpeciality[];
-    } catch (error) {
-      console.error('Error fetching provider specialities:', error);
-      return [];
-    }
-  };
-
-  const updateProviderSpecialities = async (providerId: string, specialityIds: string[]) => {
-    try {
-      // Delete existing specialities for this provider
-      await supabase
-        .from('provider_specialities')
-        .delete()
-        .eq('provider_id', providerId);
-
-      // Insert new specialities
-      if (specialityIds.length > 0) {
-        const insertData = specialityIds.map(specialityId => ({
-          provider_id: providerId,
-          speciality_id: specialityId,
-        }));
-
-        const { error } = await supabase
-          .from('provider_specialities')
-          .insert(insertData);
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: "Succès",
-        description: "Spécialités du prestataire mises à jour",
-      });
-    } catch (error) {
-      console.error('Error updating provider specialities:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour les spécialités",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
   useEffect(() => {
     fetchSpecialities();
   }, []);
@@ -194,8 +127,6 @@ export function useSpecialities() {
     createSpeciality,
     updateSpeciality,
     deleteSpeciality,
-    getProviderSpecialities,
-    updateProviderSpecialities,
     refetch: fetchSpecialities,
   };
 }

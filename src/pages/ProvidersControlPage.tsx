@@ -3,15 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, Plus, Edit, Trash2, Phone, Mail } from 'lucide-react';
-import { useProviders } from '@/hooks/useProviders';
-
+import { Users, Plus, Edit, Trash2, Phone, Mail, Settings } from 'lucide-react';
+import { useProviders, Provider } from '@/hooks/useProviders';
 import { ProviderModal } from '@/components/ProviderModal';
 import { ProviderDeleteDialog } from '@/components/ProviderDeleteDialog';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
-import type { Provider } from '@/hooks/useProviders';
 
 export default function ProvidersControlPage() {
+  const navigate = useNavigate();
   const { providers, loading, createProvider, updateProvider, deleteProvider } = useProviders();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -85,10 +85,20 @@ export default function ProvidersControlPage() {
               Gérez vos prestataires de services
             </p>
           </div>
-          <Button onClick={handleCreate} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Nouveau prestataire
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/regulatory-controls/specialities')}
+              className="flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Gérer les spécialités
+            </Button>
+            <Button onClick={handleCreate} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Nouveau prestataire
+            </Button>
+          </div>
         </div>
 
         {/* Statistiques */}

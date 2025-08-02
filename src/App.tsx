@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ControlsPage from "./pages/ControlsPage";
 import BuildingsControlPage from "./pages/BuildingsControlPage";
 import ProvidersControlPage from "./pages/ProvidersControlPage";
+import SpecialitiesControlPage from "./pages/SpecialitiesControlPage";
 import DocumentsControlPage from "./pages/DocumentsControlPage";
 import BuildingsPage from "./pages/BuildingsPage";
 import UsersPage from "./pages/UsersPage";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/regulatory-controls" element={<ControlsPage />} />
             <Route path="/regulatory-controls/buildings" element={<BuildingsControlPage />} />
             <Route path="/regulatory-controls/providers" element={<ProvidersControlPage />} />
+            <Route path="/regulatory-controls/specialities" element={<SpecialitiesControlPage />} />
             <Route path="/regulatory-controls/documents" element={<DocumentsControlPage />} />
             <Route path="/buildings" element={
               <ProtectedRoute>
