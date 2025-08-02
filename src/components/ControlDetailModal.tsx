@@ -62,8 +62,6 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
   
   const control = controls?.find(c => c.id === controlId);
   
-  if (!control) return null;
-
   // Initialiser les données d'édition quand le contrôle change
   useEffect(() => {
     if (control) {
@@ -77,6 +75,9 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
       setHasChanges(false);
     }
   }, [control]);
+
+  // Early return APRÈS tous les hooks
+  if (!control) return null;
 
   const isOverdue = new Date() > new Date(control.due_date) && control.status !== 'completed';
 
