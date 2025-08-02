@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Calendar, 
   MapPin, 
@@ -38,7 +39,7 @@ interface ControlDetailModalProps {
 }
 
 export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetailModalProps) {
-  const { controls, updateControl } = useRegulatoryControls();
+  const { controls, updateControl, deleteControl } = useRegulatoryControls();
   const { providers } = useProviders();
   const { buildings } = useBuildings();
   const { toast } = useToast();
@@ -251,6 +252,32 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
       title: "Succès",
       description: "Document supprimé",
     });
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await deleteControl(controlId);
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Succès",
+        description: "Contrôle supprimé avec succès",
+      });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -518,6 +545,32 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               )}
             </div>
             <div className="flex gap-3">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="text-destructive hover:text-destructive hover:border-destructive">
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Supprimer
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Supprimer le contrôle</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Êtes-vous sûr de vouloir supprimer ce contrôle <strong>{control.control_type_name}</strong> ?
+                      Cette action est irréversible et supprimera toutes les données associées.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button variant="outline" onClick={onClose}>
                 Fermer
               </Button>
