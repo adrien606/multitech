@@ -407,36 +407,58 @@ export default function RegulatoryControlsPage() {
 
           <TabsContent value="buildings" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {buildings?.map((building) => (
-                <Card key={building.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Building2 className="w-5 h-5" />
-                      {building.name}
-                    </CardTitle>
-                    <CardDescription>{building.address}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span>Contrôles actifs</span>
-                        <Badge>5</Badge>
+              {buildings?.map((building) => {
+                // Filtrer les contrôles pour ce bâtiment
+                const buildingControls = controls?.filter(control => control.building_id === building.id) || [];
+                const overdueControls = buildingControls.filter(control => 
+                  control.status !== 'completed' && new Date(control.due_date) < new Date()
+                );
+                const nextControl = buildingControls
+                  .filter(control => control.status !== 'completed' && new Date(control.due_date) >= new Date())
+                  .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
+
+                return (
+                  <Card key={building.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Building2 className="w-5 h-5" />
+                        {building.name}
+                      </CardTitle>
+                      <CardDescription>{building.address}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span>Contrôles actifs</span>
+                          <Badge>{buildingControls.length}</Badge>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>En retard</span>
+                          <Badge variant={overdueControls.length > 0 ? "destructive" : "secondary"}>
+                            {overdueControls.length}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Prochain contrôle</span>
+                          <span className="text-muted-foreground">
+                            {nextControl 
+                              ? new Date(nextControl.due_date).toLocaleDateString('fr-FR')
+                              : 'Aucun'
+                            }
+                          </span>
+                        </div>
+                        <Button 
+                          className="w-full mt-4" 
+                          variant="outline"
+                          onClick={() => setSelectedBuilding(building.id)}
+                        >
+                          Voir les contrôles ({buildingControls.length})
+                        </Button>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>En retard</span>
-                        <Badge variant="destructive">2</Badge>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Prochain contrôle</span>
-                        <span className="text-muted-foreground">15/02/2024</span>
-                      </div>
-                      <Button className="w-full mt-4" variant="outline">
-                        Voir les contrôles
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
 
