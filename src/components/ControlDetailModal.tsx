@@ -56,7 +56,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     assigned_provider_id: '',
     provider_name: '',
     next_due_date: '',
-    notes: ''
+    notes: '',
+    status: 'pending' as 'pending' | 'in_progress' | 'completed' | 'overdue'
   });
   
   const control = controls?.find(c => c.id === controlId);
@@ -97,7 +98,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
       assigned_provider_id: control.assigned_provider_id || '',
       provider_name: control.provider_name || '',
       next_due_date: control.next_due_date || '',
-      notes: control.notes || ''
+      notes: control.notes || '',
+      status: control.status
     });
     setIsEditing(true);
   };
@@ -341,6 +343,50 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               </div>
             </div>
           </div>
+
+          {/* Statut */}
+          {isEditing && (
+            <div>
+              <h3 className="font-medium mb-2">Statut</h3>
+              <Select
+                value={editData.status}
+                onValueChange={(value) => setEditData(prev => ({ 
+                  ...prev, 
+                  status: value as 'pending' | 'in_progress' | 'completed' | 'overdue' 
+                }))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionner un statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      En attente
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="in_progress">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      En cours
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Terminé
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="overdue">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      En retard
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Notes */}
           <div>
