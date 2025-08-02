@@ -11,6 +11,7 @@ import {
   Euro,
   Settings
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useBuildings } from '@/hooks/useBuildings';
 import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { useProviders } from '@/hooks/useProviders';
@@ -21,6 +22,7 @@ import { ControlsCalendar } from '@/components/ControlsCalendar';
 import Navigation from '@/components/Navigation';
 
 export default function ControlsPage() {
+  const navigate = useNavigate();
   const { buildings } = useBuildings();
   const { controls, stats, createControl } = useRegulatoryControls();
   const { providers } = useProviders();
@@ -120,7 +122,7 @@ export default function ControlsPage() {
           <div className="flex items-center gap-3">
             <Button 
               variant="outline"
-              onClick={() => window.location.href = '/regulatory-controls/control-types'}
+              onClick={() => navigate('/regulatory-controls/control-types')}
               className="flex items-center gap-2"
             >
               <Settings className="w-4 h-4" />
