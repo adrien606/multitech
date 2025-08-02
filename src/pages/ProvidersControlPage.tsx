@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, Plus, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Phone, Mail } from 'lucide-react';
 import { useProviders } from '@/hooks/useProviders';
 
 import { ProviderModal } from '@/components/ProviderModal';
@@ -140,7 +140,6 @@ export default function ProvidersControlPage() {
                   <TableHead>Nom</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Spécialités</TableHead>
-                  <TableHead>Adresse</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -184,14 +183,6 @@ export default function ProvidersControlPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {provider.address && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="w-3 h-3" />
-                          <span className="truncate max-w-[150px]">{provider.address}</span>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
                       <Badge variant={provider.is_active ? 'default' : 'secondary'}>
                         {provider.is_active ? 'Actif' : 'Inactif'}
                       </Badge>
@@ -219,7 +210,7 @@ export default function ProvidersControlPage() {
                 ))}
                 {providers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       Aucun prestataire trouvé. Commencez par en ajouter un.
                     </TableCell>
                   </TableRow>

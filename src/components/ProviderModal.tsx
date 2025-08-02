@@ -23,7 +23,6 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
     name: provider?.name || '',
     email: provider?.email || '',
     phone: provider?.phone || '',
-    address: provider?.address || '',
     description: provider?.description || '',
     is_active: provider?.is_active ?? true,
   });
@@ -36,7 +35,6 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         name: provider.name || '',
         email: provider.email || '',
         phone: provider.phone || '',
-        address: provider.address || '',
         description: provider.description || '',
         is_active: provider.is_active ?? true,
       });
@@ -49,7 +47,6 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         name: '',
         email: '',
         phone: '',
-        address: '',
         description: '',
         is_active: true,
       });
@@ -72,7 +69,6 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
         name: '',
         email: '',
         phone: '',
-        address: '',
         description: '',
         is_active: true,
       });
@@ -145,15 +141,6 @@ export function ProviderModal({ open, onOpenChange, provider, onSave, isLoading 
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="address">Adresse</Label>
-            <Input
-              id="address"
-              value={formData.address}
-              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              placeholder="Adresse complète"
-            />
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
