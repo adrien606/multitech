@@ -29,8 +29,14 @@ export function useProviders() {
       const { data, error } = await supabase
         .from('providers')
         .select(`
-          *,
-          building:buildings(id, name, address),
+          id,
+          name,
+          email,
+          phone,
+          description,
+          is_active,
+          created_at,
+          updated_at,
           provider_specialities(
             id,
             speciality:specialities(*)
@@ -39,7 +45,15 @@ export function useProviders() {
         .order('name');
 
       if (error) throw error;
-      setProviders(data || []);
+      
+      // Map the data to match our Provider interface
+      const mappedProviders = (data || []).map(provider => ({
+        ...provider,
+        building_id: null, // For now, until migration is applied
+        building: undefined
+      }));
+      
+      setProviders(mappedProviders);
     } catch (error) {
       console.error('Error fetching providers:', error);
       toast({
