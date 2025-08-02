@@ -24,6 +24,7 @@ import { useBuildings } from '@/hooks/useBuildings';
 import { useRegulatoryControls } from '@/hooks/useRegulatoryControls';
 import { FilterControls } from '@/components/FilterControls';
 import { NewControlModal } from '@/components/NewControlModal';
+import { ControlDetailModal } from '@/components/ControlDetailModal';
 import { useProviders } from '@/hooks/useProviders';
 import { ControlsCalendar } from '@/components/ControlsCalendar';
 
@@ -39,6 +40,9 @@ export default function RegulatoryControlsPage() {
   
   // État pour la modale de création
   const [isNewControlModalOpen, setIsNewControlModalOpen] = useState(false);
+  
+  // État pour la modale de détails
+  const [selectedControlId, setSelectedControlId] = useState<string | null>(null);
 
   // Filtrage des contrôles
   const filteredControls = controls?.filter((control) => {
@@ -376,7 +380,13 @@ export default function RegulatoryControlsPage() {
                             {getStatusIcon(control.status)}
                             {control.status}
                           </Badge>
-                          <Button variant="ghost" size="sm">Détails</Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setSelectedControlId(control.id)}
+                          >
+                            Détails
+                          </Button>
                         </div>
                       </div>
                     ))
@@ -402,7 +412,10 @@ export default function RegulatoryControlsPage() {
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
-            <ControlsCalendar controls={controls || []} />
+            <ControlsCalendar 
+              controls={controls || []} 
+              onControlClick={(controlId) => setSelectedControlId(controlId)}
+            />
           </TabsContent>
 
           <TabsContent value="buildings" className="space-y-6">
@@ -553,6 +566,15 @@ export default function RegulatoryControlsPage() {
         providers={providers || []}
         onControlCreate={handleCreateControl}
       />
+
+      {/* Modale de détails de contrôle */}
+      {selectedControlId && (
+        <ControlDetailModal
+          controlId={selectedControlId}
+          isOpen={!!selectedControlId}
+          onClose={() => setSelectedControlId(null)}
+        />
+      )}
     </div>
   );
 }
