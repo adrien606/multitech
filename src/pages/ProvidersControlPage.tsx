@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Plus, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 import { useProviders } from '@/hooks/useProviders';
-import { useSpecialities } from '@/hooks/useSpecialities';
+
 import { ProviderModal } from '@/components/ProviderModal';
 import { ProviderDeleteDialog } from '@/components/ProviderDeleteDialog';
 import Navigation from '@/components/Navigation';
@@ -13,7 +13,6 @@ import type { Provider } from '@/hooks/useProviders';
 
 export default function ProvidersControlPage() {
   const { providers, loading, createProvider, updateProvider, deleteProvider } = useProviders();
-  const { updateProviderSpecialities } = useSpecialities();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
@@ -37,17 +36,11 @@ export default function ProvidersControlPage() {
   const handleSave = async (providerData: Omit<Provider, 'id' | 'created_at' | 'updated_at'>, specialityIds: string[]) => {
     setActionLoading(true);
     try {
-      let providerId: string;
       if (selectedProvider) {
-        const updatedProvider = await updateProvider(selectedProvider.id, providerData);
-        providerId = updatedProvider.id;
+        await updateProvider(selectedProvider.id, providerData, specialityIds);
       } else {
-        const newProvider = await createProvider(providerData);
-        providerId = newProvider.id;
+        await createProvider(providerData, specialityIds);
       }
-      
-      // Update specialities
-      await updateProviderSpecialities(providerId, specialityIds);
       
       setModalOpen(false);
       setSelectedProvider(null);

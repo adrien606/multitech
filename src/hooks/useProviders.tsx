@@ -46,7 +46,7 @@ export function useProviders() {
     }
   };
 
-  const createProvider = async (provider: Omit<Provider, 'id' | 'created_at' | 'updated_at'>) => {
+  const createProvider = async (provider: Omit<Provider, 'id' | 'created_at' | 'updated_at'>, specialityIds: string[] = []) => {
     try {
       const { data, error } = await supabase
         .from('providers')
@@ -56,7 +56,25 @@ export function useProviders() {
 
       if (error) throw error;
 
-      setProviders(prev => [...prev, data]);
+      // Ajouter les spécialités si fournies
+      if (specialityIds.length > 0) {
+        const specialityInserts = specialityIds.map(specialityId => ({
+          provider_id: data.id,
+          speciality_id: specialityId,
+        }));
+
+        const { error: specialityError } = await supabase
+          .from('provider_specialities')
+          .insert(specialityInserts);
+
+        if (specialityError) {
+          console.error('Error adding specialities:', specialityError);
+        }
+      }
+
+      // Recharger les données pour inclure les spécialités
+      await fetchProviders();
+      
       toast({
         title: "Succès",
         description: "Prestataire créé avec succès",
@@ -73,7 +91,7 @@ export function useProviders() {
     }
   };
 
-  const updateProvider = async (id: string, updates: Partial<Omit<Provider, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateProvider = async (id: string, updates: Partial<Omit<Provider, 'id' | 'created_at' | 'updated_at'>>, specialityIds?: string[]) => {
     try {
       const { data, error } = await supabase
         .from('providers')
@@ -84,7 +102,34 @@ export function useProviders() {
 
       if (error) throw error;
 
-      setProviders(prev => prev.map(p => p.id === id ? data : p));
+      // Mettre à jour les spécialités si fournies
+      if (specialityIds !== undefined) {
+        // Supprimer les anciennes spécialités
+        await supabase
+          .from('provider_specialities')
+          .delete()
+          .eq('provider_id', id);
+
+        // Ajouter les nouvelles spécialités
+        if (specialityIds.length > 0) {
+          const specialityInserts = specialityIds.map(specialityId => ({
+            provider_id: id,
+            speciality_id: specialityId,
+          }));
+
+          const { error: specialityError } = await supabase
+            .from('provider_specialities')
+            .insert(specialityInserts);
+
+          if (specialityError) {
+            console.error('Error updating specialities:', specialityError);
+          }
+        }
+      }
+
+      // Recharger les données pour inclure les spécialités
+      await fetchProviders();
+      
       toast({
         title: "Succès",
         description: "Prestataire mis à jour avec succès",
