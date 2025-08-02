@@ -280,23 +280,17 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
                 <span className="font-medium">Bâtiment:</span>
                 <div className="flex-1">
                   <Select
-                    value={editData.building_id || "none"}
+                    value={editData.building_id}
                     onValueChange={(value) => {
-                      if (value === "none") {
-                        handleFieldChange('building_id', '');
-                        handleFieldChange('building_name', '');
-                      } else {
-                        const building = buildings?.find(b => b.id === value);
-                        handleFieldChange('building_id', value);
-                        handleFieldChange('building_name', building?.name || '');
-                      }
+                      const building = buildings?.find(b => b.id === value);
+                      handleFieldChange('building_id', value);
+                      handleFieldChange('building_name', building?.name || '');
                     }}
                   >
                     <SelectTrigger className="h-8">
                       <SelectValue placeholder="Sélectionner un bâtiment" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Aucun bâtiment</SelectItem>
                       {buildings?.map((building) => (
                         <SelectItem key={building.id} value={building.id}>
                           {building.name}
