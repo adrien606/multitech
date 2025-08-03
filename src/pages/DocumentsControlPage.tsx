@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2 }
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
+import { DocumentFilters } from '@/components/DocumentFilters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +16,74 @@ export default function DocumentsControlPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [regulatoryControls, setRegulatoryControls] = useState<Array<{ id: string; building_name: string; control_type_name: string }>>([]);
   const { toast } = useToast();
+
+  // États pour les filtres
+  const [buildings, setBuildings] = useState<Array<{ id: string; name: string; address: string }>>([]);
+  const [providers, setProviders] = useState<Array<{ id: string; name: string }>>([]);
+  const [controlTypes, setControlTypes] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedBuilding, setSelectedBuilding] = useState<string>('');
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [selectedControlType, setSelectedControlType] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+
+  // Charger les données pour les filtres
+  useEffect(() => {
+    const loadFilterData = async () => {
+      try {
+        const [buildingsResponse, providersResponse, controlTypesResponse] = await Promise.all([
+          supabase.from('buildings').select('id, name, address').order('name'),
+          supabase.from('providers').select('id, name').eq('is_active', true).order('name'),
+          supabase.from('control_types').select('id, name').eq('is_active', true).order('name'),
+        ]);
+
+        if (buildingsResponse.data) setBuildings(buildingsResponse.data);
+        if (providersResponse.data) setProviders(providersResponse.data);
+        if (controlTypesResponse.data) setControlTypes(controlTypesResponse.data);
+      } catch (error) {
+        console.error('Error loading filter data:', error);
+      }
+    };
+
+    loadFilterData();
+  }, []);
+
+  // Filtrer les documents
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc => {
+      // Filtre par bâtiment
+      if (selectedBuilding && doc.building_id !== selectedBuilding) return false;
+      
+      // Filtre par prestataire
+      if (selectedProvider && doc.provider_id !== selectedProvider) return false;
+      
+      // Filtre par type de contrôle
+      if (selectedControlType && doc.control_type_id !== selectedControlType) return false;
+      
+      // Filtre par statut
+      if (selectedStatus && doc.status !== selectedStatus) return false;
+      
+      // Filtre par période
+      if (dateFrom || dateTo) {
+        const docDate = new Date(doc.created_at);
+        if (dateFrom && docDate < dateFrom) return false;
+        if (dateTo && docDate > dateTo) return false;
+      }
+      
+      return true;
+    });
+  }, [documents, selectedBuilding, selectedProvider, selectedControlType, selectedStatus, dateFrom, dateTo]);
+
+  // Fonction pour réinitialiser les filtres
+  const clearFilters = () => {
+    setSelectedBuilding('');
+    setSelectedProvider('');
+    setSelectedControlType('');
+    setSelectedStatus('');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
 
   // Charger les contrôles réglementaires pour le modal d'upload
   const loadRegulatoryControls = async () => {
@@ -148,9 +217,9 @@ export default function DocumentsControlPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Gestion des Documents</h2>
+            <h2 className="text-2xl font-bold text-foreground">Drive Documents</h2>
             <p className="text-muted-foreground mt-1">
-              Centralisation des rapports et certificats de contrôle
+              Gestion complète des documents de contrôle réglementaire
             </p>
           </div>
           <Button 
@@ -215,17 +284,39 @@ export default function DocumentsControlPage() {
           </Card>
         </div>
 
+        {/* Filtres */}
+        <DocumentFilters
+          buildings={buildings}
+          providers={providers}
+          controlTypes={controlTypes}
+          selectedBuilding={selectedBuilding}
+          selectedProvider={selectedProvider}
+          selectedControlType={selectedControlType}
+          selectedStatus={selectedStatus}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onBuildingChange={setSelectedBuilding}
+          onProviderChange={setSelectedProvider}
+          onControlTypeChange={setSelectedControlType}
+          onStatusChange={setSelectedStatus}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+          onClearFilters={clearFilters}
+          filteredCount={filteredDocuments.length}
+          totalCount={documents.length}
+        />
+
         {/* Liste des documents */}
         <Card>
           <CardHeader>
-            <CardTitle>Documents récents</CardTitle>
+            <CardTitle>Tous les documents</CardTitle>
             <CardDescription>
-              Derniers rapports et certificats téléchargés
+              Rapports et certificats de contrôle réglementaire
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {documents.map((document) => (
+              {filteredDocuments.map((document) => (
                 <div key={document.id} className="flex items-center justify-between p-4 rounded-lg border">
                   <div className="flex items-center gap-4">
                     <FileText className="w-8 h-8 text-muted-foreground" />
@@ -305,9 +396,9 @@ export default function DocumentsControlPage() {
                   </div>
                 </div>
               ))}
-              {documents.length === 0 && (
+              {filteredDocuments.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Aucun document trouvé
+                  {documents.length === 0 ? 'Aucun document trouvé' : 'Aucun document ne correspond aux filtres sélectionnés'}
                 </div>
               )}
             </div>

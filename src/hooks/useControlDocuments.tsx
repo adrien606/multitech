@@ -17,8 +17,11 @@ export interface ControlDocument {
   created_at: string;
   updated_at: string;
   // Informations jointes
+  building_id?: string;
   building_name?: string;
+  control_type_id?: string;
   control_type_name?: string;
+  provider_id?: string;
   provider_name?: string;
 }
 
@@ -91,8 +94,11 @@ export const useControlDocuments = () => {
         notes: doc.notes,
         created_at: doc.created_at,
         updated_at: doc.updated_at,
+        building_id: (doc.regulatory_controls as any)?.building_id || '',
         building_name: (doc.regulatory_controls as any)?.buildings?.name || '',
+        control_type_id: (doc.regulatory_controls as any)?.control_type_id || '',
         control_type_name: (doc.regulatory_controls as any)?.control_types?.name || '',
+        provider_id: (doc.regulatory_controls as any)?.assigned_provider_id || '',
         provider_name: (doc.regulatory_controls as any)?.providers?.name || '',
       }));
 
