@@ -1,40 +1,38 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, Download, Calendar, Building2 } from 'lucide-react';
+import { FileText, Upload, Download, Calendar, Building2, Loader2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import { useControlDocuments } from '@/hooks/useControlDocuments';
 
 export default function DocumentsControlPage() {
-  // Mock data pour les documents
-  const documents = [
-    {
-      id: 1,
-      name: "Rapport contrôle ascenseur - Bâtiment A",
-      type: "PDF",
-      size: "2.3 MB",
-      date: "2024-01-15",
-      building: "Bâtiment Principal",
-      status: "Validé"
-    },
-    {
-      id: 2,
-      name: "Certificat sécurité incendie",
-      type: "PDF",
-      size: "1.8 MB",
-      date: "2024-01-10",
-      building: "Annexe Est",
-      status: "En attente"
-    },
-    {
-      id: 3,
-      name: "Contrôle électrique Q1 2024",
-      type: "PDF",
-      size: "3.1 MB",
-      date: "2024-01-05",
-      building: "Bâtiment Principal",
-      status: "Validé"
-    }
-  ];
+  const { documents, stats, loading, error, formatFileSize } = useControlDocuments();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-red-600">
+            Erreur lors du chargement des documents: {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,7 +60,7 @@ export default function DocumentsControlPage() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{documents.length}</div>
+              <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">Tous types confondus</p>
             </CardContent>
           </Card>
@@ -74,7 +72,7 @@ export default function DocumentsControlPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {documents.filter(d => d.status === "En attente").length}
+                {stats.pending}
               </div>
               <p className="text-xs text-muted-foreground">À valider</p>
             </CardContent>
@@ -87,7 +85,7 @@ export default function DocumentsControlPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {documents.filter(d => d.status === "Validé").length}
+                {stats.validated}
               </div>
               <p className="text-xs text-muted-foreground">Approuvés</p>
             </CardContent>
@@ -99,7 +97,7 @@ export default function DocumentsControlPage() {
               <Upload className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">7.2 MB</div>
+              <div className="text-2xl font-bold">{formatFileSize(stats.totalSize)}</div>
               <p className="text-xs text-muted-foreground">Stockage utilisé</p>
             </CardContent>
           </Card>
@@ -120,31 +118,43 @@ export default function DocumentsControlPage() {
                   <div className="flex items-center gap-4">
                     <FileText className="w-8 h-8 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">{document.name}</p>
+                      <p className="font-medium">{document.original_filename}</p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Building2 className="w-3 h-3" />
-                          {document.building}
+                          {document.building_name}
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {new Date(document.date).toLocaleDateString()}
+                          {new Date(document.created_at).toLocaleDateString('fr-FR')}
                         </span>
-                        <span>{document.size}</span>
+                        <span>{formatFileSize(document.file_size)}</span>
+                        {document.control_type_name && (
+                          <span className="text-xs bg-muted px-2 py-1 rounded">
+                            {document.control_type_name}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={document.status === 'Validé' ? 'default' : 'secondary'}>
-                      {document.status}
+                    <Badge variant={document.status === 'validated' ? 'default' : document.status === 'pending' ? 'secondary' : 'destructive'}>
+                      {document.status === 'validated' ? 'Validé' : document.status === 'pending' ? 'En attente' : 'Rejeté'}
                     </Badge>
-                    <Badge variant="outline">{document.type}</Badge>
-                    <Button variant="ghost" size="sm">
+                    <Badge variant="outline">
+                      {document.file_type === 'application/pdf' ? 'PDF' : document.file_type}
+                    </Badge>
+                    <Button variant="ghost" size="sm" title="Télécharger le document">
                       <Download className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
               ))}
+              {documents.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Aucun document trouvé
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

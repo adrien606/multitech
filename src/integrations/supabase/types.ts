@@ -98,6 +98,57 @@ export type Database = {
         }
         Relationships: []
       }
+      control_documents: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_size: number
+          file_type: string
+          filename: string
+          id: string
+          notes: string | null
+          original_filename: string
+          regulatory_control_id: string
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_size: number
+          file_type: string
+          filename: string
+          id?: string
+          notes?: string | null
+          original_filename: string
+          regulatory_control_id: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          filename?: string
+          id?: string
+          notes?: string | null
+          original_filename?: string
+          regulatory_control_id?: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: []
+      }
       control_types: {
         Row: {
           created_at: string
