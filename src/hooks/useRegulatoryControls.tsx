@@ -57,24 +57,37 @@ export const useRegulatoryControls = () => {
       }
 
       // Transformer les données pour correspondre à l'interface
-      const transformedControls: RegulatoryControl[] = (controlsData || []).map(control => ({
-        id: control.id,
-        building_id: control.building_id,
-        building_name: control.buildings?.name || '',
-        control_type_id: control.control_type_id,
-        control_type_name: control.control_types?.name || '',
-        due_date: control.due_date,
-        assigned_provider_id: control.assigned_provider_id || '',
-        provider_name: control.providers?.name || '',
-        completed_date: control.completed_date || '',
-        next_due_date: control.next_due_date || '',
-        estimated_cost: control.estimated_cost || 0,
-        actual_cost: control.actual_cost || 0,
-        notes: control.notes || '',
-        status: control.status as 'pending' | 'in_progress' | 'completed' | 'overdue',
-        created_at: control.created_at,
-        updated_at: control.updated_at,
-      }));
+      const transformedControls: RegulatoryControl[] = (controlsData || []).map(control => {
+        const currentDate = new Date();
+        const dueDate = new Date(control.due_date);
+        
+        // Déterminer le statut automatiquement
+        let status = control.status as 'pending' | 'in_progress' | 'completed' | 'overdue';
+        
+        // Si la date d'échéance est dépassée et le contrôle n'est pas terminé, le marquer en retard
+        if (dueDate < currentDate && status !== 'completed') {
+          status = 'overdue';
+        }
+        
+        return {
+          id: control.id,
+          building_id: control.building_id,
+          building_name: control.buildings?.name || '',
+          control_type_id: control.control_type_id,
+          control_type_name: control.control_types?.name || '',
+          due_date: control.due_date,
+          assigned_provider_id: control.assigned_provider_id || '',
+          provider_name: control.providers?.name || '',
+          completed_date: control.completed_date || '',
+          next_due_date: control.next_due_date || '',
+          estimated_cost: control.estimated_cost || 0,
+          actual_cost: control.actual_cost || 0,
+          notes: control.notes || '',
+          status,
+          created_at: control.created_at,
+          updated_at: control.updated_at,
+        };
+      });
 
       setControls(transformedControls);
       setStats(calculateStats(transformedControls));
@@ -135,6 +148,30 @@ export const useRegulatoryControls = () => {
       if (updates.actual_cost !== undefined) updateData.actual_cost = updates.actual_cost;
       if (updates.notes !== undefined) updateData.notes = updates.notes;
       if (updates.status !== undefined) updateData.status = updates.status;
+
+      // Mise à jour optimiste pour un rendu immédiat
+      setControls(prevControls => {
+        const updatedControls = prevControls.map(control => {
+          if (control.id === id) {
+            const updatedControl = { ...control, ...updates };
+            
+            // Vérifier automatiquement le statut overdue
+            const currentDate = new Date();
+            const dueDate = new Date(updatedControl.due_date);
+            
+            if (dueDate < currentDate && updatedControl.status !== 'completed') {
+              updatedControl.status = 'overdue';
+            }
+            
+            return updatedControl;
+          }
+          return control;
+        });
+        
+        // Recalculer les statistiques
+        setStats(calculateStats(updatedControls));
+        return updatedControls;
+      });
 
       const { data, error } = await supabase
         .from('regulatory_controls')

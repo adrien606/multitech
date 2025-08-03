@@ -21,6 +21,8 @@ const badgeVariants = cva(
           "border-transparent bg-status-progress text-status-progress-foreground hover:bg-status-progress/80",
         validated:
           "border-transparent bg-status-validated text-status-validated-foreground hover:bg-status-validated/80",
+        overdue:
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
       },
     },
     defaultVariants: {
