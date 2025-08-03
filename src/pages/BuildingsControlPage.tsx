@@ -84,7 +84,7 @@ export default function BuildingsControlPage() {
                       Oui {/* Mock pour l'instant */}
                     </Badge>
                   </div>
-                  <div className="pt-3 border-t space-y-2">
+                  <div className="pt-3 border-t">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -92,15 +92,6 @@ export default function BuildingsControlPage() {
                       onClick={() => handleViewDetails(building)}
                     >
                       Voir les détails
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleEditBilling(building)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Configurer refacturation
                     </Button>
                   </div>
                 </div>
@@ -123,13 +114,6 @@ export default function BuildingsControlPage() {
         building={selectedBuilding}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-      />
-
-      <BuildingEditModal
-        building={selectedBuilding}
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSaveBilling}
       />
     </div>
   );
