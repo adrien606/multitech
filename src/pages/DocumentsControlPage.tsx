@@ -229,56 +229,6 @@ export default function DocumentsControlPage() {
           </Button>
         </div>
 
-        {/* Statistiques des documents */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total documents</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">Tous types confondus</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">En attente</CardTitle>
-              <Calendar className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {stats.pending}
-              </div>
-              <p className="text-xs text-muted-foreground">À valider</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Validés</CardTitle>
-              <FileText className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {stats.validated}
-              </div>
-              <p className="text-xs text-muted-foreground">Approuvés</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taille totale</CardTitle>
-              <Upload className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatFileSize(stats.totalSize)}</div>
-              <p className="text-xs text-muted-foreground">Stockage utilisé</p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Filtres */}
         <DocumentFilters
@@ -335,9 +285,6 @@ export default function DocumentsControlPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={document.status === 'validated' ? 'default' : document.status === 'pending' ? 'secondary' : 'destructive'}>
-                      {document.status === 'validated' ? 'Validé' : document.status === 'pending' ? 'En attente' : 'Rejeté'}
-                    </Badge>
                     <Badge variant="outline">
                       {document.file_type === 'application/pdf' ? 'PDF' : document.file_type}
                     </Badge>
