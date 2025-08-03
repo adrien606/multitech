@@ -369,17 +369,17 @@ export default function RegulatoryControlsPage() {
                         <div className="flex items-center gap-4">
                           <div className={`w-3 h-3 rounded-full ${getStatusColor(control.status)}`} />
                           <div className="flex-1">
-                            <p className="font-medium">{control.control_type_name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {control.building_name} • Échéance: {new Date(control.due_date).toLocaleDateString()}
-                            </p>
-                            {control.provider_name && (
-                              <div className="mt-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-medium">{control.control_type_name}</p>
+                              {control.provider_name && (
                                 <Badge variant="outline" className="text-xs">
                                   {control.provider_name}
                                 </Badge>
-                              </div>
-                            )}
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {control.building_name} • Échéance: {new Date(control.due_date).toLocaleDateString()}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">

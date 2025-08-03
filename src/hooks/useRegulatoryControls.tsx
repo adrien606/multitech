@@ -57,7 +57,6 @@ export const useRegulatoryControls = () => {
       }
 
       // Transformer les données pour correspondre à l'interface
-      console.log('Controls data from DB:', controlsData);
       const transformedControls: RegulatoryControl[] = (controlsData || []).map(control => {
         const currentDate = new Date();
         const dueDate = new Date(control.due_date);
