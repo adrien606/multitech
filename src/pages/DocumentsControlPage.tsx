@@ -149,29 +149,6 @@ export default function DocumentsControlPage() {
           </CardContent>
         </Card>
 
-        {/* Section d'upload */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Zone de téléchargement</CardTitle>
-            <CardDescription>
-              Glissez-déposez vos documents ou cliquez pour sélectionner
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                Glissez vos fichiers ici ou cliquez pour parcourir
-              </p>
-              <Button variant="outline">
-                Sélectionner des fichiers
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2">
-                Formats acceptés: PDF, DOC, JPG, PNG (max. 10MB)
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
