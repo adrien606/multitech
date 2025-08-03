@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, Download, Calendar, Building2, Loader2 } from 'lucide-react';
+import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
@@ -69,6 +69,28 @@ export default function DocumentsControlPage() {
       toast({
         title: "Erreur de téléchargement",
         description: "Impossible de télécharger le document",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fonction pour visualiser un document
+  const viewDocument = async (document: any) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('control-documents')
+        .createSignedUrl(document.file_path, 3600); // URL valide pendant 1 heure
+
+      if (error) throw error;
+
+      // Ouvrir le document dans un nouvel onglet
+      window.open(data.signedUrl, '_blank');
+
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast({
+        title: "Erreur de visualisation",
+        description: "Impossible d'ouvrir le document",
         variant: "destructive",
       });
     }
@@ -215,6 +237,14 @@ export default function DocumentsControlPage() {
                     <Badge variant="outline">
                       {document.file_type === 'application/pdf' ? 'PDF' : document.file_type}
                     </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      title="Visualiser le document"
+                      onClick={() => viewDocument(document)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm" 
