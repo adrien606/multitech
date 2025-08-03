@@ -149,10 +149,15 @@ export default function BuildingsPage() {
                             <span className="text-sm">{building.address}</span>
                           </div>
                           {building.description && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground mb-2">
                               {building.description}
                             </p>
                           )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+                              Refacturation client: Oui {/* Mock pour l'instant */}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex gap-2">
                           <Button

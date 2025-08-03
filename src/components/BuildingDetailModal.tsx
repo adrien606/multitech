@@ -94,9 +94,17 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
               {building.description && (
                 <p className="text-muted-foreground">{building.description}</p>
               )}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                Créé le {format(new Date(building.created_at), 'dd/MM/yyyy', { locale: fr })}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  Créé le {format(new Date(building.created_at), 'dd/MM/yyyy', { locale: fr })}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Refacturation client:</span>
+                  <span className="ml-2 px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">
+                    Oui {/* Mock pour l'instant */}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
