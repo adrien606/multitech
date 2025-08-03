@@ -11,8 +11,34 @@ import { UserRole } from "@/utils/userRole.utils";
 
 export default function UsersPage() {
   const { profiles, loading, refetch } = useUserProfiles();
-  const { role } = useAuth();
+  const { role, loading: authLoading } = useAuth();
   const { deletingUserId, handleChangeRole, handleDeleteUser } = useUserManagement(refetch);
+
+  // Vérification que seuls les administrateurs peuvent accéder à cette page
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Accès non autorisé</h1>
+          <p className="text-muted-foreground mb-6">Seuls les administrateurs peuvent accéder à cette page.</p>
+          <Link to="/">
+            <Button>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retourner au tableau de bord
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const adminUsers = profiles.filter(profile => profile.role === 'admin');
   const supervisorUsers = profiles.filter(profile => profile.role === 'supervisor');
