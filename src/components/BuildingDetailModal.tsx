@@ -2,10 +2,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, MapPin, Calendar, CheckCircle, AlertTriangle, Clock, Settings, Zap } from "lucide-react";
+import { Building2, MapPin, Calendar, CheckCircle, AlertTriangle, Clock, Zap } from "lucide-react";
 import { Building } from "@/hooks/useBuildings";
 import { useRegulatoryControls } from "@/hooks/useRegulatoryControls";
-import { BuildingEditModal } from "@/components/BuildingEditModal";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useState } from "react";
@@ -19,7 +19,6 @@ interface BuildingDetailModalProps {
 
 export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetailModalProps) {
   const { controls } = useRegulatoryControls();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [clientBilling, setClientBilling] = useState(false); // Mock state pour l'instant
   
   if (!building) return null;
@@ -76,11 +75,11 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
   const overdueControls = buildingControls.filter(c => c.status === 'overdue').length;
   const completedThisMonth = buildingControls.filter(c => c.status === 'completed').length;
 
-  const handleSaveBilling = async (buildingId: string, newClientBilling: boolean) => {
+  const handleBillingToggle = async (newValue: boolean) => {
     try {
-      setClientBilling(newClientBilling);
-      // Après Supabase : await updateBuilding(buildingId, { client_billing: newClientBilling });
-      toast.success("Paramètres de refacturation mis à jour");
+      setClientBilling(newValue);
+      // Après Supabase : await updateBuilding(building.id, { client_billing: newValue });
+      toast.success(`Refacturation client ${newValue ? 'activée' : 'désactivée'}`);
     } catch (error) {
       toast.error("Erreur lors de la mise à jour");
     }
@@ -90,20 +89,10 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
-              Détails du bâtiment - {building.name}
-            </DialogTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditModalOpen(true)}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configurer refacturation
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Détails du bâtiment - {building.name}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -120,17 +109,23 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
               {building.description && (
                 <p className="text-muted-foreground">{building.description}</p>
               )}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   Créé le {format(new Date(building.created_at), 'dd/MM/yyyy', { locale: fr })}
                 </div>
-                <div className="text-sm">
-                  <span className="font-medium">Refacturation client:</span>
-                  <Badge variant={clientBilling ? "default" : "outline"} className="ml-2">
-                    <Zap className="w-3 h-3 mr-1" />
-                    {clientBilling ? "Activée" : "Désactivée"}
-                  </Badge>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">Refacturation client:</span>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={clientBilling}
+                      onCheckedChange={handleBillingToggle}
+                    />
+                    <Badge variant={clientBilling ? "default" : "outline"} className="text-xs">
+                      <Zap className="w-3 h-3 mr-1" />
+                      {clientBilling ? "Activée" : "Désactivée"}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -219,13 +214,6 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
             </CardContent>
           </Card>
         </div>
-
-        <BuildingEditModal
-          building={building}
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSaveBilling}
-        />
       </DialogContent>
     </Dialog>
   );
