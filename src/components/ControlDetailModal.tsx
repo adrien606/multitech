@@ -63,6 +63,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     provider_name: '',
     due_date: '',
     next_due_date: '',
+    estimated_cost: '',
+    actual_cost: '',
     notes: '',
     status: 'pending' as 'pending' | 'in_progress' | 'completed' | 'overdue'
   });
@@ -80,6 +82,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
         provider_name: control.provider_name || '',
         due_date: control.due_date || '',
         next_due_date: control.next_due_date || '',
+        estimated_cost: control.estimated_cost?.toString() || '',
+        actual_cost: control.actual_cost?.toString() || '',
         notes: control.notes || '',
         status: control.status
       });
@@ -153,6 +157,8 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
       provider_name: control.provider_name || '',
       due_date: control.due_date || '',
       next_due_date: control.next_due_date || '',
+      estimated_cost: control.estimated_cost?.toString() || '',
+      actual_cost: control.actual_cost?.toString() || '',
       notes: control.notes || '',
       status: control.status
     });
@@ -166,7 +172,14 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
       const newNextDueDate = editData.next_due_date;
       const shouldCreateNextControl = newNextDueDate && newNextDueDate !== originalNextDueDate;
       
-      const { error } = await updateControl(controlId, editData);
+      // Préparer les données avec conversion des types
+      const updateData = {
+        ...editData,
+        estimated_cost: editData.estimated_cost ? parseFloat(editData.estimated_cost) : undefined,
+        actual_cost: editData.actual_cost ? parseFloat(editData.actual_cost) : undefined,
+      };
+      
+      const { error } = await updateControl(controlId, updateData);
       if (error) {
         toast({
           title: "Erreur",
@@ -504,6 +517,32 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
                 <span className="font-medium">Créé le:</span>
                 <span>{format(new Date(control.created_at), 'dd/MM/yyyy', { locale: fr })}</span>
               </div>
+            </div>
+          </div>
+
+          {/* Coûts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-medium mb-2">Prix estimé (€)</h3>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={editData.estimated_cost}
+                onChange={(e) => handleFieldChange('estimated_cost', e.target.value)}
+              />
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">Prix réel (€)</h3>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={editData.actual_cost}
+                onChange={(e) => handleFieldChange('actual_cost', e.target.value)}
+              />
             </div>
           </div>
 

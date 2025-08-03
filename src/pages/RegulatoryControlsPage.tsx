@@ -189,7 +189,10 @@ export default function RegulatoryControlsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                0 €
+                {new Intl.NumberFormat('fr-FR', {
+                  style: 'currency',
+                  currency: 'EUR'
+                }).format(stats?.total_budget || 0)}
               </div>
               <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
             </CardContent>

@@ -25,6 +25,7 @@ interface NewControlModalProps {
     control_type_id: string;
     due_date: string;
     assigned_provider_id?: string;
+    estimated_cost?: number;
     notes?: string;
   }) => void;
 }
@@ -43,6 +44,7 @@ export function NewControlModal({
     control_type_id: '',
     due_date: undefined as Date | undefined,
     assigned_provider_id: 'none',
+    estimated_cost: '',
     notes: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,6 +63,7 @@ export function NewControlModal({
       control_type_id: formData.control_type_id,
       due_date: formData.due_date.toISOString(),
       assigned_provider_id: formData.assigned_provider_id === 'none' ? undefined : formData.assigned_provider_id || undefined,
+      estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
       notes: formData.notes || undefined,
     };
 
@@ -72,6 +75,7 @@ export function NewControlModal({
       control_type_id: '',
       due_date: undefined,
       assigned_provider_id: 'none',
+      estimated_cost: '',
       notes: '',
     });
     
@@ -85,6 +89,7 @@ export function NewControlModal({
       control_type_id: '',
       due_date: undefined,
       assigned_provider_id: 'none',
+      estimated_cost: '',
       notes: '',
     });
     onClose();
@@ -209,6 +214,22 @@ export function NewControlModal({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Prix estimé */}
+            <div className="space-y-2">
+              <Label htmlFor="estimated_cost">Prix estimé (€)</Label>
+              <Input
+                id="estimated_cost"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.estimated_cost}
+                onChange={(e) => setFormData(prev => ({ ...prev, estimated_cost: e.target.value }))}
+              />
             </div>
           </div>
 

@@ -30,4 +30,5 @@ export interface ControlStats {
   completed: number;
   overdue: number;
   upcoming: number;
+  total_budget: number;
 }

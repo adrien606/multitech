@@ -71,6 +71,7 @@ export default function ControlsPage() {
     control_type_id: string; 
     due_date: string; 
     assigned_provider_id?: string; 
+    estimated_cost?: number;
     notes?: string; 
   }) => {
     try {
@@ -183,7 +184,10 @@ export default function ControlsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                0 €
+                {new Intl.NumberFormat('fr-FR', {
+                  style: 'currency',
+                  currency: 'EUR'
+                }).format(stats?.total_budget || 0)}
               </div>
               <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
             </CardContent>

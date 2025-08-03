@@ -11,6 +11,7 @@ export const useRegulatoryControls = () => {
     completed: 0,
     overdue: 0,
     upcoming: 0,
+    total_budget: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +20,11 @@ export const useRegulatoryControls = () => {
     const now = new Date();
     const oneWeekFromNow = new Date();
     oneWeekFromNow.setDate(now.getDate() + 7);
+
+    const totalBudget = controlsData.reduce((sum, control) => {
+      const cost = control.actual_cost || control.estimated_cost || 0;
+      return sum + cost;
+    }, 0);
 
     return {
       total: controlsData.length,
@@ -33,6 +39,7 @@ export const useRegulatoryControls = () => {
         new Date(c.due_date) >= now && 
         new Date(c.due_date) <= oneWeekFromNow
       ).length,
+      total_budget: totalBudget,
     };
   };
 
