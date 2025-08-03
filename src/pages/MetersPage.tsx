@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Plus, Zap, Building as BuildingIcon, Save } from "lucide-react";
+import { ArrowLeft, Plus, Zap, Building as BuildingIcon, Save, Trash2, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBuildings } from "@/hooks/useBuildings";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ export default function MetersPage() {
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [newReading, setNewReading] = useState({ month: '', year: new Date().getFullYear(), kwh: 0 });
   const [pricePerKwh, setPricePerKwh] = useState(0.15); // Prix par défaut
+  const [editingLotName, setEditingLotName] = useState<string | null>(null);
   const [editingClient, setEditingClient] = useState<string | null>(null);
 
   // Charger les données de refacturation depuis localStorage
@@ -145,6 +146,70 @@ export default function MetersPage() {
     }));
     setPricePerKwh(newPrice);
     toast.success("Prix de refacturation mis à jour");
+  };
+
+  const handleAddLot = () => {
+    if (!selectedBuildingId || !currentBuildingData) return;
+    
+    const newLotNumber = currentBuildingData.lots.length + 1;
+    const newLot: Lot = {
+      id: Date.now().toString(),
+      name: `Lot ${newLotNumber}`,
+      clientName: '',
+      readings: []
+    };
+
+    setBuildingLots(prev => ({
+      ...prev,
+      [selectedBuildingId]: {
+        ...prev[selectedBuildingId],
+        lots: [...prev[selectedBuildingId].lots, newLot]
+      }
+    }));
+    
+    toast.success("Nouveau lot ajouté");
+  };
+
+  const handleUpdateLotName = (lotId: string, newName: string) => {
+    if (!selectedBuildingId || !newName.trim()) return;
+    
+    setBuildingLots(prev => ({
+      ...prev,
+      [selectedBuildingId]: {
+        ...prev[selectedBuildingId],
+        lots: prev[selectedBuildingId].lots.map(lot =>
+          lot.id === lotId ? { ...lot, name: newName.trim() } : lot
+        )
+      }
+    }));
+    setEditingLotName(null);
+    toast.success("Nom du lot mis à jour");
+  };
+
+  const handleDeleteLot = (lotId: string) => {
+    if (!selectedBuildingId) return;
+    
+    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+    if (lot && lot.readings.length > 0) {
+      if (!confirm(`Le lot "${lot.name}" contient des relevés. Êtes-vous sûr de vouloir le supprimer ?`)) {
+        return;
+      }
+    }
+
+    setBuildingLots(prev => ({
+      ...prev,
+      [selectedBuildingId]: {
+        ...prev[selectedBuildingId],
+        lots: prev[selectedBuildingId].lots.filter(lot => lot.id !== lotId)
+      }
+    }));
+    
+    // Désélectionner le lot s'il était sélectionné
+    if (selectedLotId === lotId) {
+      setSelectedLotId(null);
+    }
+    
+    toast.success("Lot supprimé");
   };
 
   // Calculer les totaux mensuels
@@ -317,7 +382,13 @@ export default function MetersPage() {
             {/* Gestion des lots */}
             <Card>
               <CardHeader>
-                <CardTitle>Lots et clients</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Lots et clients</CardTitle>
+                  <Button onClick={handleAddLot} size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un lot
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -325,8 +396,34 @@ export default function MetersPage() {
                     <Card key={lot.id} className="bg-muted/30">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <h4 className="font-medium">{lot.name}</h4>
+                          <div className="flex items-center gap-3 flex-1">
+                            {/* Nom du lot modifiable */}
+                            {editingLotName === lot.id ? (
+                              <Input
+                                defaultValue={lot.name}
+                                onBlur={(e) => handleUpdateLotName(lot.id, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleUpdateLotName(lot.id, e.currentTarget.value);
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingLotName(null);
+                                  }
+                                }}
+                                className="w-32 h-8 font-medium"
+                                autoFocus
+                              />
+                            ) : (
+                              <button
+                                onClick={() => setEditingLotName(lot.id)}
+                                className="font-medium hover:underline flex items-center gap-1"
+                              >
+                                {lot.name}
+                                <Edit className="w-3 h-3 opacity-50" />
+                              </button>
+                            )}
+                            
+                            {/* Client modifiable */}
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-muted-foreground">Client:</span>
                               {editingClient === lot.id ? (
@@ -336,6 +433,9 @@ export default function MetersPage() {
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       handleUpdateClientName(lot.id, e.currentTarget.value);
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setEditingClient(null);
                                     }
                                   }}
                                   className="w-40 h-7"
@@ -351,13 +451,24 @@ export default function MetersPage() {
                               )}
                             </div>
                           </div>
-                          <Button
-                            variant={selectedLotId === lot.id ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedLotId(lot.id)}
-                          >
-                            {selectedLotId === lot.id ? "Sélectionné" : "Sélectionner"}
-                          </Button>
+                          
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant={selectedLotId === lot.id ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedLotId(lot.id)}
+                            >
+                              {selectedLotId === lot.id ? "Sélectionné" : "Sélectionner"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteLot(lot.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       {lot.readings.length > 0 && (
