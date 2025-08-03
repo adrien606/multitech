@@ -24,7 +24,7 @@ export default function DocumentsControlPage() {
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [selectedControlType, setSelectedControlType] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
 
@@ -61,9 +61,6 @@ export default function DocumentsControlPage() {
       // Filtre par type de contrôle
       if (selectedControlType && doc.control_type_id !== selectedControlType) return false;
       
-      // Filtre par statut
-      if (selectedStatus && doc.status !== selectedStatus) return false;
-      
       // Filtre par période
       if (dateFrom || dateTo) {
         const docDate = new Date(doc.created_at);
@@ -73,14 +70,13 @@ export default function DocumentsControlPage() {
       
       return true;
     });
-  }, [documents, selectedBuilding, selectedProvider, selectedControlType, selectedStatus, dateFrom, dateTo]);
+  }, [documents, selectedBuilding, selectedProvider, selectedControlType, dateFrom, dateTo]);
 
   // Fonction pour réinitialiser les filtres
   const clearFilters = () => {
     setSelectedBuilding('');
     setSelectedProvider('');
     setSelectedControlType('');
-    setSelectedStatus('');
     setDateFrom(undefined);
     setDateTo(undefined);
   };
@@ -292,13 +288,11 @@ export default function DocumentsControlPage() {
           selectedBuilding={selectedBuilding}
           selectedProvider={selectedProvider}
           selectedControlType={selectedControlType}
-          selectedStatus={selectedStatus}
           dateFrom={dateFrom}
           dateTo={dateTo}
           onBuildingChange={setSelectedBuilding}
           onProviderChange={setSelectedProvider}
           onControlTypeChange={setSelectedControlType}
-          onStatusChange={setSelectedStatus}
           onDateFromChange={setDateFrom}
           onDateToChange={setDateTo}
           onClearFilters={clearFilters}

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,13 +16,11 @@ interface DocumentFiltersProps {
   selectedBuilding?: string;
   selectedProvider?: string;
   selectedControlType?: string;
-  selectedStatus?: string;
   dateFrom?: Date;
   dateTo?: Date;
   onBuildingChange: (value: string) => void;
   onProviderChange: (value: string) => void;
   onControlTypeChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
   onDateFromChange: (date: Date | undefined) => void;
   onDateToChange: (date: Date | undefined) => void;
   onClearFilters: () => void;
@@ -38,13 +35,11 @@ export function DocumentFilters({
   selectedBuilding,
   selectedProvider,
   selectedControlType,
-  selectedStatus,
   dateFrom,
   dateTo,
   onBuildingChange,
   onProviderChange,
   onControlTypeChange,
-  onStatusChange,
   onDateFromChange,
   onDateToChange,
   onClearFilters,
@@ -55,16 +50,9 @@ export function DocumentFilters({
     selectedBuilding,
     selectedProvider,
     selectedControlType,
-    selectedStatus,
     dateFrom,
     dateTo,
   ].filter(Boolean).length;
-
-  const statusOptions = [
-    { value: 'pending', label: 'En attente', color: 'bg-orange-100 text-orange-800' },
-    { value: 'validated', label: 'Validé', color: 'bg-green-100 text-green-800' },
-    { value: 'rejected', label: 'Rejeté', color: 'bg-red-100 text-red-800' },
-  ];
 
   return (
     <Card className="mb-6">
@@ -92,7 +80,7 @@ export function DocumentFilters({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {/* Filtre par bâtiment */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Bâtiment</label>
@@ -144,27 +132,6 @@ export function DocumentFilters({
                 {controlTypes.map((type) => (
                   <SelectItem key={type.id} value={type.id}>
                     {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Filtre par statut */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Statut</label>
-            <Select value={selectedStatus || 'all'} onValueChange={(value) => onStatusChange(value === 'all' ? '' : value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tous les statuts" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                {statusOptions.map((status) => (
-                  <SelectItem key={status.value} value={status.value}>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${status.color}`} />
-                      {status.label}
-                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -245,12 +212,6 @@ export function DocumentFilters({
               <Badge variant="secondary" className="flex items-center gap-1">
                 Type: {controlTypes.find(t => t.id === selectedControlType)?.name}
                 <X className="w-3 h-3 cursor-pointer" onClick={() => onControlTypeChange('')} />
-              </Badge>
-            )}
-            {selectedStatus && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                Statut: {statusOptions.find(s => s.value === selectedStatus)?.label}
-                <X className="w-3 h-3 cursor-pointer" onClick={() => onStatusChange('')} />
               </Badge>
             )}
             {dateFrom && (
