@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,29 @@ export default function MetersPage() {
   const { buildings, loading } = useBuildings();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [meterReadings, setMeterReadings] = useState<MeterReading[]>([]);
+  const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>({});
+
   const [newReading, setNewReading] = useState({ month: '', year: new Date().getFullYear(), kwh: 0 });
+
+  // Charger les données de refacturation depuis localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('buildingsBilling');
+      if (saved) {
+        setBuildingsBilling(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des données de refacturation:', error);
+    }
+  }, []);
+
+  const getBillingStatus = (buildingId: string) => {
+    return buildingsBilling[buildingId] || false;
+  };
 
   // Mock: filtrer les bâtiments avec refacturation client = true
   const billingBuildings = buildings.filter(building => 
-    // Pour l'instant, on simule avec tous les bâtiments. Après Supabase, on utilisera building.client_billing
-    true
+    getBillingStatus(building.id)
   );
 
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
@@ -114,7 +131,7 @@ export default function MetersPage() {
                               </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Refacturation: Oui
+                              Refacturation: {getBillingStatus(building.id) ? 'Activée' : 'Désactivée'}
                             </div>
                           </div>
                         </CardHeader>
