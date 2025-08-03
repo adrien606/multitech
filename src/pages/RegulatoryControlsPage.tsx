@@ -52,11 +52,6 @@ export default function RegulatoryControlsPage() {
     // Filtrage par échéance
     const controlDate = new Date(control.due_date);
     const now = new Date();
-    const currentYear = now.getFullYear();
-    
-    // Filtrer par année en cours - par défaut, on ne montre que les contrôles de l'année en cours
-    const isCurrentYear = controlDate.getFullYear() === currentYear;
-    
     const oneWeekFromNow = new Date();
     oneWeekFromNow.setDate(now.getDate() + 7);
     const oneMonthFromNow = new Date();
@@ -66,51 +61,17 @@ export default function RegulatoryControlsPage() {
 
     let matchesDueDate = true;
     if (selectedDueDate === 'week') {
-      matchesDueDate = controlDate >= now && controlDate <= oneWeekFromNow && isCurrentYear;
+      matchesDueDate = controlDate >= now && controlDate <= oneWeekFromNow;
     } else if (selectedDueDate === 'month') {
-      matchesDueDate = controlDate >= now && controlDate <= oneMonthFromNow && isCurrentYear;
+      matchesDueDate = controlDate >= now && controlDate <= oneMonthFromNow;
     } else if (selectedDueDate === 'quarter') {
-      matchesDueDate = controlDate >= now && controlDate <= oneQuarterFromNow && isCurrentYear;
+      matchesDueDate = controlDate >= now && controlDate <= oneQuarterFromNow;
     } else if (selectedDueDate === 'overdue') {
-      matchesDueDate = controlDate < now && control.status !== 'completed' && isCurrentYear;
-    } else {
-      // Pour 'all', on filtre quand même par année en cours
-      matchesDueDate = isCurrentYear;
+      matchesDueDate = controlDate < now && control.status !== 'completed';
     }
     
     return matchesBuilding && matchesStatus && matchesDueDate;
   }) || [];
-
-  // Calculer les statistiques à partir des contrôles filtrés
-  const calculateFilteredStats = (controlsData: any[]) => {
-    const now = new Date();
-    const oneWeekFromNow = new Date();
-    oneWeekFromNow.setDate(now.getDate() + 7);
-
-    const totalBudget = controlsData.reduce((sum, control) => {
-      const cost = control.actual_cost || control.estimated_cost || 0;
-      return sum + cost;
-    }, 0);
-
-    return {
-      total: controlsData.length,
-      pending: controlsData.filter(c => c.status === 'pending').length,
-      in_progress: controlsData.filter(c => c.status === 'in_progress').length,
-      completed: controlsData.filter(c => c.status === 'completed').length,
-      overdue: controlsData.filter(c => 
-        c.status !== 'completed' && new Date(c.due_date) < now
-      ).length,
-      upcoming: controlsData.filter(c => 
-        c.status !== 'completed' && 
-        new Date(c.due_date) >= now && 
-        new Date(c.due_date) <= oneWeekFromNow
-      ).length,
-      total_budget: totalBudget,
-    };
-  };
-
-  // Statistiques calculées à partir des contrôles filtrés
-  const filteredStats = calculateFilteredStats(filteredControls);
 
   // Gestionnaire pour créer un nouveau contrôle
   const handleCreateControl = async (controlData: any) => {
@@ -194,7 +155,7 @@ export default function RegulatoryControlsPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{filteredStats?.upcoming || 0}</div>
+              <div className="text-2xl font-bold">{stats?.upcoming || 0}</div>
               <p className="text-xs text-muted-foreground">+12% par rapport au mois dernier</p>
             </CardContent>
           </Card>
@@ -205,7 +166,7 @@ export default function RegulatoryControlsPage() {
               <AlertTriangle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-destructive">{filteredStats?.overdue || 0}</div>
+              <div className="text-2xl font-bold text-destructive">{stats?.overdue || 0}</div>
               <p className="text-xs text-muted-foreground">Nécessite une attention immédiate</p>
             </CardContent>
           </Card>
@@ -216,7 +177,7 @@ export default function RegulatoryControlsPage() {
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{filteredStats?.completed || 0}</div>
+              <div className="text-2xl font-bold">{stats?.completed || 0}</div>
               <p className="text-xs text-muted-foreground">Taux de completion: 85%</p>
             </CardContent>
           </Card>
@@ -231,7 +192,7 @@ export default function RegulatoryControlsPage() {
                 {new Intl.NumberFormat('fr-FR', {
                   style: 'currency',
                   currency: 'EUR'
-                }).format(filteredStats?.total_budget || 0)}
+                }).format(stats?.total_budget || 0)}
               </div>
               <p className="text-xs text-muted-foreground">Dépenses prestataires 2024</p>
             </CardContent>
@@ -345,21 +306,21 @@ export default function RegulatoryControlsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm">En attente</span>
-                      <Badge variant="secondary">{filteredStats?.pending || 0}</Badge>
+                      <Badge variant="secondary">{stats?.pending || 0}</Badge>
                     </div>
                     <Progress value={65} className="h-2" />
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm">En cours</span>
-                      <Badge variant="default">{filteredStats?.in_progress || 0}</Badge>
+                      <Badge variant="default">{stats?.in_progress || 0}</Badge>
                     </div>
                     <Progress value={25} className="h-2" />
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Terminés</span>
-                      <Badge variant="outline" className="text-green-600">{filteredStats?.completed || 0}</Badge>
+                      <Badge variant="outline" className="text-green-600">{stats?.completed || 0}</Badge>
                     </div>
                     <Progress value={85} className="h-2" />
                   </div>
