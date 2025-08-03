@@ -96,12 +96,12 @@ export function DocumentFilters({
           {/* Filtre par bâtiment */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Bâtiment</label>
-            <Select value={selectedBuilding || ''} onValueChange={onBuildingChange}>
+            <Select value={selectedBuilding || 'all'} onValueChange={(value) => onBuildingChange(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les bâtiments" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les bâtiments</SelectItem>
+                <SelectItem value="all">Tous les bâtiments</SelectItem>
                 {buildings.map((building) => (
                   <SelectItem key={building.id} value={building.id}>
                     <div className="flex flex-col">
@@ -117,12 +117,12 @@ export function DocumentFilters({
           {/* Filtre par prestataire */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Prestataire</label>
-            <Select value={selectedProvider || ''} onValueChange={onProviderChange}>
+            <Select value={selectedProvider || 'all'} onValueChange={(value) => onProviderChange(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les prestataires" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les prestataires</SelectItem>
+                <SelectItem value="all">Tous les prestataires</SelectItem>
                 {providers.map((provider) => (
                   <SelectItem key={provider.id} value={provider.id}>
                     {provider.name}
@@ -135,12 +135,12 @@ export function DocumentFilters({
           {/* Filtre par type de contrôle */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Type de contrôle</label>
-            <Select value={selectedControlType || ''} onValueChange={onControlTypeChange}>
+            <Select value={selectedControlType || 'all'} onValueChange={(value) => onControlTypeChange(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les types</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
                 {controlTypes.map((type) => (
                   <SelectItem key={type.id} value={type.id}>
                     {type.name}
@@ -153,12 +153,12 @@ export function DocumentFilters({
           {/* Filtre par statut */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Statut</label>
-            <Select value={selectedStatus || ''} onValueChange={onStatusChange}>
+            <Select value={selectedStatus || 'all'} onValueChange={(value) => onStatusChange(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les statuts" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les statuts</SelectItem>
+                <SelectItem value="all">Tous les statuts</SelectItem>
                 {statusOptions.map((status) => (
                   <SelectItem key={status.value} value={status.value}>
                     <div className="flex items-center gap-2">
