@@ -2,19 +2,38 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, MapPin, Phone, Mail } from 'lucide-react';
+import { Building2, MapPin, Settings, Zap } from 'lucide-react';
 import { useBuildings, Building } from '@/hooks/useBuildings';
 import Navigation from '@/components/Navigation';
 import { BuildingDetailModal } from '@/components/BuildingDetailModal';
+import { BuildingEditModal } from '@/components/BuildingEditModal';
+import { toast } from "sonner";
 
 export default function BuildingsControlPage() {
-  const { buildings } = useBuildings();
+  const { buildings, updateBuilding } = useBuildings();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleViewDetails = (building: Building) => {
     setSelectedBuilding(building);
-    setIsModalOpen(true);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleEditBilling = (building: Building) => {
+    setSelectedBuilding(building);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveBilling = async (buildingId: string, clientBilling: boolean) => {
+    try {
+      // Pour l'instant, on simule la sauvegarde
+      // Après Supabase : await updateBuilding(buildingId, { client_billing: clientBilling });
+      console.log(`Building ${buildingId} client_billing set to ${clientBilling}`);
+      toast.success("Paramètres de refacturation mis à jour");
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour");
+    }
   };
 
   return (
@@ -58,7 +77,14 @@ export default function BuildingsControlPage() {
                     <span>Terminés ce mois</span>
                     <Badge variant="outline">8</Badge>
                   </div>
-                  <div className="pt-3 border-t">
+                  <div className="flex justify-between text-sm">
+                    <span>Refacturation client</span>
+                    <Badge variant="outline" className="text-xs">
+                      <Zap className="w-3 h-3 mr-1" />
+                      Oui {/* Mock pour l'instant */}
+                    </Badge>
+                  </div>
+                  <div className="pt-3 border-t space-y-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -66,6 +92,15 @@ export default function BuildingsControlPage() {
                       onClick={() => handleViewDetails(building)}
                     >
                       Voir les détails
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleEditBilling(building)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Configurer refacturation
                     </Button>
                   </div>
                 </div>
@@ -86,8 +121,15 @@ export default function BuildingsControlPage() {
 
       <BuildingDetailModal
         building={selectedBuilding}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+      />
+
+      <BuildingEditModal
+        building={selectedBuilding}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveBilling}
       />
     </div>
   );
