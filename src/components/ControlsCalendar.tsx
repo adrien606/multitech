@@ -116,13 +116,16 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
                   <div
                     key={control.id}
                     className={`text-xs px-1 py-0.5 rounded cursor-pointer ${getStatusColor(control.status)}`}
-                    title={`${control.control_type_name} - ${control.building_name}`}
+                    title={`${control.control_type_name} - ${control.building_name} - ${control.provider_name || 'Aucun prestataire'}`}
                     onClick={() => onControlClick?.(control.id)}
                   >
                     <div className="flex items-center gap-1">
                       {getStatusIcon(control.status)}
                       <span className="truncate text-xs">{control.control_type_name}</span>
                     </div>
+                    {control.provider_name && (
+                      <div className="text-xs opacity-60 truncate mt-0.5">{control.provider_name}</div>
+                    )}
                   </div>
                 ))}
                 {dayControls.length > 2 && (
@@ -174,6 +177,9 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
                       <span className="font-medium truncate">{control.control_type_name}</span>
                     </div>
                     <div className="text-xs opacity-60 truncate">{control.building_name}</div>
+                    {control.provider_name && (
+                      <div className="text-xs opacity-50 truncate mt-0.5">{control.provider_name}</div>
+                    )}
                   </div>
                 ))}
               </div>
