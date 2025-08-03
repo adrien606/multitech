@@ -1,12 +1,78 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Upload, Download, Calendar, Building2, Loader2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
+import DocumentUploadModal from '@/components/DocumentUploadModal';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DocumentsControlPage() {
-  const { documents, stats, loading, error, formatFileSize } = useControlDocuments();
+  const { documents, stats, loading, error, formatFileSize, refetch } = useControlDocuments();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [regulatoryControls, setRegulatoryControls] = useState<Array<{ id: string; building_name: string; control_type_name: string }>>([]);
+  const { toast } = useToast();
+
+  // Charger les contrôles réglementaires pour le modal d'upload
+  const loadRegulatoryControls = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('regulatory_controls')
+        .select(`
+          id,
+          buildings(name),
+          control_types(name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const transformedControls = (data || []).map(control => ({
+        id: control.id,
+        building_name: (control.buildings as any)?.name || '',
+        control_type_name: (control.control_types as any)?.name || '',
+      }));
+
+      setRegulatoryControls(transformedControls);
+    } catch (error) {
+      console.error('Error loading regulatory controls:', error);
+    }
+  };
+
+  // Fonction pour télécharger un document
+  const downloadDocument = async (document: any) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('control-documents')
+        .download(document.file_path);
+
+      if (error) throw error;
+
+      // Créer un lien de téléchargement
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = document.original_filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Téléchargement réussi",
+        description: `Le fichier ${document.original_filename} a été téléchargé`,
+      });
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        title: "Erreur de téléchargement",
+        description: "Impossible de télécharger le document",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -46,7 +112,12 @@ export default function DocumentsControlPage() {
               Centralisation des rapports et certificats de contrôle
             </p>
           </div>
-          <Button>
+          <Button 
+            onClick={() => {
+              loadRegulatoryControls();
+              setIsUploadModalOpen(true);
+            }}
+          >
             <Upload className="w-4 h-4 mr-2" />
             Télécharger un document
           </Button>
@@ -144,7 +215,12 @@ export default function DocumentsControlPage() {
                     <Badge variant="outline">
                       {document.file_type === 'application/pdf' ? 'PDF' : document.file_type}
                     </Badge>
-                    <Button variant="ghost" size="sm" title="Télécharger le document">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      title="Télécharger le document"
+                      onClick={() => downloadDocument(document)}
+                    >
                       <Download className="w-4 h-4" />
                     </Button>
                   </div>
@@ -158,6 +234,17 @@ export default function DocumentsControlPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal d'upload */}
+        <DocumentUploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onUploadSuccess={() => {
+            refetch();
+            setIsUploadModalOpen(false);
+          }}
+          regulatoryControls={regulatoryControls}
+        />
 
       </div>
     </div>
