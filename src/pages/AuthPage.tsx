@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { UserRole } from '@/utils/userRole.utils';
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginForm, setLoginForm] = useState({
@@ -20,7 +21,7 @@ export default function AuthPage() {
     fullName: '',
     pinCode: '',
     confirmPinCode: '',
-    role: 'agent' as 'agent' | 'supervisor'
+    role: 'agent' as UserRole
   });
   const {
     signIn,
@@ -197,7 +198,7 @@ export default function AuthPage() {
                  </div>
                  <div className="space-y-2">
                    <Label htmlFor="signup-role">Rôle</Label>
-                   <Select value={signupForm.role} onValueChange={(value: 'agent' | 'supervisor') => setSignupForm(prev => ({
+                   <Select value={signupForm.role} onValueChange={(value: UserRole) => setSignupForm(prev => ({
                   ...prev,
                   role: value
                 }))}>

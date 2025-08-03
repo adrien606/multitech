@@ -14,6 +14,7 @@ import { useAgents } from "@/hooks/useAgents";
 import { useBuildings } from "@/hooks/useBuildings";
 import { useTasks, Task, TaskStatus } from "@/hooks/useTasks";
 import { toast } from "sonner";
+import { getRoleLabel } from "@/utils/userRole.utils";
 
 export default function Dashboard() {
   const { profile, role, signOut } = useAuth();
@@ -89,7 +90,7 @@ export default function Dashboard() {
       if (comment) {
         await addComment(taskId, {
           text: comment,
-          author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
+          author: `${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`,
           comment_type: 'progress',
         });
       }
@@ -125,7 +126,7 @@ export default function Dashboard() {
       if (result.data) {
         await addComment(result.data.id, {
           text: "Tâche créée et assignée.",
-          author: `${profile?.full_name || 'Utilisateur'} (${role === 'admin' ? 'Administrateur' : role === 'supervisor' ? 'Superviseur' : 'Agent'})`,
+          author: `${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`,
           comment_type: 'assignment',
         });
 

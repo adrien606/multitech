@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { UserRole, getRoleDisplayName } from '@/utils/userRole.utils';
 
 interface Profile {
   id: string;
@@ -11,18 +12,15 @@ interface Profile {
   updated_at: string;
 }
 
-interface UserRole {
-  role: 'admin' | 'supervisor' | 'agent';
-}
 
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
-  role: 'admin' | 'supervisor' | 'agent' | null;
+  role: UserRole | null;
   session: Session | null;
   loading: boolean;
   signIn: (email: string, pinCode: string) => Promise<{ error: any }>;
-  signUp: (email: string, fullName: string, pinCode: string, role?: 'admin' | 'supervisor' | 'agent') => Promise<{ error: any }>;
+  signUp: (email: string, fullName: string, pinCode: string, role?: UserRole) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   logActivity: (action: string, entityType: string, entityId?: string, details?: any) => Promise<void>;
 }
@@ -45,7 +43,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<'admin' | 'supervisor' | 'agent' | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -109,7 +107,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .single();
       
       if (error) throw error;
-      setRole(data.role);
+      setRole(data.role as UserRole);
     } catch (error) {
       console.error('Error fetching role:', error);
     }
@@ -129,7 +127,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signUp = async (email: string, fullName: string, pinCode: string, role: 'admin' | 'supervisor' | 'agent' = 'agent') => {
+  const signUp = async (email: string, fullName: string, pinCode: string, role: UserRole = 'agent') => {
     try {
       // Convert 4-digit PIN to 6-character password by adding prefix
       const password = `pin_${pinCode}`;
