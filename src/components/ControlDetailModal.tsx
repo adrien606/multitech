@@ -59,6 +59,7 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     building_name: '',
     assigned_provider_id: '',
     provider_name: '',
+    due_date: '',
     next_due_date: '',
     notes: '',
     status: 'pending' as 'pending' | 'in_progress' | 'completed' | 'overdue'
@@ -75,6 +76,7 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
         building_name: control.building_name || '',
         assigned_provider_id: control.assigned_provider_id || '',
         provider_name: control.provider_name || '',
+        due_date: control.due_date || '',
         next_due_date: control.next_due_date || '',
         notes: control.notes || '',
         status: control.status
@@ -127,6 +129,7 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
       building_name: control.building_name || '',
       assigned_provider_id: control.assigned_provider_id || '',
       provider_name: control.provider_name || '',
+      due_date: control.due_date || '',
       next_due_date: control.next_due_date || '',
       notes: control.notes || '',
       status: control.status
@@ -396,10 +399,14 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Échéance:</span>
-                <span className={isOverdue ? 'text-destructive font-medium' : ''}>
-                  {format(new Date(control.due_date), 'dd/MM/yyyy', { locale: fr })}
-                  {isOverdue && ' (En retard)'}
-                </span>
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={editData.due_date ? editData.due_date.split('T')[0] : ''}
+                    onChange={(e) => handleFieldChange('due_date', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                    className={`h-8 ${isOverdue ? 'border-destructive' : ''}`}
+                  />
+                </div>
               </div>
               
               <div className="flex items-center gap-2 text-sm">
