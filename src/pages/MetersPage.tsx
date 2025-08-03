@@ -13,8 +13,10 @@ interface MeterReading {
   id: string;
   month: string;
   year: number;
-  kwh: number;
-  amount: number;
+  currentReading: number; // Relevé actuel
+  previousReading: number; // Relevé précédent
+  consumption: number; // Différence (consommation réelle)
+  amount: number; // Montant à facturer
 }
 
 interface Lot {
@@ -37,7 +39,7 @@ export default function MetersPage() {
   const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>({});
   const [buildingLots, setBuildingLots] = useState<BuildingLots>({});
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
-  const [newReading, setNewReading] = useState({ month: '', year: new Date().getFullYear(), kwh: 0 });
+  const [newReading, setNewReading] = useState({ currentReading: 0 });
   const [pricePerKwh, setPricePerKwh] = useState(0.15); // Prix par défaut
   const [editingLotName, setEditingLotName] = useState<string | null>(null);
   const [editingClient, setEditingClient] = useState<string | null>(null);
@@ -83,18 +85,52 @@ export default function MetersPage() {
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
   const currentBuildingData = selectedBuildingId ? buildingLots[selectedBuildingId] : null;
 
+  // Obtenir le mois/année actuels
+  const now = new Date();
+  const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+  const currentYear = now.getFullYear();
+
+  // Obtenir le dernier relevé pour un lot
+  const getLastReading = (lotId: string): number => {
+    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+    if (!lot || lot.readings.length === 0) return 0;
+    return lot.readings[lot.readings.length - 1].currentReading;
+  };
+
+  // Vérifier si le relevé du mois existe déjà
+  const hasCurrentMonthReading = (lotId: string): boolean => {
+    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+    if (!lot) return false;
+    return lot.readings.some(r => r.month === currentMonth && r.year === currentYear);
+  };
+
   const handleAddReading = () => {
-    if (!newReading.month || !newReading.kwh || !selectedLotId || !selectedBuildingId) {
-      toast.error("Veuillez remplir tous les champs et sélectionner un lot");
+    if (!newReading.currentReading || !selectedLotId || !selectedBuildingId) {
+      toast.error("Veuillez saisir le relevé actuel et sélectionner un lot");
       return;
     }
 
-    const amount = newReading.kwh * pricePerKwh;
+    if (hasCurrentMonthReading(selectedLotId)) {
+      toast.error("Le relevé pour ce mois a déjà été saisi pour ce lot");
+      return;
+    }
+
+    const previousReading = getLastReading(selectedLotId);
+    const consumption = newReading.currentReading - previousReading;
+    
+    if (consumption < 0) {
+      toast.error("Le nouveau relevé ne peut pas être inférieur au précédent");
+      return;
+    }
+
+    const amount = consumption * pricePerKwh;
     const reading: MeterReading = {
       id: Date.now().toString(),
-      month: newReading.month,
-      year: newReading.year,
-      kwh: newReading.kwh,
+      month: currentMonth,
+      year: currentYear,
+      currentReading: newReading.currentReading,
+      previousReading,
+      consumption,
       amount
     };
 
@@ -110,8 +146,8 @@ export default function MetersPage() {
       }
     }));
 
-    setNewReading({ month: '', year: new Date().getFullYear(), kwh: 0 });
-    toast.success("Relevé ajouté avec succès");
+    setNewReading({ currentReading: 0 });
+    toast.success(`Relevé ajouté: ${consumption} kWh consommés (${amount.toFixed(2)}€)`);
   };
 
   const handleSaveReadings = () => {
@@ -216,15 +252,15 @@ export default function MetersPage() {
   const getMonthlyTotals = () => {
     if (!currentBuildingData) return [];
     
-    const monthlyData: { [key: string]: { kwh: number; amount: number } } = {};
+    const monthlyData: { [key: string]: { consumption: number; amount: number } } = {};
     
     currentBuildingData.lots.forEach(lot => {
       lot.readings.forEach(reading => {
         const key = `${reading.month}/${reading.year}`;
         if (!monthlyData[key]) {
-          monthlyData[key] = { kwh: 0, amount: 0 };
+          monthlyData[key] = { consumption: 0, amount: 0 };
         }
-        monthlyData[key].kwh += reading.kwh;
+        monthlyData[key].consumption += reading.consumption;
         monthlyData[key].amount += reading.amount;
       });
     });
@@ -367,7 +403,7 @@ export default function MetersPage() {
                           <div className="text-sm text-muted-foreground mb-1">
                             {new Date(2024, parseInt(data.period.split('/')[0]) - 1).toLocaleDateString('fr-FR', { month: 'long' })} {data.period.split('/')[1]}
                           </div>
-                          <div className="text-lg font-semibold">{data.kwh.toLocaleString('fr-FR')} kWh</div>
+                          <div className="text-lg font-semibold">{data.consumption.toLocaleString('fr-FR')} kWh</div>
                           <div className="text-sm font-medium text-green-600">{data.amount.toFixed(2)} €</div>
                         </CardContent>
                       </Card>
@@ -474,8 +510,8 @@ export default function MetersPage() {
                       {lot.readings.length > 0 && (
                         <CardContent className="pt-0">
                           <div className="text-xs text-muted-foreground">
-                            Derniers relevés: {lot.readings.slice(-3).map(r => 
-                              `${r.month}/${r.year}: ${r.kwh}kWh (${r.amount.toFixed(2)}€)`
+                            Derniers relevés: {lot.readings.slice(-2).map(r => 
+                              `${r.month}/${r.year}: ${r.consumption}kWh (${r.amount.toFixed(2)}€)`
                             ).join(' • ')}
                           </div>
                         </CardContent>
@@ -492,64 +528,56 @@ export default function MetersPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Plus className="w-5 h-5" />
-                    Nouveau relevé pour {currentBuildingData?.lots.find(l => l.id === selectedLotId)?.name}
+                    Relevé mensuel - {new Date(currentYear, parseInt(currentMonth) - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="month">Mois</Label>
-                      <select 
-                        id="month"
-                        className="w-full p-2 border rounded-md"
-                        value={newReading.month}
-                        onChange={(e) => setNewReading(prev => ({ ...prev, month: e.target.value }))}
-                      >
-                        <option value="">Sélectionner...</option>
-                        <option value="01">Janvier</option>
-                        <option value="02">Février</option>
-                        <option value="03">Mars</option>
-                        <option value="04">Avril</option>
-                        <option value="05">Mai</option>
-                        <option value="06">Juin</option>
-                        <option value="07">Juillet</option>
-                        <option value="08">Août</option>
-                        <option value="09">Septembre</option>
-                        <option value="10">Octobre</option>
-                        <option value="11">Novembre</option>
-                        <option value="12">Décembre</option>
-                      </select>
+                  {hasCurrentMonthReading(selectedLotId) ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>Le relevé pour ce mois a déjà été saisi pour ce lot.</p>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="year">Année</Label>
-                      <Input
-                        id="year"
-                        type="number"
-                        value={newReading.year}
-                        onChange={(e) => setNewReading(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-                        min="2020"
-                        max="2030"
-                      />
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                        <div className="text-center">
+                          <div className="text-sm text-muted-foreground">Relevé précédent</div>
+                          <div className="text-lg font-mono">{getLastReading(selectedLotId).toLocaleString('fr-FR')}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-muted-foreground">Nouveau relevé</div>
+                          <Input
+                            type="number"
+                            value={newReading.currentReading}
+                            onChange={(e) => setNewReading(prev => ({ ...prev, currentReading: parseFloat(e.target.value) || 0 }))}
+                            min={getLastReading(selectedLotId)}
+                            step="1"
+                            placeholder="Saisir le relevé"
+                            className="text-center font-mono"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-muted-foreground">Consommation</div>
+                          <div className="text-lg font-bold text-primary">
+                            {(newReading.currentReading - getLastReading(selectedLotId)).toLocaleString('fr-FR')} kWh
+                          </div>
+                          <div className="text-sm text-green-600 font-medium">
+                            {((newReading.currentReading - getLastReading(selectedLotId)) * pricePerKwh).toFixed(2)} €
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-center">
+                        <Button 
+                          onClick={handleAddReading} 
+                          disabled={newReading.currentReading <= getLastReading(selectedLotId)}
+                          className="w-auto"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Enregistrer le relevé
+                        </Button>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="kwh">kWh consommés</Label>
-                      <Input
-                        id="kwh"
-                        type="number"
-                        value={newReading.kwh}
-                        onChange={(e) => setNewReading(prev => ({ ...prev, kwh: parseFloat(e.target.value) }))}
-                        min="0"
-                        step="0.1"
-                        placeholder="0.0"
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button onClick={handleAddReading} className="w-full">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Ajouter ({(newReading.kwh * pricePerKwh).toFixed(2)}€)
-                      </Button>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -584,7 +612,9 @@ export default function MetersPage() {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Période</TableHead>
-                                <TableHead className="text-right">kWh</TableHead>
+                                <TableHead className="text-right">Relevé précédent</TableHead>
+                                <TableHead className="text-right">Relevé actuel</TableHead>
+                                <TableHead className="text-right">Consommation</TableHead>
                                 <TableHead className="text-right">Montant</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -595,9 +625,15 @@ export default function MetersPage() {
                                     {new Date(2024, parseInt(reading.month) - 1).toLocaleDateString('fr-FR', { month: 'long' })} {reading.year}
                                   </TableCell>
                                   <TableCell className="text-right font-mono">
-                                    {reading.kwh.toLocaleString('fr-FR')} kWh
+                                    {reading.previousReading.toLocaleString('fr-FR')}
+                                  </TableCell>
+                                  <TableCell className="text-right font-mono">
+                                    {reading.currentReading.toLocaleString('fr-FR')}
                                   </TableCell>
                                   <TableCell className="text-right font-mono font-medium">
+                                    {reading.consumption.toLocaleString('fr-FR')} kWh
+                                  </TableCell>
+                                  <TableCell className="text-right font-mono font-medium text-green-600">
                                     {reading.amount.toFixed(2)} €
                                   </TableCell>
                                 </TableRow>
