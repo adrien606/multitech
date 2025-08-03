@@ -13,27 +13,23 @@ export default function BuildingsControlPage() {
   const { buildings, updateBuilding } = useBuildings();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>({});
 
   const handleViewDetails = (building: Building) => {
     setSelectedBuilding(building);
     setIsDetailModalOpen(true);
   };
 
-  const handleEditBilling = (building: Building) => {
-    setSelectedBuilding(building);
-    setIsEditModalOpen(true);
+  const handleBillingUpdate = (buildingId: string, clientBilling: boolean) => {
+    setBuildingsBilling(prev => ({
+      ...prev,
+      [buildingId]: clientBilling
+    }));
+    toast.success(`Refacturation ${clientBilling ? 'activée' : 'désactivée'} pour ce bâtiment`);
   };
 
-  const handleSaveBilling = async (buildingId: string, clientBilling: boolean) => {
-    try {
-      // Pour l'instant, on simule la sauvegarde
-      // Après Supabase : await updateBuilding(buildingId, { client_billing: clientBilling });
-      console.log(`Building ${buildingId} client_billing set to ${clientBilling}`);
-      toast.success("Paramètres de refacturation mis à jour");
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
-    }
+  const getBillingStatus = (buildingId: string) => {
+    return buildingsBilling[buildingId] || false;
   };
 
   return (
@@ -79,9 +75,9 @@ export default function BuildingsControlPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Refacturation client</span>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant={getBillingStatus(building.id) ? "default" : "outline"} className="text-xs">
                       <Zap className="w-3 h-3 mr-1" />
-                      Oui {/* Mock pour l'instant */}
+                      {getBillingStatus(building.id) ? "Activée" : "Désactivée"}
                     </Badge>
                   </div>
                   <div className="pt-3 border-t">
@@ -114,6 +110,8 @@ export default function BuildingsControlPage() {
         building={selectedBuilding}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
+        clientBilling={selectedBuilding ? getBillingStatus(selectedBuilding.id) : false}
+        onBillingChange={handleBillingUpdate}
       />
     </div>
   );

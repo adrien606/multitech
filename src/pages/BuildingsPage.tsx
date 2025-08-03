@@ -226,6 +226,8 @@ export default function BuildingsPage() {
         building={detailBuilding}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
+        clientBilling={false}
+        onBillingChange={() => {}}
       />
     </div>
   );

@@ -15,11 +15,12 @@ interface BuildingDetailModalProps {
   building: Building | null;
   isOpen: boolean;
   onClose: () => void;
+  clientBilling: boolean;
+  onBillingChange: (buildingId: string, billing: boolean) => void;
 }
 
-export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetailModalProps) {
+export function BuildingDetailModal({ building, isOpen, onClose, clientBilling, onBillingChange }: BuildingDetailModalProps) {
   const { controls } = useRegulatoryControls();
-  const [clientBilling, setClientBilling] = useState(false); // Mock state pour l'instant
   
   if (!building) return null;
 
@@ -76,13 +77,7 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
   const completedThisMonth = buildingControls.filter(c => c.status === 'completed').length;
 
   const handleBillingToggle = async (newValue: boolean) => {
-    try {
-      setClientBilling(newValue);
-      // Après Supabase : await updateBuilding(building.id, { client_billing: newValue });
-      toast.success(`Refacturation client ${newValue ? 'activée' : 'désactivée'}`);
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
-    }
+    onBillingChange(building.id, newValue);
   };
 
   return (
