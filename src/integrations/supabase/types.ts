@@ -327,6 +327,7 @@ export type Database = {
           completed_date: string | null
           control_type_id: string
           created_at: string
+          created_by: string | null
           due_date: string
           estimated_cost: number | null
           id: string
@@ -334,6 +335,7 @@ export type Database = {
           notes: string | null
           status: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           actual_cost?: number | null
@@ -342,6 +344,7 @@ export type Database = {
           completed_date?: string | null
           control_type_id: string
           created_at?: string
+          created_by?: string | null
           due_date: string
           estimated_cost?: number | null
           id?: string
@@ -349,6 +352,7 @@ export type Database = {
           notes?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           actual_cost?: number | null
@@ -357,6 +361,7 @@ export type Database = {
           completed_date?: string | null
           control_type_id?: string
           created_at?: string
+          created_by?: string | null
           due_date?: string
           estimated_cost?: number | null
           id?: string
@@ -364,6 +369,7 @@ export type Database = {
           notes?: string | null
           status?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
