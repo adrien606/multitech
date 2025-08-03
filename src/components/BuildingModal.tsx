@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Building } from "@/types";
 
 interface BuildingModalProps {
@@ -19,6 +20,7 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
     name: building?.name || '',
     address: building?.address || '',
     description: building?.description || '',
+    clientBilling: false, // Mock field pour l'instant
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,6 +44,7 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
       name: '',
       address: '',
       description: '',
+      clientBilling: false,
     });
     onClose();
   };
@@ -53,12 +56,14 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
         name: building.name,
         address: building.address,
         description: building.description || '',
+        clientBilling: false, // Mock pour l'instant
       });
     } else if (mode === 'create') {
       setFormData({
         name: '',
         address: '',
         description: '',
+        clientBilling: false,
       });
     }
   }, [building, mode, isOpen]);
@@ -104,6 +109,17 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
               placeholder="Ex: Immeuble de bureaux de 8 étages"
               className="min-h-[80px]"
             />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="clientBilling"
+              checked={formData.clientBilling}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, clientBilling: checked as boolean }))}
+            />
+            <Label htmlFor="clientBilling" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Refacturation client
+            </Label>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
