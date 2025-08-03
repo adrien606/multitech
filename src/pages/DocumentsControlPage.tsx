@@ -42,11 +42,11 @@ export default function DocumentsControlPage() {
   };
 
   // Fonction pour télécharger un document
-  const downloadDocument = async (document: any) => {
+  const downloadDocument = async (doc: any) => {
     try {
       const { data, error } = await supabase.storage
         .from('control-documents')
-        .download(document.file_path);
+        .download(doc.file_path);
 
       if (error) throw error;
 
@@ -54,7 +54,7 @@ export default function DocumentsControlPage() {
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = document.original_filename;
+      a.download = doc.original_filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -62,7 +62,7 @@ export default function DocumentsControlPage() {
 
       toast({
         title: "Téléchargement réussi",
-        description: `Le fichier ${document.original_filename} a été téléchargé`,
+        description: `Le fichier ${doc.original_filename} a été téléchargé`,
       });
     } catch (error) {
       console.error('Error downloading document:', error);
@@ -75,11 +75,11 @@ export default function DocumentsControlPage() {
   };
 
   // Fonction pour visualiser un document
-  const viewDocument = async (document: any) => {
+  const viewDocument = async (doc: any) => {
     try {
       const { data, error } = await supabase.storage
         .from('control-documents')
-        .createSignedUrl(document.file_path, 3600); // URL valide pendant 1 heure
+        .createSignedUrl(doc.file_path, 3600); // URL valide pendant 1 heure
 
       if (error) throw error;
 
