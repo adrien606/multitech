@@ -20,6 +20,21 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
 
   // Filtrer les contrôles pour ce bâtiment
   const buildingControls = controls.filter(control => control.building_id === building.id);
+  
+  // Grouper les contrôles par année
+  const controlsByYear = buildingControls.reduce((groups, control) => {
+    const year = new Date(control.due_date).getFullYear();
+    if (!groups[year]) {
+      groups[year] = [];
+    }
+    groups[year].push(control);
+    return groups;
+  }, {} as Record<number, typeof buildingControls>);
+  
+  // Trier les années (plus récentes en premier)
+  const sortedYears = Object.keys(controlsByYear)
+    .map(Number)
+    .sort((a, b) => b - a);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -126,24 +141,39 @@ export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetai
               <CardTitle className="text-lg">Contrôles associés</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {buildingControls.length > 0 ? buildingControls.map((control) => (
-                  <div key={control.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{control.control_type_name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Échéance: {format(new Date(control.due_date), 'dd/MM/yyyy', { locale: fr })}
-                      </p>
-                      {control.provider_name && (
-                        <p className="text-xs text-muted-foreground">
-                          Prestataire: {control.provider_name}
-                        </p>
-                      )}
+              <div className="space-y-6">
+                {buildingControls.length > 0 ? sortedYears.map((year) => (
+                  <div key={year} className="space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <h3 className="font-semibold text-lg">{year}</h3>
+                      <span className="text-sm text-muted-foreground">
+                        ({controlsByYear[year].length} contrôle{controlsByYear[year].length > 1 ? 's' : ''})
+                      </span>
                     </div>
-                    <Badge variant={getStatusVariant(control.status)}>
-                      {getStatusIcon(control.status)}
-                      {getStatusText(control.status)}
-                    </Badge>
+                    <div className="space-y-2">
+                      {controlsByYear[year]
+                        .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                        .map((control) => (
+                        <div key={control.id} className="flex items-center justify-between p-3 border rounded-lg ml-4">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{control.control_type_name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Échéance: {format(new Date(control.due_date), 'dd/MM/yyyy', { locale: fr })}
+                            </p>
+                            {control.provider_name && (
+                              <p className="text-xs text-muted-foreground">
+                                Prestataire: {control.provider_name}
+                              </p>
+                            )}
+                          </div>
+                          <Badge variant={getStatusVariant(control.status)}>
+                            {getStatusIcon(control.status)}
+                            {getStatusText(control.status)}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )) : (
                   <div className="text-center py-4 text-muted-foreground">
