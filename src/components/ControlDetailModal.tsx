@@ -39,7 +39,7 @@ interface ControlDetailModalProps {
 }
 
 export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetailModalProps) {
-  const { controls, updateControl, deleteControl } = useRegulatoryControls();
+  const { controls, updateControl, deleteControl, createControl } = useRegulatoryControls();
   const { providers } = useProviders();
   const { buildings } = useBuildings();
   const { toast } = useToast();
@@ -136,6 +136,11 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
 
   const handleSave = async () => {
     try {
+      // Vérifier si la date de prochaine échéance a changé
+      const originalNextDueDate = control.next_due_date;
+      const newNextDueDate = editData.next_due_date;
+      const shouldCreateNextControl = newNextDueDate && newNextDueDate !== originalNextDueDate;
+      
       const { error } = await updateControl(controlId, editData);
       if (error) {
         toast({
@@ -146,10 +151,36 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
         return;
       }
       
-      toast({
-        title: "Succès",
-        description: "Contrôle mis à jour avec succès",
-      });
+      // Si une nouvelle date de prochaine échéance a été définie, créer un nouveau contrôle
+      if (shouldCreateNextControl) {
+        const nextControlData = {
+          building_id: editData.building_id,
+          control_type_id: control.control_type_id,
+          due_date: editData.next_due_date,
+          assigned_provider_id: editData.assigned_provider_id || null,
+          notes: `Contrôle automatiquement créé à partir du contrôle du ${format(new Date(control.due_date), 'dd/MM/yyyy', { locale: fr })}`
+        };
+        
+        const { error: createError } = await createControl(nextControlData);
+        if (createError) {
+          toast({
+            title: "Avertissement",
+            description: "Contrôle mis à jour mais erreur lors de la création du contrôle suivant: " + createError,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Succès",
+            description: "Contrôle mis à jour et nouveau contrôle créé pour la prochaine échéance",
+          });
+        }
+      } else {
+        toast({
+          title: "Succès",
+          description: "Contrôle mis à jour avec succès",
+        });
+      }
+      
       setHasChanges(false);
     } catch (error) {
       toast({
