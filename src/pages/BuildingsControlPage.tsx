@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,20 @@ export default function BuildingsControlPage() {
   const { buildings, updateBuilding } = useBuildings();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>({});
+  const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>(() => {
+    // Charger depuis localStorage
+    try {
+      const saved = localStorage.getItem('buildingsBilling');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Sauvegarder dans localStorage à chaque changement
+  useEffect(() => {
+    localStorage.setItem('buildingsBilling', JSON.stringify(buildingsBilling));
+  }, [buildingsBilling]);
 
   const handleViewDetails = (building: Building) => {
     setSelectedBuilding(building);
@@ -21,10 +34,15 @@ export default function BuildingsControlPage() {
   };
 
   const handleBillingUpdate = (buildingId: string, clientBilling: boolean) => {
-    setBuildingsBilling(prev => ({
-      ...prev,
-      [buildingId]: clientBilling
-    }));
+    setBuildingsBilling(prev => {
+      const updated = {
+        ...prev,
+        [buildingId]: clientBilling
+      };
+      // Sauvegarder immédiatement
+      localStorage.setItem('buildingsBilling', JSON.stringify(updated));
+      return updated;
+    });
     toast.success(`Refacturation ${clientBilling ? 'activée' : 'désactivée'} pour ce bâtiment`);
   };
 
