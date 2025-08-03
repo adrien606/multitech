@@ -16,6 +16,10 @@ export interface RegulatoryControl {
   status: 'pending' | 'in_progress' | 'completed' | 'overdue';
   created_at: string;
   updated_at: string;
+  created_by?: string;
+  updated_by?: string;
+  created_by_name?: string;
+  updated_by_name?: string;
 }
 
 // Interface pour les statistiques

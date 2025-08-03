@@ -86,8 +86,39 @@ export const useRegulatoryControls = () => {
           status,
           created_at: control.created_at,
           updated_at: control.updated_at,
+          created_by: control.created_by,
+          updated_by: control.updated_by,
+          created_by_name: '',
+          updated_by_name: '',
         };
       });
+
+      // Récupérer les noms des utilisateurs pour les informations de création et modification
+      const userIds = new Set<string>();
+      transformedControls.forEach(control => {
+        if (control.created_by) userIds.add(control.created_by);
+        if (control.updated_by) userIds.add(control.updated_by);
+      });
+
+      if (userIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', Array.from(userIds));
+
+        if (profiles) {
+          const profileMap = new Map(profiles.map(p => [p.user_id, p.full_name]));
+          
+          transformedControls.forEach(control => {
+            if (control.created_by) {
+              control.created_by_name = profileMap.get(control.created_by) || '';
+            }
+            if (control.updated_by) {
+              control.updated_by_name = profileMap.get(control.updated_by) || '';
+            }
+          });
+        }
+      }
 
       setControls(transformedControls);
       setStats(calculateStats(transformedControls));

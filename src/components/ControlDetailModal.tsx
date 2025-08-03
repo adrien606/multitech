@@ -633,6 +633,37 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
             )}
           </div>
 
+          {/* Informations de création et modification */}
+          <div className="bg-muted/20 p-4 rounded-lg space-y-2">
+            <h4 className="font-medium text-sm text-muted-foreground">Historique</h4>
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Créé le:</span>
+                <span className="font-medium">
+                  {format(new Date(control.created_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
+                </span>
+                {control.created_by_name && (
+                  <>
+                    <span className="text-muted-foreground">par</span>
+                    <span className="font-medium">{control.created_by_name}</span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Modifié le:</span>
+                <span className="font-medium">
+                  {format(new Date(control.updated_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
+                </span>
+                {control.updated_by_name && (
+                  <>
+                    <span className="text-muted-foreground">par</span>
+                    <span className="font-medium">{control.updated_by_name}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Statut et informations supplémentaires */}
           <div className="bg-muted/30 p-4 rounded-lg">
             <div className="flex items-center gap-3 mb-3">
