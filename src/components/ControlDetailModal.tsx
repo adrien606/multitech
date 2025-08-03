@@ -31,6 +31,7 @@ import { useProviders } from "@/hooks/useProviders";
 import { useBuildings } from "@/hooks/useBuildings";
 import { useToast } from "@/hooks/use-toast";
 import { useStorageUpload } from "@/hooks/useStorageUpload";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ControlDetailModalProps {
   controlId: string;
@@ -48,11 +49,12 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
   
   const [documents, setDocuments] = useState<Array<{
     id: string;
-    file_name: string;
-    file_url: string;
-    document_type: string;
+    filename: string;
+    file_path: string;
+    file_type: string;
     file_size: number;
-    uploaded_at: string;
+    created_at: string;
+    status: string;
   }>>([]);
   const [editData, setEditData] = useState({
     building_id: '',
@@ -68,7 +70,7 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
   
   const control = controls?.find(c => c.id === controlId);
   
-  // Initialiser les données d'édition quand le contrôle change
+  // Initialiser les données d'édition et charger les documents quand le contrôle change
   useEffect(() => {
     if (control) {
       setEditData({
@@ -82,8 +84,28 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
         status: control.status
       });
       setHasChanges(false);
+      
+      // Charger les documents associés au contrôle
+      loadDocuments();
     }
   }, [control]);
+
+  const loadDocuments = async () => {
+    if (!control) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('control_documents')
+        .select('*')
+        .eq('regulatory_control_id', control.id);
+      
+      if (error) throw error;
+      
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des documents:', error);
+    }
+  };
 
   // Early return APRÈS tous les hooks
   if (!control) return null;
@@ -229,26 +251,48 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     if (!file) return;
 
     try {
-      const result = await uploadFile(file, 'control-documents');
-      
-      // Ici on devrait aussi sauvegarder l'info en base de données
-      // Pour l'instant on simule avec le state local
-      const newDocument = {
-        id: Math.random().toString(),
-        file_name: file.name,
-        file_url: result.url,
-        document_type: getDocumentType(file.name),
-        file_size: file.size,
-        uploaded_at: new Date().toISOString()
-      };
-      
-      setDocuments(prev => [...prev, newDocument]);
+      // Créer un nom de fichier unique
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${control.id}/${fileName}`;
+
+      // Upload vers le bucket control-documents
+      const { error: uploadError } = await supabase.storage
+        .from('control-documents')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Enregistrer les métadonnées dans la table control_documents
+      const { data, error: dbError } = await supabase
+        .from('control_documents')
+        .insert({
+          regulatory_control_id: control.id,
+          filename: fileName,
+          original_filename: file.name,
+          file_path: filePath,
+          file_size: file.size,
+          file_type: file.type || 'application/octet-stream',
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      // Recharger la liste des documents
+      await loadDocuments();
       
       toast({
         title: "Succès",
         description: "Document uploadé avec succès",
       });
     } catch (error) {
+      console.error('Erreur lors de l\'upload:', error);
       toast({
         title: "Erreur",
         description: "Erreur lors de l'upload du document",
@@ -280,12 +324,45 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const removeDocument = (documentId: string) => {
-    setDocuments(prev => prev.filter(doc => doc.id !== documentId));
-    toast({
-      title: "Succès",
-      description: "Document supprimé",
-    });
+  const removeDocument = async (documentId: string) => {
+    try {
+      const document = documents.find(doc => doc.id === documentId);
+      if (!document) return;
+
+      // Supprimer le fichier du storage
+      const { error: storageError } = await supabase.storage
+        .from('control-documents')
+        .remove([document.file_path]);
+
+      if (storageError) {
+        console.error('Erreur lors de la suppression du fichier:', storageError);
+      }
+
+      // Supprimer l'enregistrement de la base de données
+      const { error: dbError } = await supabase
+        .from('control_documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      // Recharger la liste des documents
+      await loadDocuments();
+      
+      toast({
+        title: "Succès",
+        description: "Document supprimé",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la suppression du document",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async () => {
@@ -510,10 +587,10 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
                     <div className="flex items-center gap-3">
                       <FileText className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">{doc.file_name}</p>
+                        <p className="text-sm font-medium">{doc.filename}</p>
                         <p className="text-xs text-muted-foreground">
-                          {doc.document_type} • {formatFileSize(doc.file_size)} • 
-                          {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                          {getDocumentType(doc.filename)} • {formatFileSize(doc.file_size)} • 
+                          {format(new Date(doc.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                         </p>
                       </div>
                     </div>
@@ -521,7 +598,22 @@ export function ControlDetailModal({ controlId, isOpen, onClose }: ControlDetail
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.open(doc.file_url, '_blank')}
+                        onClick={async () => {
+                          try {
+                            const { data, error } = await supabase.storage
+                              .from('control-documents')
+                              .createSignedUrl(doc.file_path, 3600);
+                            
+                            if (error) throw error;
+                            window.open(data.signedUrl, '_blank');
+                          } catch (error) {
+                            toast({
+                              title: "Erreur",
+                              description: "Impossible d'ouvrir le document",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
                       >
                         <Download className="w-4 h-4" />
                       </Button>
