@@ -144,6 +144,38 @@ export const useControlDocuments = () => {
     }
   };
 
+  const deleteDocument = async (id: string, filePath: string) => {
+    try {
+      // Supprimer le fichier du storage
+      const { error: storageError } = await supabase.storage
+        .from('control-documents')
+        .remove([filePath]);
+
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continuer même si la suppression du fichier échoue
+      }
+
+      // Supprimer l'enregistrement de la base de données
+      const { error: dbError } = await supabase
+        .from('control_documents')
+        .delete()
+        .eq('id', id);
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      // Recharger la liste
+      await fetchDocuments();
+      
+      return { error: null };
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      return { error: err instanceof Error ? err.message : 'Erreur lors de la suppression' };
+    }
+  };
+
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -163,6 +195,7 @@ export const useControlDocuments = () => {
     error,
     refetch: fetchDocuments,
     updateDocumentStatus,
+    deleteDocument,
     formatFileSize,
   };
 };

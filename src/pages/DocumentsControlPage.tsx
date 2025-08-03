@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
@@ -10,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DocumentsControlPage() {
-  const { documents, stats, loading, error, formatFileSize, refetch } = useControlDocuments();
+  const { documents, stats, loading, error, formatFileSize, refetch, deleteDocument } = useControlDocuments();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [regulatoryControls, setRegulatoryControls] = useState<Array<{ id: string; building_name: string; control_type_name: string }>>([]);
   const { toast } = useToast();
@@ -92,6 +93,24 @@ export default function DocumentsControlPage() {
         title: "Erreur de visualisation",
         description: "Impossible d'ouvrir le document",
         variant: "destructive",
+      });
+    }
+  };
+
+  // Fonction pour supprimer un document
+  const handleDeleteDocument = async (doc: any) => {
+    const { error } = await deleteDocument(doc.id, doc.file_path);
+    
+    if (error) {
+      toast({
+        title: "Erreur de suppression",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Document supprimé",
+        description: `Le fichier ${doc.original_filename} a été supprimé`,
       });
     }
   };
@@ -253,6 +272,36 @@ export default function DocumentsControlPage() {
                     >
                       <Download className="w-4 h-4" />
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title="Supprimer le document"
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Supprimer le document</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Êtes-vous sûr de vouloir supprimer le document <strong>{document.original_filename}</strong> ?
+                            Cette action est irréversible.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteDocument(document)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Supprimer
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}
