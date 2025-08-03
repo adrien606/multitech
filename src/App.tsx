@@ -14,7 +14,6 @@ import SpecialitiesControlPage from "./pages/SpecialitiesControlPage";
 import ControlTypesControlPage from "./pages/ControlTypesControlPage";
 import DocumentsControlPage from "./pages/DocumentsControlPage";
 import BuildingsPage from "./pages/BuildingsPage";
-import MetersPage from "./pages/MetersPage";
 import UsersPage from "./pages/UsersPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -45,11 +44,6 @@ const App = () => (
             <Route path="/buildings" element={
               <ProtectedRoute>
                 <BuildingsPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/meters" element={
-              <ProtectedRoute>
-                <MetersPage />
               </ProtectedRoute>
             } />
             <Route path="/users" element={
