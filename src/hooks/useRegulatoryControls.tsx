@@ -23,11 +23,8 @@ export const useRegulatoryControls = () => {
 
     const totalBudget = controlsData.reduce((sum, control) => {
       const cost = control.actual_cost || control.estimated_cost || 0;
-      console.log('Control:', control.id, 'actual_cost:', control.actual_cost, 'estimated_cost:', control.estimated_cost, 'cost used:', cost);
       return sum + cost;
     }, 0);
-    
-    console.log('Total budget calculated:', totalBudget);
 
     return {
       total: controlsData.length,
