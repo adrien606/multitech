@@ -147,7 +147,15 @@ export type Database = {
           validated_at?: string | null
           validated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_control_documents_regulatory_control"
+            columns: ["regulatory_control_id"]
+            isOneToOne: false
+            referencedRelation: "regulatory_controls"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       control_types: {
         Row: {
