@@ -59,11 +59,11 @@ export default function MetersPage() {
   useEffect(() => {
     if (selectedBuildingId) {
       const buildingMeterData = meterData[selectedBuildingId];
-      if (buildingMeterData) {
+      if (buildingMeterData && buildingMeterData.pricePerKwh !== pricePerKwh) {
         setPricePerKwh(buildingMeterData.pricePerKwh);
       }
     }
-  }, [selectedBuildingId]); // Retirer meterData des dépendances pour éviter la boucle
+  }, [selectedBuildingId, meterData]);
 
   // Obtenir le mois/année actuels
   const now = new Date();
