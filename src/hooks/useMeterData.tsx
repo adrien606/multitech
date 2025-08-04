@@ -1,0 +1,303 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export interface MeterReading {
+  id?: string;
+  month: string;
+  year: number;
+  currentReading: number;
+  previousReading: number;
+  consumption: number;
+  amount: number;
+}
+
+export interface MeterLot {
+  id?: string;
+  name: string;
+  clientName: string;
+  readings: MeterReading[];
+}
+
+export interface BuildingLotData {
+  pricePerKwh: number;
+  lots: MeterLot[];
+}
+
+export function useMeterData() {
+  const queryClient = useQueryClient();
+
+  // Récupérer les données des compteurs pour tous les bâtiments
+  const { data: meterData = {}, isLoading } = useQuery({
+    queryKey: ['meter-data'],
+    queryFn: async () => {
+      // Récupérer les configurations de prix
+      const { data: configs, error: configError } = await supabase
+        .from('building_meter_configs')
+        .select('building_id, price_per_kwh');
+      
+      if (configError) throw configError;
+
+      // Récupérer les lots avec leurs relevés
+      const { data: lots, error: lotsError } = await supabase
+        .from('meter_lots')
+        .select(`
+          id,
+          name,
+          client_name,
+          building_id,
+          meter_readings (
+            id,
+            month,
+            year,
+            current_reading,
+            previous_reading,
+            consumption,
+            amount
+          )
+        `);
+      
+      if (lotsError) throw lotsError;
+
+      // Organiser les données par bâtiment
+      const buildingData: Record<string, BuildingLotData> = {};
+      
+      // Initialiser avec les configurations de prix
+      configs.forEach(config => {
+        buildingData[config.building_id] = {
+          pricePerKwh: Number(config.price_per_kwh),
+          lots: []
+        };
+      });
+
+      // Ajouter les lots et relevés
+      lots.forEach(lot => {
+        if (!buildingData[lot.building_id]) {
+          buildingData[lot.building_id] = {
+            pricePerKwh: 0.15, // Prix par défaut
+            lots: []
+          };
+        }
+
+        buildingData[lot.building_id].lots.push({
+          id: lot.id,
+          name: lot.name,
+          clientName: lot.client_name || '',
+          readings: (lot.meter_readings || []).map(reading => ({
+            id: reading.id,
+            month: reading.month,
+            year: reading.year,
+            currentReading: Number(reading.current_reading),
+            previousReading: Number(reading.previous_reading),
+            consumption: Number(reading.consumption),
+            amount: Number(reading.amount)
+          }))
+        });
+      });
+
+      return buildingData;
+    }
+  });
+
+  // Mutation pour créer/mettre à jour la configuration de prix
+  const updatePriceMutation = useMutation({
+    mutationFn: async ({ buildingId, pricePerKwh }: { buildingId: string, pricePerKwh: number }) => {
+      const { error } = await supabase
+        .from('building_meter_configs')
+        .upsert({
+          building_id: buildingId,
+          price_per_kwh: pricePerKwh
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+      toast.success("Prix mis à jour - tous les calculs ont été recalculés");
+    }
+  });
+
+  // Mutation pour créer un lot
+  const createLotMutation = useMutation({
+    mutationFn: async ({ buildingId, name, clientName }: { buildingId: string, name: string, clientName: string }) => {
+      const { error } = await supabase
+        .from('meter_lots')
+        .insert({
+          building_id: buildingId,
+          name,
+          client_name: clientName
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+      toast.success("Lot ajouté avec succès");
+    }
+  });
+
+  // Mutation pour supprimer un lot
+  const deleteLotMutation = useMutation({
+    mutationFn: async (lotId: string) => {
+      // Supprimer d'abord les relevés
+      await supabase
+        .from('meter_readings')
+        .delete()
+        .eq('lot_id', lotId);
+
+      // Puis supprimer le lot
+      const { error } = await supabase
+        .from('meter_lots')
+        .delete()
+        .eq('id', lotId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+      toast.success("Lot supprimé avec succès");
+    }
+  });
+
+  // Mutation pour mettre à jour un lot
+  const updateLotMutation = useMutation({
+    mutationFn: async ({ lotId, name, clientName }: { lotId: string, name?: string, clientName?: string }) => {
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (clientName !== undefined) updates.client_name = clientName;
+
+      const { error } = await supabase
+        .from('meter_lots')
+        .update(updates)
+        .eq('id', lotId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+    }
+  });
+
+  // Mutation pour ajouter un relevé
+  const addReadingMutation = useMutation({
+    mutationFn: async ({ 
+      lotId, 
+      month, 
+      year, 
+      currentReading, 
+      previousReading, 
+      pricePerKwh 
+    }: { 
+      lotId: string, 
+      month: string, 
+      year: number, 
+      currentReading: number, 
+      previousReading: number,
+      pricePerKwh: number
+    }) => {
+      const consumption = currentReading - previousReading;
+      const amount = consumption * pricePerKwh;
+
+      const { error } = await supabase
+        .from('meter_readings')
+        .insert({
+          lot_id: lotId,
+          month,
+          year,
+          current_reading: currentReading,
+          previous_reading: previousReading,
+          consumption,
+          amount
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+      toast.success("Relevé ajouté avec succès");
+    }
+  });
+
+  // Mutation pour supprimer un relevé
+  const deleteReadingMutation = useMutation({
+    mutationFn: async (readingId: string) => {
+      const { error } = await supabase
+        .from('meter_readings')
+        .delete()
+        .eq('id', readingId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+      toast.success("Relevé supprimé avec succès");
+    }
+  });
+
+  // Mutation pour recalculer tous les montants avec le nouveau prix
+  const recalculateAmountsMutation = useMutation({
+    mutationFn: async ({ buildingId, newPricePerKwh }: { buildingId: string, newPricePerKwh: number }) => {
+      // Récupérer tous les relevés pour ce bâtiment
+      const { data: lots, error: lotsError } = await supabase
+        .from('meter_lots')
+        .select('id')
+        .eq('building_id', buildingId);
+      
+      if (lotsError) throw lotsError;
+
+      const lotIds = lots.map(lot => lot.id);
+
+      if (lotIds.length > 0) {
+        const { data: readings, error: readingsError } = await supabase
+          .from('meter_readings')
+          .select('id, consumption')
+          .in('lot_id', lotIds);
+        
+        if (readingsError) throw readingsError;
+
+        // Mettre à jour tous les montants
+        const updates = readings.map(reading => ({
+          id: reading.id,
+          amount: Number(reading.consumption) * newPricePerKwh
+        }));
+
+        for (const update of updates) {
+          await supabase
+            .from('meter_readings')
+            .update({ amount: update.amount })
+            .eq('id', update.id);
+        }
+      }
+
+      // Mettre à jour le prix dans la configuration
+      await supabase
+        .from('building_meter_configs')
+        .upsert({
+          building_id: buildingId,
+          price_per_kwh: newPricePerKwh
+        });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+    }
+  });
+
+  return {
+    meterData,
+    isLoading,
+    updatePrice: updatePriceMutation.mutate,
+    createLot: createLotMutation.mutate,
+    deleteLot: deleteLotMutation.mutate,
+    updateLot: updateLotMutation.mutate,
+    addReading: addReadingMutation.mutate,
+    deleteReading: deleteReadingMutation.mutate,
+    recalculateAmounts: recalculateAmountsMutation.mutate,
+    isUpdating: updatePriceMutation.isPending || 
+                createLotMutation.isPending || 
+                deleteLotMutation.isPending || 
+                updateLotMutation.isPending || 
+                addReadingMutation.isPending || 
+                deleteReadingMutation.isPending ||
+                recalculateAmountsMutation.isPending
+  };
+}

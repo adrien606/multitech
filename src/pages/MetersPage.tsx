@@ -186,28 +186,8 @@ export default function MetersPage() {
   const handleUpdatePrice = (newPrice: number) => {
     if (!selectedBuildingId) return;
     
-    // Recalculer tous les montants avec le nouveau prix
-    setBuildingLots(prev => {
-      const updatedLots = prev[selectedBuildingId].lots.map(lot => ({
-        ...lot,
-        readings: lot.readings.map(reading => ({
-          ...reading,
-          amount: reading.consumption * newPrice
-        }))
-      }));
-
-      return {
-        ...prev,
-        [selectedBuildingId]: {
-          ...prev[selectedBuildingId],
-          pricePerKwh: newPrice,
-          lots: updatedLots
-        }
-      };
-    });
-    
+    recalculateAmounts({ buildingId: selectedBuildingId, newPricePerKwh: newPrice });
     setPricePerKwh(newPrice);
-    toast.success("Prix mis à jour - tous les calculs ont été recalculés");
   };
 
   const handleAddLot = () => {
