@@ -229,10 +229,16 @@ export default function BuildingsPage() {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         clientBilling={detailBuilding?.client_billing_enabled || false}
-        onBillingChange={(buildingId, enabled) => {
-          updateBuilding(buildingId, { 
+        onBillingChange={async (buildingId, enabled) => {
+          const result = await updateBuilding(buildingId, { 
             client_billing_enabled: enabled 
           });
+          if (result?.error) {
+            toast.error(result.error);
+          } else {
+            toast.success('Refacturation client mise à jour');
+            refetch(); // Force refresh after billing change
+          }
         }}
       />
     </div>
