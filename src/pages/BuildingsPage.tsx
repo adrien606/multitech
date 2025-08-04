@@ -11,7 +11,7 @@ import { useBuildings, Building } from "@/hooks/useBuildings";
 import { toast } from "sonner";
 
 export default function BuildingsPage() {
-  const { buildings, loading, createBuilding, updateBuilding, deleteBuilding } = useBuildings();
+  const { buildings, loading, createBuilding, updateBuilding, deleteBuilding, refetch } = useBuildings();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -64,6 +64,7 @@ export default function BuildingsPage() {
       }
 
       toast.success(modalMode === 'create' ? 'Bâtiment créé avec succès' : 'Bâtiment modifié avec succès');
+      refetch(); // Force refresh
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error saving building:', error);
