@@ -30,6 +30,26 @@ export const useRegulatoryControls = () => {
     const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
+    // Debug: log des contrôles en retard
+    const overdueControls = controlsData.filter(c => {
+      const dueDate = new Date(c.due_date);
+      const isOverdue = c.status !== 'completed' && dueDate < now;
+      if (isOverdue) {
+        console.log('Contrôle en retard:', {
+          id: c.id,
+          building_name: c.building_name,
+          control_type_name: c.control_type_name,
+          due_date: c.due_date,
+          status: c.status,
+          dueDate: dueDate.toLocaleDateString(),
+          now: now.toLocaleDateString()
+        });
+      }
+      return isOverdue;
+    });
+
+    console.log(`Total contrôles en retard calculés: ${overdueControls.length}`);
+
     const totalBudget = controlsData.reduce((sum, control) => {
       const cost = control.actual_cost || control.estimated_cost || 0;
       return sum + cost;
@@ -40,9 +60,7 @@ export const useRegulatoryControls = () => {
       pending: controlsData.filter(c => c.status === 'pending').length,
       in_progress: controlsData.filter(c => c.status === 'in_progress').length,
       completed: controlsData.filter(c => c.status === 'completed').length,
-      overdue: controlsData.filter(c => 
-        c.status !== 'completed' && new Date(c.due_date) < now
-      ).length,
+      overdue: overdueControls.length,
       upcoming: controlsData.filter(c => {
         const dueDate = new Date(c.due_date);
         return c.status !== 'completed' && 
