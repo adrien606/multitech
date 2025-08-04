@@ -70,14 +70,15 @@ export default function MetersPage() {
   // Sauvegarder automatiquement le prix après un délai
   useEffect(() => {
     if (selectedBuildingId && pricePerKwh !== lastSavedPrice && pricePerKwh > 0) {
+      console.log('Auto-saving price:', pricePerKwh, 'for building:', selectedBuildingId);
       const timeout = setTimeout(() => {
-        handleUpdatePrice(pricePerKwh);
+        updatePrice({ buildingId: selectedBuildingId, pricePerKwh });
         setLastSavedPrice(pricePerKwh);
       }, 1000); // Sauvegarde après 1 seconde d'inactivité
 
       return () => clearTimeout(timeout);
     }
-  }, [pricePerKwh, selectedBuildingId, lastSavedPrice]);
+  }, [pricePerKwh, selectedBuildingId, lastSavedPrice, updatePrice]);
 
   // Obtenir le mois/année actuels
   const now = new Date();
