@@ -6,7 +6,6 @@ export interface Building {
   name: string;
   address: string;
   description?: string;
-  client_billing_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -34,7 +33,7 @@ export const useBuildings = () => {
     }
   };
 
-  const createBuilding = async (buildingData: Pick<Building, 'name' | 'address' | 'description' | 'client_billing_enabled'>) => {
+  const createBuilding = async (buildingData: Pick<Building, 'name' | 'address' | 'description'>) => {
     try {
       const { data, error } = await supabase
         .from('buildings')
@@ -52,7 +51,7 @@ export const useBuildings = () => {
     }
   };
 
-  const updateBuilding = async (id: string, buildingData: Partial<Pick<Building, 'name' | 'address' | 'description' | 'client_billing_enabled'>>) => {
+  const updateBuilding = async (id: string, buildingData: Partial<Pick<Building, 'name' | 'address' | 'description'>>) => {
     try {
       const { data, error } = await supabase
         .from('buildings')

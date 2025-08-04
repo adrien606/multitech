@@ -71,34 +71,9 @@ export type Database = {
         }
         Relationships: []
       }
-      building_meter_configs: {
-        Row: {
-          building_id: string
-          created_at: string
-          id: string
-          price_per_kwh: number
-          updated_at: string
-        }
-        Insert: {
-          building_id: string
-          created_at?: string
-          id?: string
-          price_per_kwh?: number
-          updated_at?: string
-        }
-        Update: {
-          building_id?: string
-          created_at?: string
-          id?: string
-          price_per_kwh?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       buildings: {
         Row: {
           address: string
-          client_billing_enabled: boolean
           created_at: string
           description: string | null
           id: string
@@ -107,7 +82,6 @@ export type Database = {
         }
         Insert: {
           address: string
-          client_billing_enabled?: boolean
           created_at?: string
           description?: string | null
           id?: string
@@ -116,7 +90,6 @@ export type Database = {
         }
         Update: {
           address?: string
-          client_billing_enabled?: boolean
           created_at?: string
           description?: string | null
           id?: string
@@ -210,80 +183,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      meter_lots: {
-        Row: {
-          building_id: string
-          client_name: string | null
-          created_at: string
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          building_id: string
-          client_name?: string | null
-          created_at?: string
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          building_id?: string
-          client_name?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      meter_readings: {
-        Row: {
-          amount: number
-          consumption: number
-          created_at: string
-          current_reading: number
-          id: string
-          lot_id: string
-          month: string
-          previous_reading: number
-          updated_at: string
-          year: number
-        }
-        Insert: {
-          amount: number
-          consumption: number
-          created_at?: string
-          current_reading: number
-          id?: string
-          lot_id: string
-          month: string
-          previous_reading?: number
-          updated_at?: string
-          year: number
-        }
-        Update: {
-          amount?: number
-          consumption?: number
-          created_at?: string
-          current_reading?: number
-          id?: string
-          lot_id?: string
-          month?: string
-          previous_reading?: number
-          updated_at?: string
-          year?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "meter_readings_lot_id_fkey"
-            columns: ["lot_id"]
-            isOneToOne: false
-            referencedRelation: "meter_lots"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {

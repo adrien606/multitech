@@ -5,13 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Building } from "@/hooks/useBuildings";
+import { Building } from "@/types";
 
 interface BuildingModalProps {
   building: Building | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (building: Pick<Building, 'name' | 'address' | 'description' | 'client_billing_enabled'>) => void;
+  onSave: (building: Omit<Building, 'id' | 'createdAt'> | Building) => void;
   mode: 'create' | 'edit';
 }
 
@@ -20,7 +20,7 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
     name: building?.name || '',
     address: building?.address || '',
     description: building?.description || '',
-    client_billing_enabled: building?.client_billing_enabled || false,
+    clientBilling: false, // Mock field pour l'instant
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,14 +30,21 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
       return;
     }
 
-    onSave(formData);
+    if (mode === 'edit' && building) {
+      onSave({
+        ...building,
+        ...formData,
+      });
+    } else {
+      onSave(formData);
+    }
     
     // Reset form
     setFormData({
       name: '',
       address: '',
       description: '',
-      client_billing_enabled: false,
+      clientBilling: false,
     });
     onClose();
   };
@@ -49,14 +56,14 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
         name: building.name,
         address: building.address,
         description: building.description || '',
-        client_billing_enabled: building.client_billing_enabled || false,
+        clientBilling: false, // Mock pour l'instant
       });
     } else if (mode === 'create') {
       setFormData({
         name: '',
         address: '',
         description: '',
-        client_billing_enabled: false,
+        clientBilling: false,
       });
     }
   }, [building, mode, isOpen]);
@@ -107,8 +114,8 @@ export function BuildingModal({ building, isOpen, onClose, onSave, mode }: Build
           <div className="flex items-center space-x-2">
             <Checkbox
               id="clientBilling"
-              checked={formData.client_billing_enabled}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, client_billing_enabled: checked as boolean }))}
+              checked={formData.clientBilling}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, clientBilling: checked as boolean }))}
             />
             <Label htmlFor="clientBilling" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Refacturation client

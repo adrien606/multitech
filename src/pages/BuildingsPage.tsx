@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { BuildingModal } from "@/components/BuildingModal";
 import { BuildingDetailModal } from "@/components/BuildingDetailModal";
 import { Plus, Edit, Trash2, MapPin, Building as BuildingIcon, ArrowLeft, Eye } from "lucide-react";
@@ -12,7 +11,7 @@ import { useBuildings, Building } from "@/hooks/useBuildings";
 import { toast } from "sonner";
 
 export default function BuildingsPage() {
-  const { buildings, loading, createBuilding, updateBuilding, deleteBuilding, refetch } = useBuildings();
+  const { buildings, loading, createBuilding, updateBuilding, deleteBuilding } = useBuildings();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -49,7 +48,7 @@ export default function BuildingsPage() {
     }
   };
 
-  const handleSaveBuilding = async (buildingData: Pick<Building, 'name' | 'address' | 'description' | 'client_billing_enabled'>) => {
+  const handleSaveBuilding = async (buildingData: Pick<Building, 'name' | 'address' | 'description'>) => {
     try {
       let result;
       
@@ -65,7 +64,6 @@ export default function BuildingsPage() {
       }
 
       toast.success(modalMode === 'create' ? 'Bâtiment créé avec succès' : 'Bâtiment modifié avec succès');
-      refetch(); // Force refresh
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error saving building:', error);
@@ -155,31 +153,10 @@ export default function BuildingsPage() {
                               {building.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium">Refacturation client:</span>
-                              <Switch
-                                checked={building.client_billing_enabled}
-                                onCheckedChange={async (enabled) => {
-                                  const result = await updateBuilding(building.id, { 
-                                    client_billing_enabled: enabled 
-                                  });
-                                  if (result?.error) {
-                                    toast.error(result.error);
-                                  } else {
-                                    toast.success(`Refacturation client ${enabled ? 'activée' : 'désactivée'}`);
-                                    refetch();
-                                  }
-                                }}
-                              />
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                building.client_billing_enabled 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                {building.client_billing_enabled ? 'Activée' : 'Désactivée'}
-                              </span>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+                              Refacturation client: Oui {/* Mock pour l'instant */}
+                            </span>
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -235,7 +212,10 @@ export default function BuildingsPage() {
 
       {/* Modals */}
       <BuildingModal
-        building={selectedBuilding}
+        building={selectedBuilding ? {
+          ...selectedBuilding,
+          createdAt: new Date(selectedBuilding.created_at)
+        } : null}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveBuilding}
@@ -246,25 +226,8 @@ export default function BuildingsPage() {
         building={detailBuilding}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        clientBilling={detailBuilding?.client_billing_enabled || false}
-        onBillingChange={async (buildingId, enabled) => {
-          const result = await updateBuilding(buildingId, { 
-            client_billing_enabled: enabled 
-          });
-          if (result?.error) {
-            toast.error(result.error);
-          } else {
-            toast.success('Refacturation client mise à jour');
-            // Mettre à jour detailBuilding avec la nouvelle valeur
-            if (detailBuilding) {
-              setDetailBuilding({
-                ...detailBuilding,
-                client_billing_enabled: enabled
-              });
-            }
-            refetch(); // Force refresh after billing change
-          }
-        }}
+        clientBilling={false}
+        onBillingChange={() => {}}
       />
     </div>
   );
