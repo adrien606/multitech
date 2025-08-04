@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { BuildingModal } from "@/components/BuildingModal";
 import { BuildingDetailModal } from "@/components/BuildingDetailModal";
 import { Plus, Edit, Trash2, MapPin, Building as BuildingIcon, ArrowLeft, Eye } from "lucide-react";
@@ -154,14 +155,31 @@ export default function BuildingsPage() {
                               {building.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              building.client_billing_enabled 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              Refacturation client: {building.client_billing_enabled ? 'Activée' : 'Désactivée'}
-                            </span>
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium">Refacturation client:</span>
+                              <Switch
+                                checked={building.client_billing_enabled}
+                                onCheckedChange={async (enabled) => {
+                                  const result = await updateBuilding(building.id, { 
+                                    client_billing_enabled: enabled 
+                                  });
+                                  if (result?.error) {
+                                    toast.error(result.error);
+                                  } else {
+                                    toast.success(`Refacturation client ${enabled ? 'activée' : 'désactivée'}`);
+                                    refetch();
+                                  }
+                                }}
+                              />
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                building.client_billing_enabled 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {building.client_billing_enabled ? 'Activée' : 'Désactivée'}
+                              </span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex gap-2">
