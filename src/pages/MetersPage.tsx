@@ -53,10 +53,24 @@ export default function MetersPage() {
       if (saved) {
         setBuildingsBilling(JSON.parse(saved));
       }
+      
+      const savedLots = localStorage.getItem('buildingLots');
+      if (savedLots) {
+        setBuildingLots(JSON.parse(savedLots));
+      }
     } catch (error) {
-      console.error('Erreur lors du chargement des données de refacturation:', error);
+      console.error('Erreur lors du chargement des données:', error);
     }
   }, []);
+
+  // Sauvegarder automatiquement les modifications
+  useEffect(() => {
+    try {
+      localStorage.setItem('buildingLots', JSON.stringify(buildingLots));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    }
+  }, [buildingLots]);
 
   const getBillingStatus = (buildingId: string) => {
     return buildingsBilling[buildingId] || false;
