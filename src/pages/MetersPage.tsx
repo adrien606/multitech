@@ -342,10 +342,20 @@ export default function MetersPage() {
                   id="price"
                   type="number"
                   step="0.001"
-                  value={currentPricePerKwh}
-                  onChange={(e) => {
+                  defaultValue={currentPricePerKwh}
+                  onBlur={(e) => {
                     const newPrice = parseFloat(e.target.value) || 0;
-                    handleUpdatePrice(newPrice);
+                    if (newPrice !== currentPricePerKwh) {
+                      handleUpdatePrice(newPrice);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const newPrice = parseFloat(e.currentTarget.value) || 0;
+                      if (newPrice !== currentPricePerKwh) {
+                        handleUpdatePrice(newPrice);
+                      }
+                    }
                   }}
                   className="w-20"
                 />
