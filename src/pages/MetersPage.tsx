@@ -95,10 +95,16 @@ export default function MetersPage() {
 
   // Synchroniser le prix avec les données du bâtiment sélectionné
   useEffect(() => {
-    if (selectedBuildingId && currentBuildingData) {
-      setPricePerKwh(currentBuildingData.pricePerKwh);
+    if (selectedBuildingId) {
+      // Prioriser les données de la base via meterData
+      const buildingMeterData = meterData[selectedBuildingId];
+      if (buildingMeterData) {
+        setPricePerKwh(buildingMeterData.pricePerKwh);
+      } else if (currentBuildingData) {
+        setPricePerKwh(currentBuildingData.pricePerKwh);
+      }
     }
-  }, [selectedBuildingId, currentBuildingData?.pricePerKwh]);
+  }, [selectedBuildingId, meterData, currentBuildingData?.pricePerKwh]);
 
   // Obtenir le mois/année actuels
   const now = new Date();
