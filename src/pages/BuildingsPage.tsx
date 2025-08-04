@@ -237,6 +237,13 @@ export default function BuildingsPage() {
             toast.error(result.error);
           } else {
             toast.success('Refacturation client mise à jour');
+            // Mettre à jour detailBuilding avec la nouvelle valeur
+            if (detailBuilding) {
+              setDetailBuilding({
+                ...detailBuilding,
+                client_billing_enabled: enabled
+              });
+            }
             refetch(); // Force refresh after billing change
           }
         }}
