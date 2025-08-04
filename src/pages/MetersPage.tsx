@@ -63,7 +63,7 @@ export default function MetersPage() {
         setPricePerKwh(buildingMeterData.pricePerKwh);
       }
     }
-  }, [selectedBuildingId, meterData]);
+  }, [selectedBuildingId]); // Retirer meterData des dépendances pour éviter la boucle
 
   // Obtenir le mois/année actuels
   const now = new Date();
