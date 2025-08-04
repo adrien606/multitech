@@ -40,6 +40,7 @@ export default function MetersPage() {
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [newReading, setNewReading] = useState({ currentReading: 0 });
   const [pricePerKwh, setPricePerKwh] = useState(0.15);
+  const [lastSavedPrice, setLastSavedPrice] = useState(0.15);
   const [editingLotName, setEditingLotName] = useState<string | null>(null);
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [addingPreviousReading, setAddingPreviousReading] = useState<string | null>(null);
@@ -61,9 +62,22 @@ export default function MetersPage() {
       const buildingMeterData = meterData[selectedBuildingId];
       if (buildingMeterData && buildingMeterData.pricePerKwh !== pricePerKwh) {
         setPricePerKwh(buildingMeterData.pricePerKwh);
+        setLastSavedPrice(buildingMeterData.pricePerKwh);
       }
     }
   }, [selectedBuildingId, meterData]);
+
+  // Sauvegarder automatiquement le prix après un délai
+  useEffect(() => {
+    if (selectedBuildingId && pricePerKwh !== lastSavedPrice && pricePerKwh > 0) {
+      const timeout = setTimeout(() => {
+        handleUpdatePrice(pricePerKwh);
+        setLastSavedPrice(pricePerKwh);
+      }, 1000); // Sauvegarde après 1 seconde d'inactivité
+
+      return () => clearTimeout(timeout);
+    }
+  }, [pricePerKwh, selectedBuildingId, lastSavedPrice]);
 
   // Obtenir le mois/année actuels
   const now = new Date();
