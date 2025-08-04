@@ -43,6 +43,8 @@ export default function MetersPage() {
   const [pricePerKwh, setPricePerKwh] = useState(0.15); // Prix par défaut
   const [editingLotName, setEditingLotName] = useState<string | null>(null);
   const [editingClient, setEditingClient] = useState<string | null>(null);
+  const [addingPreviousReading, setAddingPreviousReading] = useState<string | null>(null);
+  const [previousReadingValue, setPreviousReadingValue] = useState(0);
 
   // Charger les données de refacturation depuis localStorage
   useEffect(() => {
@@ -246,6 +248,47 @@ export default function MetersPage() {
     }
     
     toast.success("Lot supprimé");
+  };
+
+  const handleAddPreviousReading = (lotId: string) => {
+    if (!selectedBuildingId || previousReadingValue < 0) {
+      toast.error("Veuillez saisir un relevé précédent valide");
+      return;
+    }
+
+    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+    if (!lot || lot.readings.length === 0) {
+      toast.error("Aucun relevé actuel trouvé pour ce lot");
+      return;
+    }
+
+    // Obtenir le premier relevé (le plus ancien)
+    const firstReading = lot.readings[0];
+    const updatedFirstReading = {
+      ...firstReading,
+      previousReading: previousReadingValue,
+      consumption: firstReading.currentReading - previousReadingValue,
+      amount: (firstReading.currentReading - previousReadingValue) * currentBuildingData.pricePerKwh
+    };
+
+    setBuildingLots(prev => ({
+      ...prev,
+      [selectedBuildingId]: {
+        ...prev[selectedBuildingId],
+        lots: prev[selectedBuildingId].lots.map(lot =>
+          lot.id === lotId
+            ? { 
+                ...lot, 
+                readings: [updatedFirstReading, ...lot.readings.slice(1)]
+              }
+            : lot
+        )
+      }
+    }));
+
+    setAddingPreviousReading(null);
+    setPreviousReadingValue(0);
+    toast.success("Relevé précédent ajouté");
   };
 
   // Calculer les totaux mensuels
@@ -488,34 +531,91 @@ export default function MetersPage() {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant={selectedLotId === lot.id ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setSelectedLotId(lot.id)}
-                            >
-                              {selectedLotId === lot.id ? "Sélectionné" : "Sélectionner"}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteLot(lot.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                           <div className="flex items-center gap-2">
+                             {lot.readings.length > 0 && lot.readings[0].previousReading === 0 && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => {
+                                   setAddingPreviousReading(lot.id);
+                                   setPreviousReadingValue(0);
+                                 }}
+                                 className="text-blue-600 hover:text-blue-700"
+                               >
+                                 <Plus className="w-4 h-4 mr-1" />
+                                 Relevé précédent
+                               </Button>
+                             )}
+                             <Button
+                               variant={selectedLotId === lot.id ? "default" : "outline"}
+                               size="sm"
+                               onClick={() => setSelectedLotId(lot.id)}
+                             >
+                               {selectedLotId === lot.id ? "Sélectionné" : "Sélectionner"}
+                             </Button>
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               onClick={() => handleDeleteLot(lot.id)}
+                               className="text-destructive hover:text-destructive"
+                             >
+                               <Trash2 className="w-4 h-4" />
+                             </Button>
+                           </div>
                         </div>
                       </CardHeader>
-                      {lot.readings.length > 0 && (
-                        <CardContent className="pt-0">
-                          <div className="text-xs text-muted-foreground">
-                            Derniers relevés: {lot.readings.slice(-2).map(r => 
-                              `${r.month}/${r.year}: ${r.consumption}kWh (${r.amount.toFixed(2)}€)`
-                            ).join(' • ')}
-                          </div>
-                        </CardContent>
-                      )}
+                       {lot.readings.length > 0 && (
+                         <CardContent className="pt-0">
+                           <div className="text-xs text-muted-foreground">
+                             Derniers relevés: {lot.readings.slice(-2).map(r => 
+                               `${r.month}/${r.year}: ${r.consumption}kWh (${r.amount.toFixed(2)}€)`
+                             ).join(' • ')}
+                           </div>
+                         </CardContent>
+                       )}
+                       
+                       {/* Modal pour ajouter le relevé précédent */}
+                       {addingPreviousReading === lot.id && (
+                         <CardContent className="pt-0 border-t">
+                           <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                             <h5 className="font-medium text-blue-900">Ajouter le relevé précédent</h5>
+                             <div className="flex items-center gap-3">
+                               <Label htmlFor={`previous-${lot.id}`} className="text-sm">
+                                 Relevé précédent:
+                               </Label>
+                               <Input
+                                 id={`previous-${lot.id}`}
+                                 type="number"
+                                 value={previousReadingValue}
+                                 onChange={(e) => setPreviousReadingValue(parseFloat(e.target.value) || 0)}
+                                 placeholder="0"
+                                 className="w-32"
+                                 autoFocus
+                               />
+                               <Button
+                                 size="sm"
+                                 onClick={() => handleAddPreviousReading(lot.id)}
+                                 disabled={previousReadingValue < 0}
+                               >
+                                 Confirmer
+                               </Button>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => {
+                                   setAddingPreviousReading(null);
+                                   setPreviousReadingValue(0);
+                                 }}
+                               >
+                                 Annuler
+                               </Button>
+                             </div>
+                             <p className="text-xs text-blue-700">
+                               Ceci mettra à jour le premier relevé de ce lot pour calculer la vraie consommation.
+                             </p>
+                           </div>
+                         </CardContent>
+                       )}
                     </Card>
                   ))}
                 </div>
