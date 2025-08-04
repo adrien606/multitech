@@ -48,7 +48,7 @@ export default function BuildingsPage() {
     }
   };
 
-  const handleSaveBuilding = async (buildingData: Pick<Building, 'name' | 'address' | 'description'>) => {
+  const handleSaveBuilding = async (buildingData: Pick<Building, 'name' | 'address' | 'description' | 'client_billing_enabled'>) => {
     try {
       let result;
       
@@ -154,8 +154,12 @@ export default function BuildingsPage() {
                             </p>
                           )}
                           <div className="flex items-center gap-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
-                              Refacturation client: Oui {/* Mock pour l'instant */}
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              building.client_billing_enabled 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              Refacturation client: {building.client_billing_enabled ? 'Activée' : 'Désactivée'}
                             </span>
                           </div>
                         </div>
@@ -212,10 +216,7 @@ export default function BuildingsPage() {
 
       {/* Modals */}
       <BuildingModal
-        building={selectedBuilding ? {
-          ...selectedBuilding,
-          createdAt: new Date(selectedBuilding.created_at)
-        } : null}
+        building={selectedBuilding}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveBuilding}
@@ -226,8 +227,12 @@ export default function BuildingsPage() {
         building={detailBuilding}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        clientBilling={false}
-        onBillingChange={() => {}}
+        clientBilling={detailBuilding?.client_billing_enabled || false}
+        onBillingChange={(buildingId, enabled) => {
+          updateBuilding(buildingId, { 
+            client_billing_enabled: enabled 
+          });
+        }}
       />
     </div>
   );

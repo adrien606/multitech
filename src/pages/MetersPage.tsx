@@ -13,7 +13,6 @@ import { toast } from "sonner";
 export default function MetersPage() {
   const { buildings, loading } = useBuildings();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
-  const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>({});
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [newReading, setNewReading] = useState({ currentReading: 0 });
   const [editingLotName, setEditingLotName] = useState<string | null>(null);
@@ -35,17 +34,6 @@ export default function MetersPage() {
     updateReading
   } = useMeters(selectedBuildingId || undefined);
 
-  // Charger les données de refacturation depuis localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('buildingsBilling');
-      if (saved) {
-        setBuildingsBilling(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des données de refacturation:', error);
-    }
-  }, []);
 
   // Initialiser les données Supabase quand un bâtiment est sélectionné
   useEffect(() => {
@@ -55,13 +43,9 @@ export default function MetersPage() {
     }
   }, [selectedBuildingId]);
 
-  const getBillingStatus = (buildingId: string) => {
-    return buildingsBilling[buildingId] || false;
-  };
-
-  // Mock: filtrer les bâtiments avec refacturation client = true
+  // Filtrer les bâtiments avec refacturation client = true
   const billingBuildings = buildings.filter(building => 
-    getBillingStatus(building.id)
+    building.client_billing_enabled
   );
 
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
@@ -323,7 +307,7 @@ export default function MetersPage() {
                               </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Refacturation: {getBillingStatus(building.id) ? 'Activée' : 'Désactivée'}
+                              Refacturation: {building.client_billing_enabled ? 'Activée' : 'Désactivée'}
                             </div>
                           </div>
                         </CardHeader>
