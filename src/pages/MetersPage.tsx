@@ -7,44 +7,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Plus, Zap, Building as BuildingIcon, Save, Trash2, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBuildings } from "@/hooks/useBuildings";
+import { useMeters, MeterReading, MeterLot } from "@/hooks/useMeters";
 import { toast } from "sonner";
-
-interface MeterReading {
-  id: string;
-  month: string;
-  year: number;
-  currentReading: number; // Relevé actuel
-  previousReading: number; // Relevé précédent
-  consumption: number; // Différence (consommation réelle)
-  amount: number; // Montant à facturer
-}
-
-interface Lot {
-  id: string;
-  name: string;
-  clientName: string;
-  readings: MeterReading[];
-}
-
-interface BuildingLots {
-  [buildingId: string]: {
-    lots: Lot[];
-    pricePerKwh: number;
-  };
-}
 
 export default function MetersPage() {
   const { buildings, loading } = useBuildings();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>({});
-  const [buildingLots, setBuildingLots] = useState<BuildingLots>({});
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [newReading, setNewReading] = useState({ currentReading: 0 });
-  const [pricePerKwh, setPricePerKwh] = useState(0.15); // Prix par défaut
   const [editingLotName, setEditingLotName] = useState<string | null>(null);
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [addingPreviousReading, setAddingPreviousReading] = useState<string | null>(null);
   const [previousReadingValue, setPreviousReadingValue] = useState(0);
+
+  const {
+    meterConfig,
+    lots,
+    isLoading: isLoadingMeters,
+    initBuildingConfig,
+    initDefaultLots,
+    updatePrice,
+    addLot,
+    updateLot,
+    deleteLot,
+    addReading,
+    updateReading
+  } = useMeters(selectedBuildingId || undefined);
 
   // Charger les données de refacturation depuis localStorage
   useEffect(() => {
@@ -53,24 +42,18 @@ export default function MetersPage() {
       if (saved) {
         setBuildingsBilling(JSON.parse(saved));
       }
-      
-      const savedLots = localStorage.getItem('buildingLots');
-      if (savedLots) {
-        setBuildingLots(JSON.parse(savedLots));
-      }
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
+      console.error('Erreur lors du chargement des données de refacturation:', error);
     }
   }, []);
 
-  // Sauvegarder automatiquement les modifications
+  // Initialiser les données Supabase quand un bâtiment est sélectionné
   useEffect(() => {
-    try {
-      localStorage.setItem('buildingLots', JSON.stringify(buildingLots));
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
+    if (selectedBuildingId) {
+      initBuildingConfig.mutate(selectedBuildingId);
+      initDefaultLots.mutate(selectedBuildingId);
     }
-  }, [buildingLots]);
+  }, [selectedBuildingId]);
 
   const getBillingStatus = (buildingId: string) => {
     return buildingsBilling[buildingId] || false;
@@ -81,25 +64,8 @@ export default function MetersPage() {
     getBillingStatus(building.id)
   );
 
-  // Initialiser les lots pour un bâtiment s'ils n'existent pas
-  const initializeBuildingLots = (buildingId: string) => {
-    if (!buildingLots[buildingId]) {
-      setBuildingLots(prev => ({
-        ...prev,
-        [buildingId]: {
-          lots: [
-            { id: '1', name: 'Lot 1', clientName: '', readings: [] },
-            { id: '2', name: 'Lot 2', clientName: '', readings: [] },
-            { id: '3', name: 'Lot 3', clientName: '', readings: [] }
-          ],
-          pricePerKwh: 0.15
-        }
-      }));
-    }
-  };
-
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
-  const currentBuildingData = selectedBuildingId ? buildingLots[selectedBuildingId] : null;
+  const currentPricePerKwh = meterConfig?.price_per_kwh || 0.15;
 
   // Obtenir le mois/année actuels
   const now = new Date();
@@ -108,19 +74,19 @@ export default function MetersPage() {
 
   // Obtenir le dernier relevé pour un lot
   const getLastReading = (lotId: string): number => {
-    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+    const lot = lots.find(l => l.id === lotId);
     if (!lot || lot.readings.length === 0) return 0;
-    return lot.readings[lot.readings.length - 1].currentReading;
+    return lot.readings[lot.readings.length - 1].current_reading;
   };
 
   // Vérifier si le relevé du mois existe déjà
   const hasCurrentMonthReading = (lotId: string): boolean => {
-    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+    const lot = lots.find(l => l.id === lotId);
     if (!lot) return false;
     return lot.readings.some(r => r.month === currentMonth && r.year === currentYear);
   };
 
-  const handleAddReading = () => {
+  const handleAddReading = async () => {
     if (!newReading.currentReading || !selectedLotId || !selectedBuildingId) {
       toast.error("Veuillez saisir le relevé actuel et sélectionner un lot");
       return;
@@ -139,138 +105,110 @@ export default function MetersPage() {
       return;
     }
 
-    const amount = consumption * pricePerKwh;
-    const reading: MeterReading = {
-      id: Date.now().toString(),
-      month: currentMonth,
-      year: currentYear,
-      currentReading: newReading.currentReading,
-      previousReading,
-      consumption,
-      amount
-    };
+    const amount = consumption * currentPricePerKwh;
+    
+    try {
+      await addReading.mutateAsync({
+        lot_id: selectedLotId,
+        month: currentMonth,
+        year: currentYear,
+        current_reading: newReading.currentReading,
+        previous_reading: previousReading,
+        consumption,
+        amount
+      });
 
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        lots: prev[selectedBuildingId].lots.map(lot =>
-          lot.id === selectedLotId
-            ? { ...lot, readings: [...lot.readings, reading] }
-            : lot
-        )
-      }
-    }));
-
-    setNewReading({ currentReading: 0 });
-    toast.success(`Relevé ajouté: ${consumption} kWh consommés (${amount.toFixed(2)}€)`);
+      setNewReading({ currentReading: 0 });
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du relevé:', error);
+    }
   };
 
   const handleSaveReadings = () => {
     toast.success("Relevés sauvegardés avec succès");
   };
 
-  const handleUpdateClientName = (lotId: string, clientName: string) => {
+  const handleUpdateClientName = async (lotId: string, clientName: string) => {
+    try {
+      await updateLot.mutateAsync({
+        lotId,
+        updates: { client_name: clientName }
+      });
+      setEditingClient(null);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du nom du client:', error);
+    }
+  };
+
+  const handleUpdatePrice = async (newPrice: number) => {
     if (!selectedBuildingId) return;
     
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        lots: prev[selectedBuildingId].lots.map(lot =>
-          lot.id === lotId ? { ...lot, clientName } : lot
-        )
-      }
-    }));
-    setEditingClient(null);
-    toast.success("Nom du client mis à jour");
+    try {
+      await updatePrice.mutateAsync({
+        buildingId: selectedBuildingId,
+        price: newPrice
+      });
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du prix:', error);
+    }
   };
 
-  const handleUpdatePrice = (newPrice: number) => {
+  const handleAddLot = async () => {
     if (!selectedBuildingId) return;
     
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        pricePerKwh: newPrice
-      }
-    }));
-    setPricePerKwh(newPrice);
-    toast.success("Prix de refacturation mis à jour");
+    const newLotNumber = lots.length + 1;
+    
+    try {
+      await addLot.mutateAsync({
+        buildingId: selectedBuildingId,
+        name: `Lot ${newLotNumber}`
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du lot:', error);
+    }
   };
 
-  const handleAddLot = () => {
-    if (!selectedBuildingId || !currentBuildingData) return;
+  const handleUpdateLotName = async (lotId: string, newName: string) => {
+    if (!newName.trim()) return;
     
-    const newLotNumber = currentBuildingData.lots.length + 1;
-    const newLot: Lot = {
-      id: Date.now().toString(),
-      name: `Lot ${newLotNumber}`,
-      clientName: '',
-      readings: []
-    };
-
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        lots: [...prev[selectedBuildingId].lots, newLot]
-      }
-    }));
-    
-    toast.success("Nouveau lot ajouté");
+    try {
+      await updateLot.mutateAsync({
+        lotId,
+        updates: { name: newName.trim() }
+      });
+      setEditingLotName(null);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du nom du lot:', error);
+    }
   };
 
-  const handleUpdateLotName = (lotId: string, newName: string) => {
-    if (!selectedBuildingId || !newName.trim()) return;
-    
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        lots: prev[selectedBuildingId].lots.map(lot =>
-          lot.id === lotId ? { ...lot, name: newName.trim() } : lot
-        )
-      }
-    }));
-    setEditingLotName(null);
-    toast.success("Nom du lot mis à jour");
-  };
-
-  const handleDeleteLot = (lotId: string) => {
-    if (!selectedBuildingId) return;
-    
-    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+  const handleDeleteLot = async (lotId: string) => {
+    const lot = lots.find(l => l.id === lotId);
     if (lot && lot.readings.length > 0) {
       if (!confirm(`Le lot "${lot.name}" contient des relevés. Êtes-vous sûr de vouloir le supprimer ?`)) {
         return;
       }
     }
 
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        lots: prev[selectedBuildingId].lots.filter(lot => lot.id !== lotId)
+    try {
+      await deleteLot.mutateAsync(lotId);
+      
+      // Désélectionner le lot s'il était sélectionné
+      if (selectedLotId === lotId) {
+        setSelectedLotId(null);
       }
-    }));
-    
-    // Désélectionner le lot s'il était sélectionné
-    if (selectedLotId === lotId) {
-      setSelectedLotId(null);
+    } catch (error) {
+      console.error('Erreur lors de la suppression du lot:', error);
     }
-    
-    toast.success("Lot supprimé");
   };
 
-  const handleAddPreviousReading = (lotId: string) => {
-    if (!selectedBuildingId || previousReadingValue < 0) {
+  const handleAddPreviousReading = async (lotId: string) => {
+    if (previousReadingValue < 0) {
       toast.error("Veuillez saisir un relevé précédent valide");
       return;
     }
 
-    const lot = currentBuildingData?.lots.find(l => l.id === lotId);
+    const lot = lots.find(l => l.id === lotId);
     if (!lot || lot.readings.length === 0) {
       toast.error("Aucun relevé actuel trouvé pour ce lot");
       return;
@@ -278,40 +216,31 @@ export default function MetersPage() {
 
     // Obtenir le premier relevé (le plus ancien)
     const firstReading = lot.readings[0];
-    const updatedFirstReading = {
-      ...firstReading,
-      previousReading: previousReadingValue,
-      consumption: firstReading.currentReading - previousReadingValue,
-      amount: (firstReading.currentReading - previousReadingValue) * currentBuildingData.pricePerKwh
-    };
+    const newConsumption = firstReading.current_reading - previousReadingValue;
+    const newAmount = newConsumption * currentPricePerKwh;
 
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        lots: prev[selectedBuildingId].lots.map(lot =>
-          lot.id === lotId
-            ? { 
-                ...lot, 
-                readings: [updatedFirstReading, ...lot.readings.slice(1)]
-              }
-            : lot
-        )
-      }
-    }));
+    try {
+      await updateReading.mutateAsync({
+        readingId: firstReading.id,
+        updates: {
+          previous_reading: previousReadingValue,
+          consumption: newConsumption,
+          amount: newAmount
+        }
+      });
 
-    setAddingPreviousReading(null);
-    setPreviousReadingValue(0);
-    toast.success("Relevé précédent ajouté");
+      setAddingPreviousReading(null);
+      setPreviousReadingValue(0);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du relevé précédent:', error);
+    }
   };
 
   // Calculer les totaux mensuels
   const getMonthlyTotals = () => {
-    if (!currentBuildingData) return [];
-    
     const monthlyData: { [key: string]: { consumption: number; amount: number } } = {};
     
-    currentBuildingData.lots.forEach(lot => {
+    lots.forEach(lot => {
       lot.readings.forEach(reading => {
         const key = `${reading.month}/${reading.year}`;
         if (!monthlyData[key]) {
@@ -333,7 +262,7 @@ export default function MetersPage() {
     });
   };
 
-  if (loading) {
+  if (loading || isLoadingMeters) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Chargement...</p>
@@ -414,11 +343,6 @@ export default function MetersPage() {
         ) : (
           // Vue détail - Gestion des relevés pour un bâtiment
           <>
-            {(() => {
-              initializeBuildingLots(selectedBuildingId);
-              return null;
-            })()}
-            
             <div className="flex items-center gap-4 mb-6">
               <Button variant="outline" size="sm" onClick={() => setSelectedBuildingId(null)}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -434,9 +358,11 @@ export default function MetersPage() {
                   id="price"
                   type="number"
                   step="0.001"
-                  value={pricePerKwh}
-                  onChange={(e) => setPricePerKwh(parseFloat(e.target.value) || 0)}
-                  onBlur={() => handleUpdatePrice(pricePerKwh)}
+                  value={currentPricePerKwh}
+                  onChange={(e) => {
+                    const newPrice = parseFloat(e.target.value) || 0;
+                    handleUpdatePrice(newPrice);
+                  }}
                   className="w-20"
                 />
                 <span className="text-sm text-muted-foreground">€</span>
@@ -485,7 +411,7 @@ export default function MetersPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {currentBuildingData?.lots.map((lot) => (
+                  {lots.map((lot) => (
                     <Card key={lot.id} className="bg-muted/30">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
@@ -521,7 +447,7 @@ export default function MetersPage() {
                               <span className="text-sm text-muted-foreground">Client:</span>
                               {editingClient === lot.id ? (
                                 <Input
-                                  defaultValue={lot.clientName}
+                                  defaultValue={lot.client_name}
                                   onBlur={(e) => handleUpdateClientName(lot.id, e.target.value)}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
@@ -539,14 +465,14 @@ export default function MetersPage() {
                                   onClick={() => setEditingClient(lot.id)}
                                   className="text-sm font-medium hover:underline min-w-[100px] text-left"
                                 >
-                                  {lot.clientName || "Cliquer pour ajouter"}
+                                  {lot.client_name || "Cliquer pour ajouter"}
                                 </button>
                               )}
                             </div>
                           </div>
                           
-                           <div className="flex items-center gap-2">
-                             {lot.readings.length > 0 && lot.readings[0].previousReading === 0 && (
+                          <div className="flex items-center gap-2">
+                             {lot.readings.length > 0 && lot.readings[0].previous_reading === 0 && (
                                <Button
                                  variant="outline"
                                  size="sm"
@@ -652,17 +578,17 @@ export default function MetersPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-                        <div className="text-center">
-                          <div className="text-sm text-muted-foreground">Relevé précédent</div>
-                          <div className="text-lg font-mono">{getLastReading(selectedLotId).toLocaleString('fr-FR')}</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm text-muted-foreground">Nouveau relevé</div>
-                          <Input
-                            type="number"
-                            value={newReading.currentReading}
-                            onChange={(e) => setNewReading(prev => ({ ...prev, currentReading: parseFloat(e.target.value) || 0 }))}
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                         <div className="text-center">
+                           <div className="text-sm text-muted-foreground">Relevé précédent</div>
+                           <div className="text-lg font-mono">{getLastReading(selectedLotId).toLocaleString('fr-FR')}</div>
+                         </div>
+                         <div className="text-center">
+                           <div className="text-sm text-muted-foreground">Nouveau relevé</div>
+                           <Input
+                             type="number"
+                             value={newReading.currentReading}
+                             onChange={(e) => setNewReading(prev => ({ ...prev, currentReading: parseFloat(e.target.value) || 0 }))}
                             min={getLastReading(selectedLotId)}
                             step="1"
                             placeholder="Saisir le relevé"
@@ -675,7 +601,7 @@ export default function MetersPage() {
                             {(newReading.currentReading - getLastReading(selectedLotId)).toLocaleString('fr-FR')} kWh
                           </div>
                           <div className="text-sm text-green-600 font-medium">
-                            {((newReading.currentReading - getLastReading(selectedLotId)) * pricePerKwh).toFixed(2)} €
+                            {((newReading.currentReading - getLastReading(selectedLotId)) * currentPricePerKwh).toFixed(2)} €
                           </div>
                         </div>
                       </div>
@@ -701,7 +627,7 @@ export default function MetersPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Historique des relevés</CardTitle>
-                  {currentBuildingData?.lots.some(lot => lot.readings.length > 0) && (
+                  {lots.some(lot => lot.readings.length > 0) && (
                     <Button onClick={handleSaveReadings}>
                       <Save className="w-4 h-4 mr-2" />
                       Sauvegarder
@@ -710,16 +636,16 @@ export default function MetersPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {currentBuildingData?.lots.some(lot => lot.readings.length > 0) ? (
+                {lots.some(lot => lot.readings.length > 0) ? (
                   <div className="space-y-6">
-                    {currentBuildingData.lots
+                    {lots
                       .filter(lot => lot.readings.length > 0)
                       .map(lot => (
                         <div key={lot.id}>
                           <h4 className="font-medium mb-3 flex items-center gap-2">
                             {lot.name}
-                            {lot.clientName && (
-                              <span className="text-sm text-muted-foreground">- {lot.clientName}</span>
+                            {lot.client_name && (
+                              <span className="text-sm text-muted-foreground">- {lot.client_name}</span>
                             )}
                           </h4>
                           <Table>
@@ -739,10 +665,10 @@ export default function MetersPage() {
                                     {new Date(2024, parseInt(reading.month) - 1).toLocaleDateString('fr-FR', { month: 'long' })} {reading.year}
                                   </TableCell>
                                   <TableCell className="text-right font-mono">
-                                    {reading.previousReading.toLocaleString('fr-FR')}
+                                    {reading.previous_reading.toLocaleString('fr-FR')}
                                   </TableCell>
                                   <TableCell className="text-right font-mono">
-                                    {reading.currentReading.toLocaleString('fr-FR')}
+                                    {reading.current_reading.toLocaleString('fr-FR')}
                                   </TableCell>
                                   <TableCell className="text-right font-mono font-medium">
                                     {reading.consumption.toLocaleString('fr-FR')} kWh
