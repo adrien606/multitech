@@ -13,6 +13,15 @@ export const useRegulatoryControls = () => {
     upcoming: 0,
     total_budget: 0,
   });
+  const [previousMonthStats, setPreviousMonthStats] = useState<ControlStats>({
+    total: 0,
+    pending: 0,
+    in_progress: 0,
+    completed: 0,
+    overdue: 0,
+    upcoming: 0,
+    total_budget: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +50,20 @@ export const useRegulatoryControls = () => {
       ).length,
       total_budget: totalBudget,
     };
+  };
+
+  
+  const calculatePercentageChange = (current: number, previous: number): string => {
+    if (previous === 0) {
+      return current > 0 ? '+100%' : '0%';
+    }
+    const change = ((current - previous) / previous) * 100;
+    if (change > 0) {
+      return `+${Math.round(change)}%`;
+    } else if (change < 0) {
+      return `${Math.round(change)}%`;
+    }
+    return '0%';
   };
 
   const fetchControls = async () => {
@@ -127,8 +150,49 @@ export const useRegulatoryControls = () => {
         }
       }
 
+      // Calculer les stats actuelles
+      const currentStats = calculateStats(transformedControls);
+      
+      // Calculer les stats du mois précédent pour la comparaison
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const startOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+      const endOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
+
+      const { data: lastMonthControlsData } = await supabase
+        .from('regulatory_controls')
+        .select('*')
+        .gte('created_at', startOfLastMonth.toISOString())
+        .lte('created_at', endOfLastMonth.toISOString());
+
+      const lastMonthControls: RegulatoryControl[] = (lastMonthControlsData || []).map(control => ({
+        id: control.id,
+        building_id: control.building_id,
+        building_name: '',
+        control_type_id: control.control_type_id,
+        control_type_name: '',
+        due_date: control.due_date,
+        assigned_provider_id: control.assigned_provider_id || '',
+        provider_name: '',
+        completed_date: control.completed_date || '',
+        next_due_date: control.next_due_date || '',
+        estimated_cost: control.estimated_cost || 0,
+        actual_cost: control.actual_cost || 0,
+        notes: control.notes || '',
+        status: control.status as 'pending' | 'in_progress' | 'completed' | 'overdue',
+        created_at: control.created_at,
+        updated_at: control.updated_at,
+        created_by: control.created_by,
+        updated_by: control.updated_by,
+        created_by_name: '',
+        updated_by_name: '',
+      }));
+
+      const lastMonthStats = calculateStats(lastMonthControls);
+
       setControls(transformedControls);
-      setStats(calculateStats(transformedControls));
+      setStats(currentStats);
+      setPreviousMonthStats(lastMonthStats);
 
       return { data: transformedControls, error: null };
     } catch (err) {
@@ -286,11 +350,13 @@ export const useRegulatoryControls = () => {
   return {
     controls,
     stats,
+    previousMonthStats,
     loading,
     error,
     refetch: fetchControls,
     createControl,
     updateControl,
     deleteControl,
+    calculatePercentageChange,
   };
 };

@@ -30,7 +30,7 @@ import { ControlsCalendar } from '@/components/ControlsCalendar';
 
 export default function RegulatoryControlsPage() {
   const { buildings } = useBuildings();
-  const { controls, stats, createControl } = useRegulatoryControls();
+  const { controls, stats, previousMonthStats, createControl, calculatePercentageChange } = useRegulatoryControls();
   const { providers } = useProviders();
   
   // États pour les filtres
@@ -156,7 +156,12 @@ export default function RegulatoryControlsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.upcoming || 0}</div>
-              <p className="text-xs text-muted-foreground">+12% par rapport au mois dernier</p>
+              <p className="text-xs text-muted-foreground">
+                {stats?.upcoming === 0 && previousMonthStats?.upcoming === 0 
+                  ? "Aucun contrôle à venir" 
+                  : `${calculatePercentageChange(stats?.upcoming || 0, previousMonthStats?.upcoming || 0)} par rapport au mois dernier`
+                }
+              </p>
             </CardContent>
           </Card>
 
