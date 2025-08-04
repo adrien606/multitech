@@ -27,8 +27,8 @@ export const useRegulatoryControls = () => {
 
   const calculateStats = (controlsData: RegulatoryControl[]): ControlStats => {
     const now = new Date();
-    const oneWeekFromNow = new Date();
-    oneWeekFromNow.setDate(now.getDate() + 7);
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     const totalBudget = controlsData.reduce((sum, control) => {
       const cost = control.actual_cost || control.estimated_cost || 0;
@@ -43,11 +43,12 @@ export const useRegulatoryControls = () => {
       overdue: controlsData.filter(c => 
         c.status !== 'completed' && new Date(c.due_date) < now
       ).length,
-      upcoming: controlsData.filter(c => 
-        c.status !== 'completed' && 
-        new Date(c.due_date) >= now && 
-        new Date(c.due_date) <= oneWeekFromNow
-      ).length,
+      upcoming: controlsData.filter(c => {
+        const dueDate = new Date(c.due_date);
+        return c.status !== 'completed' && 
+               dueDate >= startOfCurrentMonth && 
+               dueDate <= endOfCurrentMonth;
+      }).length,
       total_budget: totalBudget,
     };
   };
