@@ -27,13 +27,22 @@ export const useRegulatoryControls = () => {
 
   const calculateStats = (controlsData: RegulatoryControl[]): ControlStats => {
     const now = new Date();
+    // Remettre l'heure à minuit pour bien comparer les dates
+    now.setHours(0, 0, 0, 0);
+    
     const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     // Debug: log des contrôles en retard
     const overdueControls = controlsData.filter(c => {
       const dueDate = new Date(c.due_date);
+      dueDate.setHours(0, 0, 0, 0); // Remettre à minuit pour comparaison exacte
+      
+      // Un contrôle est en retard si :
+      // 1. Il n'est pas terminé (status !== 'completed')
+      // 2. Sa date d'échéance est antérieure à aujourd'hui (strictement <)
       const isOverdue = c.status !== 'completed' && dueDate < now;
+      
       if (isOverdue) {
         console.log('Contrôle en retard:', {
           id: c.id,
@@ -42,13 +51,20 @@ export const useRegulatoryControls = () => {
           due_date: c.due_date,
           status: c.status,
           dueDate: dueDate.toLocaleDateString(),
-          now: now.toLocaleDateString()
+          now: now.toLocaleDateString(),
+          isOverdue: isOverdue
         });
       }
       return isOverdue;
     });
 
     console.log(`Total contrôles en retard calculés: ${overdueControls.length}`);
+    console.log('Liste complète des contrôles:', controlsData.map(c => ({
+      id: c.id,
+      type: c.control_type_name,
+      due_date: c.due_date,
+      status: c.status
+    })));
 
     const totalBudget = controlsData.reduce((sum, control) => {
       const cost = control.actual_cost || control.estimated_cost || 0;
