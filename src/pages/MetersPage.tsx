@@ -91,6 +91,13 @@ export default function MetersPage() {
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
   const currentBuildingData = selectedBuildingId ? buildingLots[selectedBuildingId] : null;
 
+  // Synchroniser le prix avec les données du bâtiment sélectionné
+  useEffect(() => {
+    if (selectedBuildingId && currentBuildingData) {
+      setPricePerKwh(currentBuildingData.pricePerKwh);
+    }
+  }, [selectedBuildingId, currentBuildingData?.pricePerKwh]);
+
   // Obtenir le mois/année actuels
   const now = new Date();
   const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -179,15 +186,28 @@ export default function MetersPage() {
   const handleUpdatePrice = (newPrice: number) => {
     if (!selectedBuildingId) return;
     
-    setBuildingLots(prev => ({
-      ...prev,
-      [selectedBuildingId]: {
-        ...prev[selectedBuildingId],
-        pricePerKwh: newPrice
-      }
-    }));
+    // Recalculer tous les montants avec le nouveau prix
+    setBuildingLots(prev => {
+      const updatedLots = prev[selectedBuildingId].lots.map(lot => ({
+        ...lot,
+        readings: lot.readings.map(reading => ({
+          ...reading,
+          amount: reading.consumption * newPrice
+        }))
+      }));
+
+      return {
+        ...prev,
+        [selectedBuildingId]: {
+          ...prev[selectedBuildingId],
+          pricePerKwh: newPrice,
+          lots: updatedLots
+        }
+      };
+    });
+    
     setPricePerKwh(newPrice);
-    toast.success("Prix de refacturation mis à jour");
+    toast.success("Prix mis à jour - tous les calculs ont été recalculés");
   };
 
   const handleAddLot = () => {
@@ -420,15 +440,20 @@ export default function MetersPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Label htmlFor="price">Prix/kWh:</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.001"
-                  value={pricePerKwh}
-                  onChange={(e) => setPricePerKwh(parseFloat(e.target.value) || 0)}
-                  onBlur={() => handleUpdatePrice(pricePerKwh)}
-                  className="w-20"
-                />
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.001"
+                    value={pricePerKwh}
+                    onChange={(e) => setPricePerKwh(parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleUpdatePrice(pricePerKwh)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleUpdatePrice(pricePerKwh);
+                      }
+                    }}
+                    className="w-20"
+                  />
                 <span className="text-sm text-muted-foreground">€</span>
               </div>
             </div>
