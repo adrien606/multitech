@@ -33,14 +33,14 @@ export function useMeterData() {
     queryFn: async () => {
       // Récupérer les configurations de prix
       const { data: configs, error: configError } = await supabase
-        .from('building_meter_configs')
+        .from('building_meter_configs' as any)
         .select('building_id, price_per_kwh');
       
       if (configError) throw configError;
 
       // Récupérer les lots avec leurs relevés
       const { data: lots, error: lotsError } = await supabase
-        .from('meter_lots')
+        .from('meter_lots' as any)
         .select(`
           id,
           name,
@@ -63,7 +63,7 @@ export function useMeterData() {
       const buildingData: Record<string, BuildingLotData> = {};
       
       // Initialiser avec les configurations de prix
-      configs.forEach(config => {
+      (configs || []).forEach((config: any) => {
         buildingData[config.building_id] = {
           pricePerKwh: Number(config.price_per_kwh),
           lots: []
@@ -71,7 +71,7 @@ export function useMeterData() {
       });
 
       // Ajouter les lots et relevés
-      lots.forEach(lot => {
+      (lots || []).forEach((lot: any) => {
         if (!buildingData[lot.building_id]) {
           buildingData[lot.building_id] = {
             pricePerKwh: 0.15, // Prix par défaut
@@ -83,7 +83,7 @@ export function useMeterData() {
           id: lot.id,
           name: lot.name,
           clientName: lot.client_name || '',
-          readings: (lot.meter_readings || []).map(reading => ({
+          readings: (lot.meter_readings || []).map((reading: any) => ({
             id: reading.id,
             month: reading.month,
             year: reading.year,
@@ -99,17 +99,59 @@ export function useMeterData() {
     }
   });
 
+  // Mutation pour recalculer tous les montants avec le nouveau prix
+  const recalculateAmountsMutation = useMutation({
+    mutationFn: async ({ buildingId, newPricePerKwh }: { buildingId: string, newPricePerKwh: number }) => {
+      // Récupérer tous les relevés pour ce bâtiment
+      const { data: lots, error: lotsError } = await supabase
+        .from('meter_lots' as any)
+        .select('id')
+        .eq('building_id', buildingId);
+      
+      if (lotsError) throw lotsError;
+
+      const lotIds = (lots || []).map((lot: any) => lot.id);
+
+      if (lotIds.length > 0) {
+        const { data: readings, error: readingsError } = await supabase
+          .from('meter_readings' as any)
+          .select('id, consumption')
+          .in('lot_id', lotIds);
+        
+        if (readingsError) throw readingsError;
+
+        // Mettre à jour tous les montants
+        const updates = (readings || []).map((reading: any) => ({
+          id: reading.id,
+          amount: Number(reading.consumption) * newPricePerKwh
+        }));
+
+        for (const update of updates) {
+          await supabase
+            .from('meter_readings' as any)
+            .update({ amount: update.amount })
+            .eq('id', update.id);
+        }
+      }
+
+      // Mettre à jour le prix dans la configuration
+      await supabase
+        .from('building_meter_configs' as any)
+        .upsert({
+          building_id: buildingId,
+          price_per_kwh: newPricePerKwh
+        });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+    }
+  });
+
   // Mutation pour créer/mettre à jour la configuration de prix
   const updatePriceMutation = useMutation({
     mutationFn: async ({ buildingId, pricePerKwh }: { buildingId: string, pricePerKwh: number }) => {
-      const { error } = await supabase
-        .from('building_meter_configs')
-        .upsert({
-          building_id: buildingId,
-          price_per_kwh: pricePerKwh
-        });
-      
-      if (error) throw error;
+      // D'abord, recalculer tous les montants avec le nouveau prix
+      await recalculateAmountsMutation.mutateAsync({ buildingId, newPricePerKwh: pricePerKwh });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meter-data'] });
@@ -121,7 +163,7 @@ export function useMeterData() {
   const createLotMutation = useMutation({
     mutationFn: async ({ buildingId, name, clientName }: { buildingId: string, name: string, clientName: string }) => {
       const { error } = await supabase
-        .from('meter_lots')
+        .from('meter_lots' as any)
         .insert({
           building_id: buildingId,
           name,
@@ -141,13 +183,13 @@ export function useMeterData() {
     mutationFn: async (lotId: string) => {
       // Supprimer d'abord les relevés
       await supabase
-        .from('meter_readings')
+        .from('meter_readings' as any)
         .delete()
         .eq('lot_id', lotId);
 
       // Puis supprimer le lot
       const { error } = await supabase
-        .from('meter_lots')
+        .from('meter_lots' as any)
         .delete()
         .eq('id', lotId);
       
@@ -167,7 +209,7 @@ export function useMeterData() {
       if (clientName !== undefined) updates.client_name = clientName;
 
       const { error } = await supabase
-        .from('meter_lots')
+        .from('meter_lots' as any)
         .update(updates)
         .eq('id', lotId);
       
@@ -199,7 +241,7 @@ export function useMeterData() {
       const amount = consumption * pricePerKwh;
 
       const { error } = await supabase
-        .from('meter_readings')
+        .from('meter_readings' as any)
         .insert({
           lot_id: lotId,
           month,
@@ -222,7 +264,7 @@ export function useMeterData() {
   const deleteReadingMutation = useMutation({
     mutationFn: async (readingId: string) => {
       const { error } = await supabase
-        .from('meter_readings')
+        .from('meter_readings' as any)
         .delete()
         .eq('id', readingId);
       
@@ -234,53 +276,6 @@ export function useMeterData() {
     }
   });
 
-  // Mutation pour recalculer tous les montants avec le nouveau prix
-  const recalculateAmountsMutation = useMutation({
-    mutationFn: async ({ buildingId, newPricePerKwh }: { buildingId: string, newPricePerKwh: number }) => {
-      // Récupérer tous les relevés pour ce bâtiment
-      const { data: lots, error: lotsError } = await supabase
-        .from('meter_lots')
-        .select('id')
-        .eq('building_id', buildingId);
-      
-      if (lotsError) throw lotsError;
-
-      const lotIds = lots.map(lot => lot.id);
-
-      if (lotIds.length > 0) {
-        const { data: readings, error: readingsError } = await supabase
-          .from('meter_readings')
-          .select('id, consumption')
-          .in('lot_id', lotIds);
-        
-        if (readingsError) throw readingsError;
-
-        // Mettre à jour tous les montants
-        const updates = readings.map(reading => ({
-          id: reading.id,
-          amount: Number(reading.consumption) * newPricePerKwh
-        }));
-
-        for (const update of updates) {
-          await supabase
-            .from('meter_readings')
-            .update({ amount: update.amount })
-            .eq('id', update.id);
-        }
-      }
-
-      // Mettre à jour le prix dans la configuration
-      await supabase
-        .from('building_meter_configs')
-        .upsert({
-          building_id: buildingId,
-          price_per_kwh: newPricePerKwh
-        });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
-    }
-  });
 
   return {
     meterData,

@@ -9,7 +9,7 @@ export function useBillingSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('buildings')
-        .select('id, client_billing_enabled');
+        .select('id, client_billing_enabled') as any;
       
       if (error) throw error;
       return data;
@@ -20,7 +20,7 @@ export function useBillingSettings() {
     mutationFn: async ({ buildingId, clientBilling }: { buildingId: string, clientBilling: boolean }) => {
       const { error } = await supabase
         .from('buildings')
-        .update({ client_billing_enabled: clientBilling })
+        .update({ client_billing_enabled: clientBilling } as any)
         .eq('id', buildingId);
       
       if (error) throw error;

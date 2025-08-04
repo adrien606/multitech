@@ -8,6 +8,7 @@ import { ArrowLeft, Plus, Zap, Building as BuildingIcon, Save, Trash2, Edit } fr
 import { Link } from "react-router-dom";
 import { useBuildings } from "@/hooks/useBuildings";
 import { useBillingSettings } from "@/hooks/useBillingSettings";
+import { useMeterData } from "@/hooks/useMeterData";
 import { toast } from "sonner";
 
 interface MeterReading {
@@ -37,6 +38,7 @@ interface BuildingLots {
 export default function MetersPage() {
   const { buildings, loading } = useBuildings();
   const { getBillingStatus } = useBillingSettings();
+  const { meterData, updatePrice, recalculateAmounts } = useMeterData();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [buildingLots, setBuildingLots] = useState<BuildingLots>({});
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
@@ -186,7 +188,7 @@ export default function MetersPage() {
   const handleUpdatePrice = (newPrice: number) => {
     if (!selectedBuildingId) return;
     
-    recalculateAmounts({ buildingId: selectedBuildingId, newPricePerKwh: newPrice });
+    updatePrice({ buildingId: selectedBuildingId, pricePerKwh: newPrice });
     setPricePerKwh(newPrice);
   };
 
