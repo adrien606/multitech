@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Plus, Zap, Building as BuildingIcon, Save, Trash2, Edit } from "lucide-react";
+import { ArrowLeft, Plus, Zap, Building as BuildingIcon, Save, Trash2, Edit, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBuildings } from "@/hooks/useBuildings";
 import { useBillingSettings } from "@/hooks/useBillingSettings";
 import { useMeterData } from "@/hooks/useMeterData";
+import { useElectricalMeters } from "@/hooks/useElectricalMeters";
+import { ElectricalMeterModal } from "@/components/ElectricalMeterModal";
 import { toast } from "sonner";
 
 export default function MetersPage() {
@@ -26,6 +28,14 @@ export default function MetersPage() {
     isLoading: meterLoading,
     isUpdating 
   } = useMeterData();
+  const {
+    meters,
+    getMetersByBuilding,
+    createMeter,
+    updateMeter,
+    deleteMeter,
+    isModifying
+  } = useElectricalMeters();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [newReading, setNewReading] = useState({ currentReading: 0 });
@@ -34,6 +44,8 @@ export default function MetersPage() {
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [addingPreviousReading, setAddingPreviousReading] = useState<string | null>(null);
   const [previousReadingValue, setPreviousReadingValue] = useState(0);
+  const [meterModalOpen, setMeterModalOpen] = useState(false);
+  const [editingMeter, setEditingMeter] = useState<any>(null);
 
   // Filtrer les bâtiments avec refacturation client = true
   const billingBuildings = buildings.filter(building => 
@@ -179,6 +191,31 @@ export default function MetersPage() {
     setPreviousReadingValue(0);
   };
 
+  // Fonctions de gestion des PDL
+  const handleCreateMeter = (data: any) => {
+    createMeter(data);
+    setMeterModalOpen(false);
+    setEditingMeter(null);
+  };
+
+  const handleUpdateMeter = (data: any) => {
+    updateMeter(data);
+    setMeterModalOpen(false);
+    setEditingMeter(null);
+  };
+
+  const handleEditMeter = (meter: any) => {
+    setEditingMeter(meter);
+    setMeterModalOpen(true);
+  };
+
+  const handleDeleteMeter = (meterId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce compteur électrique ?")) {
+      return;
+    }
+    deleteMeter(meterId);
+  };
+
   // Calculer les totaux mensuels
   const getMonthlyTotals = () => {
     if (!currentBuildingData) return [];
@@ -282,6 +319,112 @@ export default function MetersPage() {
                     <p className="text-sm">Configurez la refacturation dans la gestion des bâtiments.</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Gestion des PDL (Compteurs électriques) */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    PDL / Compteurs électriques
+                  </CardTitle>
+                  <Button onClick={() => setMeterModalOpen(true)} size="sm" disabled={isModifying}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un PDL
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {buildings.map((building) => {
+                    const buildingMeters = getMetersByBuilding(building.id);
+                    return (
+                      <Card key={building.id} className="bg-muted/20">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-secondary/10">
+                                <BuildingIcon className="w-5 h-5 text-secondary-foreground" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">{building.name}</h3>
+                                <p className="text-sm text-muted-foreground">{building.address}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {buildingMeters.length} compteur{buildingMeters.length !== 1 ? 's' : ''}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingMeter({ building_id: building.id });
+                                  setMeterModalOpen(true);
+                                }}
+                                disabled={isModifying}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        
+                        {buildingMeters.length > 0 && (
+                          <CardContent className="pt-0">
+                            <div className="space-y-3">
+                              {buildingMeters.map((meter) => (
+                                <div key={meter.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-medium">{meter.name}</h4>
+                                      <span className="text-xs bg-muted px-2 py-1 rounded">
+                                        {meter.meter_number}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                      {meter.pdl_number && (
+                                        <span>PDL: {meter.pdl_number}</span>
+                                      )}
+                                      {meter.supplier && (
+                                        <span>• {meter.supplier}</span>
+                                      )}
+                                      {meter.contract_reference && (
+                                        <span>• Contrat: {meter.contract_reference}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleEditMeter(meter)}
+                                      disabled={isModifying}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDeleteMeter(meter.id)}
+                                      className="text-destructive hover:text-destructive"
+                                      disabled={isModifying}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </>
@@ -630,6 +773,19 @@ export default function MetersPage() {
           </>
         )}
       </div>
+
+      {/* Modal pour ajouter/éditer un compteur électrique */}
+      <ElectricalMeterModal
+        isOpen={meterModalOpen}
+        onClose={() => {
+          setMeterModalOpen(false);
+          setEditingMeter(null);
+        }}
+        meter={editingMeter && editingMeter.id ? editingMeter : undefined}
+        buildingId={editingMeter?.building_id || ""}
+        onSubmit={editingMeter && editingMeter.id ? handleUpdateMeter : handleCreateMeter}
+        isLoading={isModifying}
+      />
     </div>
   );
 }
