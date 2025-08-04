@@ -276,6 +276,35 @@ export function useMeterData() {
     }
   });
 
+  // Mutation pour mettre à jour un relevé existant
+  const updateReadingMutation = useMutation({
+    mutationFn: async ({ 
+      readingId, 
+      previousReading, 
+      consumption, 
+      amount 
+    }: { 
+      readingId: string, 
+      previousReading: number, 
+      consumption: number, 
+      amount: number 
+    }) => {
+      const { error } = await supabase
+        .from('meter_readings' as any)
+        .update({
+          previous_reading: previousReading,
+          consumption,
+          amount
+        })
+        .eq('id', readingId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meter-data'] });
+      toast.success("Relevé mis à jour avec succès");
+    }
+  });
 
   return {
     meterData,
@@ -286,13 +315,14 @@ export function useMeterData() {
     updateLot: updateLotMutation.mutate,
     addReading: addReadingMutation.mutate,
     deleteReading: deleteReadingMutation.mutate,
-    recalculateAmounts: recalculateAmountsMutation.mutate,
+    updateReading: updateReadingMutation.mutate,
     isUpdating: updatePriceMutation.isPending || 
                 createLotMutation.isPending || 
                 deleteLotMutation.isPending || 
                 updateLotMutation.isPending || 
                 addReadingMutation.isPending || 
                 deleteReadingMutation.isPending ||
+                updateReadingMutation.isPending ||
                 recalculateAmountsMutation.isPending
   };
 }

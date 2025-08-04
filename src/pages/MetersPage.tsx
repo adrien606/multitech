@@ -22,6 +22,7 @@ export default function MetersPage() {
     updateLot, 
     addReading, 
     deleteReading,
+    updateReading,
     isLoading: meterLoading,
     isUpdating 
   } = useMeterData();
@@ -145,6 +146,37 @@ export default function MetersPage() {
     if (selectedLotId === lotId) {
       setSelectedLotId(null);
     }
+  };
+
+  const handleAddPreviousReading = (readingId: string) => {
+    if (previousReadingValue < 0) {
+      toast.error("Veuillez saisir un relevé précédent valide");
+      return;
+    }
+
+    // Trouver le relevé à mettre à jour
+    const lot = currentBuildingData?.lots.find(l => 
+      l.readings.some(r => r.id === readingId)
+    );
+    const reading = lot?.readings.find(r => r.id === readingId);
+    
+    if (!reading) {
+      toast.error("Relevé introuvable");
+      return;
+    }
+
+    const newConsumption = reading.currentReading - previousReadingValue;
+    const newAmount = newConsumption * pricePerKwh;
+
+    updateReading({
+      readingId,
+      previousReading: previousReadingValue,
+      consumption: newConsumption,
+      amount: newAmount
+    });
+
+    setAddingPreviousReading(null);
+    setPreviousReadingValue(0);
   };
 
   // Calculer les totaux mensuels
@@ -507,16 +539,17 @@ export default function MetersPage() {
                               <span className="text-sm text-muted-foreground">- {lot.clientName}</span>
                             )}
                           </h4>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Période</TableHead>
-                                <TableHead className="text-right">Relevé précédent</TableHead>
-                                <TableHead className="text-right">Relevé actuel</TableHead>
-                                <TableHead className="text-right">Consommation</TableHead>
-                                <TableHead className="text-right">Montant</TableHead>
-                              </TableRow>
-                            </TableHeader>
+                           <Table>
+                             <TableHeader>
+                               <TableRow>
+                                 <TableHead>Période</TableHead>
+                                 <TableHead className="text-right">Relevé précédent</TableHead>
+                                 <TableHead className="text-right">Relevé actuel</TableHead>
+                                 <TableHead className="text-right">Consommation</TableHead>
+                                 <TableHead className="text-right">Montant</TableHead>
+                                 <TableHead className="text-right">Actions</TableHead>
+                               </TableRow>
+                             </TableHeader>
                             <TableBody>
                               {lot.readings.map((reading) => (
                                 <TableRow key={reading.id}>
@@ -532,9 +565,51 @@ export default function MetersPage() {
                                   <TableCell className="text-right font-mono font-medium">
                                     {reading.consumption.toLocaleString('fr-FR')} kWh
                                   </TableCell>
-                                  <TableCell className="text-right font-mono font-medium text-green-600">
-                                    {reading.amount.toFixed(2)} €
-                                  </TableCell>
+                                   <TableCell className="text-right font-mono font-medium text-green-600">
+                                     {reading.amount.toFixed(2)} €
+                                   </TableCell>
+                                   <TableCell className="text-right">
+                                     {reading.previousReading === 0 ? (
+                                       addingPreviousReading === reading.id ? (
+                                         <div className="flex items-center gap-2 justify-end">
+                                           <Input
+                                             type="number"
+                                             value={previousReadingValue}
+                                             onChange={(e) => setPreviousReadingValue(parseFloat(e.target.value) || 0)}
+                                             onKeyDown={(e) => {
+                                               if (e.key === 'Enter') {
+                                                 handleAddPreviousReading(reading.id);
+                                               }
+                                               if (e.key === 'Escape') {
+                                                 setAddingPreviousReading(null);
+                                                 setPreviousReadingValue(0);
+                                               }
+                                             }}
+                                             className="w-20 h-7"
+                                             placeholder="Relevé"
+                                             autoFocus
+                                             disabled={isUpdating}
+                                           />
+                                           <Button
+                                             size="sm"
+                                             onClick={() => handleAddPreviousReading(reading.id)}
+                                             disabled={isUpdating}
+                                           >
+                                             <Save className="w-3 h-3" />
+                                           </Button>
+                                         </div>
+                                       ) : (
+                                         <Button
+                                           variant="outline"
+                                           size="sm"
+                                           onClick={() => setAddingPreviousReading(reading.id)}
+                                           disabled={isUpdating}
+                                         >
+                                           Ajouter relevé précédent
+                                         </Button>
+                                       )
+                                     ) : null}
+                                   </TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
