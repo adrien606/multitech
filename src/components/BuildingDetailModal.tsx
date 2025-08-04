@@ -77,7 +77,7 @@ export function BuildingDetailModal({ building, isOpen, onClose, clientBilling, 
   const completedThisMonth = buildingControls.filter(c => c.status === 'completed').length;
 
   const handleBillingToggle = async (newValue: boolean) => {
-    onBillingChange(building.id, newValue);
+    await onBillingChange(building.id, newValue);
   };
 
   return (
