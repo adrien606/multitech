@@ -325,16 +325,10 @@ export default function MetersPage() {
             {/* Gestion des PDL (Compteurs électriques) */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
-                    PDL / Compteurs électriques
-                  </CardTitle>
-                  <Button onClick={() => setMeterModalOpen(true)} size="sm" disabled={isModifying}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ajouter un PDL
-                  </Button>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  PDL / Compteurs électriques
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4">
