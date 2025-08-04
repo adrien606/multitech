@@ -154,9 +154,6 @@ export default function BuildingsPage() {
                             </p>
                           )}
                           <div className="flex items-center gap-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
-                              Refacturation client: Oui {/* Mock pour l'instant */}
-                            </span>
                           </div>
                         </div>
                         <div className="flex gap-2">

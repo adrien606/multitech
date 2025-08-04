@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Plus, Zap, Building as BuildingIcon, Save, Trash2, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBuildings } from "@/hooks/useBuildings";
+import { useBillingSettings } from "@/hooks/useBillingSettings";
 import { toast } from "sonner";
 
 interface MeterReading {
@@ -35,25 +36,19 @@ interface BuildingLots {
 
 export default function MetersPage() {
   const { buildings, loading } = useBuildings();
+  const { getBillingStatus } = useBillingSettings();
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
-  const [buildingsBilling, setBuildingsBilling] = useState<Record<string, boolean>>({});
   const [buildingLots, setBuildingLots] = useState<BuildingLots>({});
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [newReading, setNewReading] = useState({ currentReading: 0 });
-  const [pricePerKwh, setPricePerKwh] = useState(0.15); // Prix par défaut
+  const [pricePerKwh, setPricePerKwh] = useState(0.15);
   const [editingLotName, setEditingLotName] = useState<string | null>(null);
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [addingPreviousReading, setAddingPreviousReading] = useState<string | null>(null);
   const [previousReadingValue, setPreviousReadingValue] = useState(0);
 
-  // Charger les données de refacturation depuis localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('buildingsBilling');
-      if (saved) {
-        setBuildingsBilling(JSON.parse(saved));
-      }
-      
       const savedLots = localStorage.getItem('buildingLots');
       if (savedLots) {
         setBuildingLots(JSON.parse(savedLots));
@@ -63,7 +58,6 @@ export default function MetersPage() {
     }
   }, []);
 
-  // Sauvegarder automatiquement les modifications
   useEffect(() => {
     try {
       localStorage.setItem('buildingLots', JSON.stringify(buildingLots));
@@ -72,11 +66,7 @@ export default function MetersPage() {
     }
   }, [buildingLots]);
 
-  const getBillingStatus = (buildingId: string) => {
-    return buildingsBilling[buildingId] || false;
-  };
-
-  // Mock: filtrer les bâtiments avec refacturation client = true
+  // Filtrer les bâtiments avec refacturation client = true
   const billingBuildings = buildings.filter(building => 
     getBillingStatus(building.id)
   );
