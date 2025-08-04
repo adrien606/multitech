@@ -259,6 +259,28 @@ export const useRegulatoryControls = () => {
 
   useEffect(() => {
     fetchControls();
+    
+    // S'abonner aux changements en temps réel
+    const subscription = supabase
+      .channel('regulatory_controls_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'regulatory_controls' 
+        }, 
+        (payload) => {
+          console.log('Regulatory controls changed:', payload);
+          // Rafraîchir les données quand il y a des changements
+          fetchControls();
+        }
+      )
+      .subscribe();
+
+    // Nettoyer l'abonnement au démontage
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return {
