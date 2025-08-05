@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addDays } from 'date-fns';
+import { format, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addDays, startOfQuarter, endOfQuarter, eachMonthOfInterval, startOfYear, endOfYear, getQuarter } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CalendarIcon, Clock, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,7 +20,7 @@ interface ControlsCalendarProps {
 export function ControlsCalendar({ controls, buildings, onControlClick }: ControlsCalendarProps) {
   console.log('ControlsCalendar rendered with controls:', controls.length);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'quarter' | 'year'>('month');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('all');
 
   // Filtrer les contrôles par bâtiment
@@ -69,6 +69,26 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
       newDate.setDate(currentDate.getDate() - 7);
     } else {
       newDate.setDate(currentDate.getDate() + 7);
+    }
+    setCurrentDate(newDate);
+  };
+
+  const navigateQuarter = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    if (direction === 'prev') {
+      newDate.setMonth(currentDate.getMonth() - 3);
+    } else {
+      newDate.setMonth(currentDate.getMonth() + 3);
+    }
+    setCurrentDate(newDate);
+  };
+
+  const navigateYear = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    if (direction === 'prev') {
+      newDate.setFullYear(currentDate.getFullYear() - 1);
+    } else {
+      newDate.setFullYear(currentDate.getFullYear() + 1);
     }
     setCurrentDate(newDate);
   };
@@ -190,6 +210,139 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
     );
   };
 
+  // Vue trimestre
+  const renderQuarterView = () => {
+    const quarterStart = startOfQuarter(currentDate);
+    const quarterEnd = endOfQuarter(currentDate);
+    const months = eachMonthOfInterval({ start: quarterStart, end: quarterEnd });
+    
+    return (
+      <div className="grid grid-cols-3 gap-4">
+        {months.map((month) => {
+          const monthControls = filteredControls.filter(control => {
+            const controlDate = new Date(control.due_date);
+            return isSameMonth(controlDate, month);
+          });
+          
+          return (
+            <div
+              key={month.toISOString()}
+              className="border border-border rounded-lg p-3 min-h-[200px] hover:bg-muted/30 transition-colors"
+            >
+              <div className="text-lg font-semibold mb-3 pb-2 border-b border-border">
+                {format(month, 'MMMM yyyy', { locale: fr })}
+              </div>
+              
+              <div className="space-y-2">
+                {monthControls.slice(0, 6).map((control) => (
+                  <div
+                    key={control.id}
+                    className={`text-xs p-2 rounded cursor-pointer ${getStatusColor(control.status)}`}
+                    onClick={() => onControlClick?.(control.id)}
+                  >
+                    <div className="flex items-center gap-1 mb-1">
+                      {getStatusIcon(control.status)}
+                      <span className="font-medium truncate">{control.control_type_name}</span>
+                    </div>
+                    <div className="text-xs opacity-60 truncate">{control.building_name}</div>
+                    <div className="text-xs opacity-50 truncate mt-0.5">
+                      {format(new Date(control.due_date), 'd MMM', { locale: fr })}
+                    </div>
+                  </div>
+                ))}
+                {monthControls.length > 6 && (
+                  <div className="text-xs text-muted-foreground px-2">
+                    +{monthControls.length - 6} autres
+                  </div>
+                )}
+                {monthControls.length === 0 && (
+                  <div className="text-xs text-muted-foreground px-2 py-4 text-center">
+                    Aucun contrôle ce mois
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Vue année
+  const renderYearView = () => {
+    const yearStart = startOfYear(currentDate);
+    const yearEnd = endOfYear(currentDate);
+    const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
+    
+    return (
+      <div className="grid grid-cols-4 gap-3">
+        {months.map((month) => {
+          const monthControls = filteredControls.filter(control => {
+            const controlDate = new Date(control.due_date);
+            return isSameMonth(controlDate, month);
+          });
+          
+          const completedCount = monthControls.filter(c => c.status === 'completed').length;
+          const overdueCount = monthControls.filter(c => c.status === 'overdue').length;
+          const inProgressCount = monthControls.filter(c => c.status === 'in_progress').length;
+          const pendingCount = monthControls.filter(c => c.status === 'pending').length;
+          
+          return (
+            <div
+              key={month.toISOString()}
+              className="border border-border rounded-lg p-3 min-h-[150px] hover:bg-muted/30 transition-colors"
+            >
+              <div className="text-sm font-semibold mb-2 pb-1 border-b border-border">
+                {format(month, 'MMM yyyy', { locale: fr })}
+              </div>
+              
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  Total: {monthControls.length} contrôles
+                </div>
+                
+                {monthControls.length > 0 && (
+                  <div className="space-y-1">
+                    {completedCount > 0 && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <CheckCircle className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-600">{completedCount} terminés</span>
+                      </div>
+                    )}
+                    {overdueCount > 0 && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <AlertTriangle className="w-3 h-3 text-red-600" />
+                        <span className="text-red-600">{overdueCount} en retard</span>
+                      </div>
+                    )}
+                    {inProgressCount > 0 && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <Clock className="w-3 h-3 text-blue-600" />
+                        <span className="text-blue-600">{inProgressCount} en cours</span>
+                      </div>
+                    )}
+                    {pendingCount > 0 && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <Clock className="w-3 h-3 text-amber-600" />
+                        <span className="text-amber-600">{pendingCount} en attente</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {monthControls.length === 0 && (
+                  <div className="text-xs text-muted-foreground text-center py-2">
+                    Aucun contrôle
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   console.log('Rendering calendar with controls:', controls.length);
   
   return (
@@ -202,7 +355,12 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
               Calendrier des contrôles
             </CardTitle>
             <CardDescription className="text-sm">
-              {format(currentDate, 'MMMM yyyy')}
+              {viewMode === 'quarter' 
+                ? `T${getQuarter(currentDate)} ${format(currentDate, 'yyyy')}`
+                : viewMode === 'year'
+                ? format(currentDate, 'yyyy')
+                : format(currentDate, 'MMMM yyyy', { locale: fr })
+              }
             </CardDescription>
           </div>
           
@@ -234,10 +392,12 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
               </Select>
             </div>
             
-            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'month' | 'week')}>
+            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'month' | 'week' | 'quarter' | 'year')}>
               <TabsList>
                 <TabsTrigger value="month" className="text-xs">Mois</TabsTrigger>
                 <TabsTrigger value="week" className="text-xs">Semaine</TabsTrigger>
+                <TabsTrigger value="quarter" className="text-xs">Trimestre</TabsTrigger>
+                <TabsTrigger value="year" className="text-xs">Année</TabsTrigger>
               </TabsList>
             </Tabs>
             
@@ -245,7 +405,12 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => viewMode === 'month' ? navigateMonth('prev') : navigateWeek('prev')}
+                onClick={() => {
+                  if (viewMode === 'month') navigateMonth('prev');
+                  else if (viewMode === 'week') navigateWeek('prev');
+                  else if (viewMode === 'quarter') navigateQuarter('prev');
+                  else if (viewMode === 'year') navigateYear('prev');
+                }}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -260,7 +425,12 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => viewMode === 'month' ? navigateMonth('next') : navigateWeek('next')}
+                onClick={() => {
+                  if (viewMode === 'month') navigateMonth('next');
+                  else if (viewMode === 'week') navigateWeek('next');
+                  else if (viewMode === 'quarter') navigateQuarter('next');
+                  else if (viewMode === 'year') navigateYear('next');
+                }}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -269,8 +439,11 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
         </div>
       </CardHeader>
       
-      <CardContent className="p-0">
-        {viewMode === 'month' ? renderMonthView() : renderWeekView()}
+      <CardContent className="p-4">
+        {viewMode === 'month' ? renderMonthView() : 
+         viewMode === 'week' ? renderWeekView() :
+         viewMode === 'quarter' ? renderQuarterView() :
+         renderYearView()}
       </CardContent>
     </Card>
   );
