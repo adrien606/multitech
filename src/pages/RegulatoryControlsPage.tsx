@@ -73,21 +73,6 @@ export default function RegulatoryControlsPage() {
     return matchesBuilding && matchesStatus && matchesDueDate;
   }) || [];
 
-  // Grouper les contrôles par année
-  const controlsByYear = filteredControls.reduce((groups, control) => {
-    const year = new Date(control.due_date).getFullYear();
-    if (!groups[year]) {
-      groups[year] = [];
-    }
-    groups[year].push(control);
-    return groups;
-  }, {} as Record<number, typeof filteredControls>);
-
-  // Trier les années (les plus récentes en premier)
-  const sortedYears = Object.keys(controlsByYear)
-    .map(year => parseInt(year))
-    .sort((a, b) => b - a);
-
   // Gestionnaire pour créer un nouveau contrôle
   const handleCreateControl = async (controlData: any) => {
     try {
@@ -288,7 +273,7 @@ export default function RegulatoryControlsPage() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="controls" className="space-y-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="controls">Contrôles</TabsTrigger>
@@ -369,53 +354,31 @@ export default function RegulatoryControlsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {filteredControls.length > 0 ? (
-                    sortedYears.map((year) => (
-                      <div key={year} className="space-y-4">
-                        {/* Séparateur d'année */}
-                        <div className="flex items-center gap-4 py-2">
-                          <div className="flex-1 h-px bg-border"></div>
-                          <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-semibold text-lg">{year}</span>
-                            <Badge variant="outline" className="ml-2">
-                              {controlsByYear[year].length} contrôle{controlsByYear[year].length > 1 ? 's' : ''}
-                            </Badge>
+                    filteredControls.map((control) => (
+                      <div key={control.id} className="flex items-center justify-between p-4 rounded-lg border">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-3 h-3 rounded-full ${getStatusColor(control.status)}`} />
+                          <div>
+                            <p className="font-medium">{control.control_type_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {control.building_name} • Échéance: {new Date(control.due_date).toLocaleDateString()}
+                            </p>
                           </div>
-                          <div className="flex-1 h-px bg-border"></div>
                         </div>
-                        
-                        {/* Contrôles de l'année */}
-                        <div className="space-y-3 ml-4">
-                          {controlsByYear[year]
-                            .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
-                            .map((control) => (
-                            <div key={control.id} className="flex items-center justify-between p-4 rounded-lg border bg-card">
-                              <div className="flex items-center gap-4">
-                                <div className={`w-3 h-3 rounded-full ${getStatusColor(control.status)}`} />
-                                <div>
-                                  <p className="font-medium">{control.control_type_name}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {control.building_name} • Échéance: {new Date(control.due_date).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <Badge variant={control.status === 'completed' ? 'default' : 'secondary'}>
-                                  {getStatusIcon(control.status)}
-                                  {control.status}
-                                </Badge>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => setSelectedControlId(control.id)}
-                                >
-                                  Détails
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="flex items-center gap-3">
+                          <Badge variant={control.status === 'completed' ? 'default' : 'secondary'}>
+                            {getStatusIcon(control.status)}
+                            {control.status}
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setSelectedControlId(control.id)}
+                          >
+                            Détails
+                          </Button>
                         </div>
                       </div>
                     ))
