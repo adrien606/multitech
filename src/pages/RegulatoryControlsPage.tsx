@@ -288,7 +288,7 @@ export default function RegulatoryControlsPage() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="dashboard" className="space-y-6">
+        <Tabs defaultValue="controls" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="controls">Contrôles</TabsTrigger>
