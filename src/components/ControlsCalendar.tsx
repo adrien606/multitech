@@ -121,7 +121,7 @@ export function ControlsCalendar({ controls, buildings, onControlClick }: Contro
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[80px] p-1 border-b border-r border-border transition-colors hover:bg-muted/30 ${
+              className={`min-h-[80px] p-1 border border-border transition-colors hover:bg-muted/30 ${
                 !isCurrentMonth ? 'bg-muted/10' : ''
               } ${isToday ? 'bg-primary/5' : ''}`}
             >
