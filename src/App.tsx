@@ -15,6 +15,7 @@ import ControlTypesControlPage from "./pages/ControlTypesControlPage";
 import DocumentsControlPage from "./pages/DocumentsControlPage";
 import BuildingsPage from "./pages/BuildingsPage";
 import MetersPage from "./pages/MetersPage";
+import InsurancePage from "./pages/InsurancePage";
 import UsersPage from "./pages/UsersPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -50,6 +51,11 @@ const App = () => (
             <Route path="/meters" element={
               <ProtectedRoute>
                 <MetersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/insurance" element={
+              <ProtectedRoute>
+                <InsurancePage />
               </ProtectedRoute>
             } />
             <Route path="/users" element={

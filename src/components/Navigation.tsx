@@ -6,7 +6,8 @@ import {
   Users, 
   FileText,
   Home,
-  Zap
+  Zap,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -38,6 +39,11 @@ const Navigation = () => {
       label: 'Compteurs',
       path: '/meters',
       icon: Zap
+    },
+    {
+      label: 'Assurance',
+      path: '/insurance',
+      icon: Shield
     }
   ];
 
