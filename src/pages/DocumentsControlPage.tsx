@@ -553,9 +553,18 @@ export default function DocumentsControlPage() {
                              contract.status === 'expired' ? 'Expiré' : 'Archivé'}
                           </Badge>
                         </div>
-                        {contract.notes && (
-                          <p className="text-xs text-muted-foreground mt-1">{contract.notes}</p>
-                        )}
+                         {contract.buildings && contract.buildings.length > 0 && (
+                           <div className="flex flex-wrap gap-1 mt-2">
+                             {contract.buildings.map((building) => (
+                               <Badge key={building.id} variant="secondary" className="text-xs px-2 py-1">
+                                 {building.name}
+                               </Badge>
+                             ))}
+                           </div>
+                         )}
+                         {contract.notes && (
+                           <p className="text-xs text-muted-foreground mt-1">{contract.notes}</p>
+                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
