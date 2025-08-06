@@ -390,6 +390,42 @@ export type Database = {
           },
         ]
       }
+      provider_contract_buildings: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          provider_contract_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          provider_contract_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          provider_contract_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_contract_buildings_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_contract_buildings_provider_contract_id_fkey"
+            columns: ["provider_contract_id"]
+            isOneToOne: false
+            referencedRelation: "provider_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_contracts: {
         Row: {
           created_at: string

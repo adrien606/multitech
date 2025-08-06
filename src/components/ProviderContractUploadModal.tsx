@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, X, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
 import { supabase } from '@/integrations/supabase/client';
+import { Building } from '@/types';
 
 interface Provider {
   id: string;
@@ -19,16 +21,19 @@ interface ProviderContractUploadModalProps {
   onClose: () => void;
   onUploadSuccess: () => void;
   providers: Provider[];
+  buildings: Building[];
 }
 
 export default function ProviderContractUploadModal({
   isOpen,
   onClose,
   onUploadSuccess,
-  providers
+  providers,
+  buildings
 }: ProviderContractUploadModalProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const { uploadMultipleFiles, uploading } = useStorageUpload();
   const { toast } = useToast();
@@ -77,27 +82,42 @@ export default function ProviderContractUploadModal({
       // Upload files to storage
       const uploadResults = await uploadMultipleFiles(selectedFiles, 'control-documents');
       
-      // Get current user
-      const { data: userData } = await supabase.auth.getUser();
-      
-      // Save metadata to database
-      const contractsData = uploadResults.map((result, index) => ({
-        provider_id: selectedProviderId,
-        file_path: result.url.split('/').pop(), // Extract filename from URL
-        original_filename: result.filename,
-        filename: result.filename,
-        file_type: selectedFiles[index].type,
-        file_size: selectedFiles[index].size,
-        notes: notes || null,
-        uploaded_by: userData.user?.id,
-        status: 'active'
-      }));
+        // Get current user
+        const { data: userData } = await supabase.auth.getUser();
+        
+        // Save metadata to database
+        const contractsData = uploadResults.map((result, index) => ({
+          provider_id: selectedProviderId,
+          file_path: result.url.split('/').pop(), // Extract filename from URL
+          original_filename: result.filename,
+          filename: result.filename,
+          file_type: selectedFiles[index].type,
+          file_size: selectedFiles[index].size,
+          notes: notes || null,
+          uploaded_by: userData.user?.id,
+          status: 'active'
+        }));
 
-      const { error } = await (supabase as any)
-        .from('provider_contracts')
-        .insert(contractsData);
+        const { data: insertedContracts, error } = await (supabase as any)
+          .from('provider_contracts')
+          .insert(contractsData)
+          .select('id');
 
       if (error) throw error;
+
+      // Associate buildings with contracts
+      if (selectedBuildingIds.length > 0 && insertedContracts) {
+        const buildingAssociations = insertedContracts.flatMap((contract: any) => 
+          selectedBuildingIds.map(buildingId => ({
+            provider_contract_id: contract.id,
+            building_id: buildingId
+          }))
+        );
+
+        await (supabase as any)
+          .from('provider_contract_buildings')
+          .insert(buildingAssociations);
+      }
 
       toast({
         title: "Upload réussi",
@@ -107,6 +127,7 @@ export default function ProviderContractUploadModal({
       // Reset form
       setSelectedFiles([]);
       setSelectedProviderId('');
+      setSelectedBuildingIds([]);
       setNotes('');
       onUploadSuccess();
     } catch (error) {
@@ -197,6 +218,31 @@ export default function ProviderContractUploadModal({
               </div>
             </div>
           )}
+
+          {/* Sélection des bâtiments */}
+          <div className="space-y-2">
+            <Label>Bâtiments (optionnel)</Label>
+            <div className="space-y-2 max-h-32 overflow-y-auto border rounded p-2">
+              {buildings.map((building) => (
+                <div key={building.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={building.id}
+                    checked={selectedBuildingIds.includes(building.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedBuildingIds(prev => [...prev, building.id]);
+                      } else {
+                        setSelectedBuildingIds(prev => prev.filter(id => id !== building.id));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={building.id} className="text-sm">
+                    {building.name} - {building.address}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Notes */}
           <div className="space-y-2">

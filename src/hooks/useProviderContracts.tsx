@@ -17,6 +17,7 @@ export interface ProviderContract {
   uploaded_at: string;
   created_at: string;
   updated_at: string;
+  buildings?: { id: string; name: string }[];
 }
 
 export interface ProviderContractStats {
@@ -47,7 +48,10 @@ export const useProviderContracts = () => {
         .from('provider_contracts')
         .select(`
           *,
-          providers!inner(name)
+          providers!inner(name),
+          provider_contract_buildings(
+            buildings(id, name)
+          )
         `)
         .order('created_at', { ascending: false });
 
@@ -68,6 +72,7 @@ export const useProviderContracts = () => {
         uploaded_at: contract.created_at,
         created_at: contract.created_at,
         updated_at: contract.updated_at,
+        buildings: contract.provider_contract_buildings?.map((pcb: any) => pcb.buildings) || []
       }));
 
       setContracts(transformedContracts);
@@ -96,7 +101,7 @@ export const useProviderContracts = () => {
     });
   };
 
-  const updateContractStatus = async (id: string, status: 'active' | 'expired' | 'archived', notes?: string) => {
+  const updateContract = async (id: string, status: 'active' | 'expired' | 'archived', notes?: string, buildingIds?: string[]) => {
     try {
       const { error } = await (supabase as any)
         .from('provider_contracts')
@@ -109,9 +114,30 @@ export const useProviderContracts = () => {
 
       if (error) throw error;
 
+      // Update buildings if provided
+      if (buildingIds) {
+        // Delete existing building associations
+        await (supabase as any)
+          .from('provider_contract_buildings')
+          .delete()
+          .eq('provider_contract_id', id);
+
+        // Insert new building associations
+        if (buildingIds.length > 0) {
+          const buildingAssociations = buildingIds.map(buildingId => ({
+            provider_contract_id: id,
+            building_id: buildingId
+          }));
+
+          await (supabase as any)
+            .from('provider_contract_buildings')
+            .insert(buildingAssociations);
+        }
+      }
+
       toast({
-        title: "Statut mis à jour",
-        description: "Le statut du contrat a été mis à jour avec succès",
+        title: "Contrat mis à jour",
+        description: "Le contrat a été mis à jour avec succès",
       });
 
       await fetchContracts();
@@ -178,7 +204,7 @@ export const useProviderContracts = () => {
     loading,
     error,
     refetch,
-    updateContractStatus,
+    updateContractStatus: updateContract,
     deleteContract,
     formatFileSize
   };

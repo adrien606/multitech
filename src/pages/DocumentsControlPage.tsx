@@ -5,26 +5,30 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2, File, Filter } from 'lucide-react';
+import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2, File, Filter, Edit } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
 import { useProviderContracts } from '@/hooks/useProviderContracts';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
 import ProviderContractUploadModal from '@/components/ProviderContractUploadModal';
+import ProviderContractEditModal from '@/components/ProviderContractEditModal';
 import { DocumentFilters } from '@/components/DocumentFilters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Building } from '@/types';
 
 export default function DocumentsControlPage() {
   const { documents, stats, loading, error, formatFileSize, refetch, deleteDocument } = useControlDocuments();
-  const { contracts, loading: contractsLoading, deleteContract, formatFileSize: formatContractFileSize, refetch: refetchContracts } = useProviderContracts();
+  const { contracts, loading: contractsLoading, deleteContract, formatFileSize: formatContractFileSize, refetch: refetchContracts, updateContractStatus } = useProviderContracts();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isContractUploadModalOpen, setIsContractUploadModalOpen] = useState(false);
+  const [isContractEditModalOpen, setIsContractEditModalOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(null);
   const [regulatoryControls, setRegulatoryControls] = useState<Array<{ id: string; building_name: string; control_type_name: string }>>([]);
   const { toast } = useToast();
 
   // États pour les filtres
-  const [buildings, setBuildings] = useState<Array<{ id: string; name: string; address: string }>>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [providers, setProviders] = useState<Array<{ id: string; name: string }>>([]);
   const [controlTypes, setControlTypes] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
@@ -42,12 +46,21 @@ export default function DocumentsControlPage() {
     const loadFilterData = async () => {
       try {
         const [buildingsResponse, providersResponse, controlTypesResponse] = await Promise.all([
-          supabase.from('buildings').select('id, name, address').order('name'),
+          supabase.from('buildings').select('id, name, address, description, created_at, updated_at').order('name'),
           supabase.from('providers').select('id, name').eq('is_active', true).order('name'),
           supabase.from('control_types').select('id, name').eq('is_active', true).order('name'),
         ]);
 
-        if (buildingsResponse.data) setBuildings(buildingsResponse.data);
+        if (buildingsResponse.data) {
+          const transformedBuildings = buildingsResponse.data.map(building => ({
+            id: building.id,
+            name: building.name,
+            address: building.address,
+            description: building.description,
+            createdAt: new Date(building.created_at)
+          }));
+          setBuildings(transformedBuildings);
+        }
         if (providersResponse.data) setProviders(providersResponse.data);
         if (controlTypesResponse.data) setControlTypes(controlTypesResponse.data);
       } catch (error) {
@@ -557,15 +570,26 @@ export default function DocumentsControlPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        title="Télécharger le contrat"
-                        onClick={() => downloadContract(contract)}
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <AlertDialog>
+                       <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         title="Télécharger le contrat"
+                         onClick={() => downloadContract(contract)}
+                       >
+                         <Download className="w-4 h-4" />
+                       </Button>
+                       <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         title="Modifier le contrat"
+                         onClick={() => {
+                           setSelectedContract(contract);
+                           setIsContractEditModalOpen(true);
+                         }}
+                       >
+                         <Edit className="w-4 h-4" />
+                       </Button>
+                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button 
                             variant="ghost" 
@@ -617,6 +641,24 @@ export default function DocumentsControlPage() {
             setIsContractUploadModalOpen(false);
           }}
           providers={providers}
+          buildings={buildings}
+        />
+
+        <ProviderContractEditModal
+          isOpen={isContractEditModalOpen}
+          onClose={() => {
+            setIsContractEditModalOpen(false);
+            setSelectedContract(null);
+          }}
+          onEditSuccess={() => {
+            setIsContractEditModalOpen(false);
+            setSelectedContract(null);
+            refetchContracts();
+          }}
+          providers={providers}
+          buildings={buildings}
+          contract={selectedContract}
+          updateContractStatus={updateContractStatus}
         />
 
       </div>
