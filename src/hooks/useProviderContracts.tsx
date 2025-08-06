@@ -43,7 +43,7 @@ export const useProviderContracts = () => {
   const fetchContracts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('provider_contracts')
         .select(`
           *,
@@ -98,7 +98,7 @@ export const useProviderContracts = () => {
 
   const updateContractStatus = async (id: string, status: 'active' | 'expired' | 'archived', notes?: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('provider_contracts')
         .update({ 
           status,
@@ -138,7 +138,7 @@ export const useProviderContracts = () => {
       }
 
       // Delete from database
-      const { error: dbError } = await supabase
+      const { error: dbError } = await (supabase as any)
         .from('provider_contracts')
         .delete()
         .eq('id', id);

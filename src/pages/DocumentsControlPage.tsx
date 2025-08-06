@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2, FileContract, Filter } from 'lucide-react';
+import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2, File, Filter } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
 import { useProviderContracts } from '@/hooks/useProviderContracts';
@@ -445,6 +445,178 @@ export default function DocumentsControlPage() {
             setIsUploadModalOpen(false);
           }}
           regulatoryControls={regulatoryControls}
+        />
+
+        <Separator className="my-8" />
+
+        {/* Section Contrats de Prestataires */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-xl font-semibold text-foreground">Contrats de Prestataires</h3>
+            <p className="text-muted-foreground mt-1">
+              Gestion des contrats et documents non liés aux contrôles
+            </p>
+          </div>
+          <Button 
+            onClick={() => setIsContractUploadModalOpen(true)}
+            variant="outline"
+          >
+            <File className="w-4 h-4 mr-2" />
+            Télécharger un contrat
+          </Button>
+        </div>
+
+        {/* Filtres pour les contrats */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Select value={contractProviderFilter} onValueChange={setContractProviderFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filtrer par prestataire" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providers.map((provider) => (
+                      <SelectItem key={provider.id} value={provider.id}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={clearContractFilters}
+                disabled={!contractProviderFilter}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Réinitialiser
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground mt-2">
+              {filteredContracts.length} contrat(s) affiché(s) sur {contracts.length} total
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Liste des contrats */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Contrats de prestataires</CardTitle>
+            <CardDescription>
+              Documents contractuels et annexes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {contractsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredContracts.map((contract) => (
+                  <div key={contract.id} className="flex items-center justify-between p-4 rounded-lg border">
+                    <div className="flex items-center gap-4">
+                      <File className="w-8 h-8 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{contract.original_filename}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {contract.provider_name}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(contract.created_at).toLocaleDateString('fr-FR')}
+                          </span>
+                          <span>{formatContractFileSize(contract.file_size)}</span>
+                          <Badge 
+                            variant={
+                              contract.status === 'active' ? 'default' : 
+                              contract.status === 'expired' ? 'destructive' : 'secondary'
+                            }
+                          >
+                            {contract.status === 'active' ? 'Actif' : 
+                             contract.status === 'expired' ? 'Expiré' : 'Archivé'}
+                          </Badge>
+                        </div>
+                        {contract.notes && (
+                          <p className="text-xs text-muted-foreground mt-1">{contract.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline">
+                        {contract.file_type === 'application/pdf' ? 'PDF' : contract.file_type}
+                      </Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        title="Visualiser le contrat"
+                        onClick={() => viewContract(contract)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        title="Télécharger le contrat"
+                        onClick={() => downloadContract(contract)}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            title="Supprimer le contrat"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Supprimer le contrat</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Êtes-vous sûr de vouloir supprimer le contrat <strong>{contract.original_filename}</strong> ?
+                              Cette action est irréversible.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteContract(contract)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Supprimer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                ))}
+                {filteredContracts.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {contracts.length === 0 ? 'Aucun contrat trouvé' : 'Aucun contrat ne correspond aux filtres sélectionnés'}
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Modal d'upload pour les contrats */}
+        <ProviderContractUploadModal
+          isOpen={isContractUploadModalOpen}
+          onClose={() => setIsContractUploadModalOpen(false)}
+          onUploadSuccess={() => {
+            refetchContracts();
+            setIsContractUploadModalOpen(false);
+          }}
+          providers={providers}
         />
 
       </div>

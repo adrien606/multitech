@@ -77,6 +77,9 @@ export default function ProviderContractUploadModal({
       // Upload files to storage
       const uploadResults = await uploadMultipleFiles(selectedFiles, 'control-documents');
       
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      
       // Save metadata to database
       const contractsData = uploadResults.map((result, index) => ({
         provider_id: selectedProviderId,
@@ -86,11 +89,11 @@ export default function ProviderContractUploadModal({
         file_type: selectedFiles[index].type,
         file_size: selectedFiles[index].size,
         notes: notes || null,
-        uploaded_by: (await supabase.auth.getUser()).data.user?.id,
+        uploaded_by: userData.user?.id,
         status: 'active'
       }));
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('provider_contracts')
         .insert(contractsData);
 

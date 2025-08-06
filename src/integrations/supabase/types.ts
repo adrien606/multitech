@@ -390,6 +390,59 @@ export type Database = {
           },
         ]
       }
+      provider_contracts: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_size: number
+          file_type: string
+          filename: string
+          id: string
+          notes: string | null
+          original_filename: string
+          provider_id: string
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_size: number
+          file_type: string
+          filename: string
+          id?: string
+          notes?: string | null
+          original_filename: string
+          provider_id: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          filename?: string
+          id?: string
+          notes?: string | null
+          original_filename?: string
+          provider_id?: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_contracts_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_specialities: {
         Row: {
           created_at: string
