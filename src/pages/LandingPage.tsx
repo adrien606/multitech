@@ -9,7 +9,7 @@ export default function LandingPage() {
       <div className="max-w-5xl mx-auto text-center space-y-12">
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-bold text-foreground mb-4">YVAN TECH</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4">YVES - MultiTech</h1>
           <p className="text-xl text-muted-foreground mb-8">
             Plateforme unifiée de gestion technique du bâtiment
           </p>
