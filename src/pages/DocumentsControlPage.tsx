@@ -3,17 +3,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2, FileContract, Filter } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
+import { useProviderContracts } from '@/hooks/useProviderContracts';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
+import ProviderContractUploadModal from '@/components/ProviderContractUploadModal';
 import { DocumentFilters } from '@/components/DocumentFilters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DocumentsControlPage() {
   const { documents, stats, loading, error, formatFileSize, refetch, deleteDocument } = useControlDocuments();
+  const { contracts, loading: contractsLoading, deleteContract, formatFileSize: formatContractFileSize, refetch: refetchContracts } = useProviderContracts();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isContractUploadModalOpen, setIsContractUploadModalOpen] = useState(false);
   const [regulatoryControls, setRegulatoryControls] = useState<Array<{ id: string; building_name: string; control_type_name: string }>>([]);
   const { toast } = useToast();
 
@@ -27,6 +33,9 @@ export default function DocumentsControlPage() {
   
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  
+  // États pour les filtres des contrats
+  const [contractProviderFilter, setContractProviderFilter] = useState<string>('');
 
   // Charger les données pour les filtres
   useEffect(() => {
@@ -72,6 +81,14 @@ export default function DocumentsControlPage() {
     });
   }, [documents, selectedBuilding, selectedProvider, selectedControlType, dateFrom, dateTo]);
 
+  // Filtrer les contrats
+  const filteredContracts = useMemo(() => {
+    return contracts.filter(contract => {
+      if (contractProviderFilter && contract.provider_id !== contractProviderFilter) return false;
+      return true;
+    });
+  }, [contracts, contractProviderFilter]);
+
   // Fonction pour réinitialiser les filtres
   const clearFilters = () => {
     setSelectedBuilding('');
@@ -79,6 +96,10 @@ export default function DocumentsControlPage() {
     setSelectedControlType('');
     setDateFrom(undefined);
     setDateTo(undefined);
+  };
+
+  const clearContractFilters = () => {
+    setContractProviderFilter('');
   };
 
   // Charger les contrôles réglementaires pour le modal d'upload
@@ -176,6 +197,75 @@ export default function DocumentsControlPage() {
       toast({
         title: "Document supprimé",
         description: `Le fichier ${doc.original_filename} a été supprimé`,
+      });
+    }
+  };
+
+  // Fonction pour supprimer un contrat
+  const handleDeleteContract = async (contract: any) => {
+    const { error } = await deleteContract(contract.id, contract.file_path);
+    
+    if (error) {
+      toast({
+        title: "Erreur de suppression",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Contrat supprimé",
+        description: `Le fichier ${contract.original_filename} a été supprimé`,
+      });
+    }
+  };
+
+  // Fonctions pour télécharger et visualiser les contrats
+  const downloadContract = async (contract: any) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('control-documents')
+        .download(contract.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = contract.original_filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Téléchargement réussi",
+        description: `Le fichier ${contract.original_filename} a été téléchargé`,
+      });
+    } catch (error) {
+      console.error('Error downloading contract:', error);
+      toast({
+        title: "Erreur de téléchargement",
+        description: "Impossible de télécharger le contrat",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const viewContract = async (contract: any) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('control-documents')
+        .createSignedUrl(contract.file_path, 3600);
+
+      if (error) throw error;
+
+      window.open(data.signedUrl, '_blank');
+    } catch (error) {
+      console.error('Error viewing contract:', error);
+      toast({
+        title: "Erreur de visualisation",
+        description: "Impossible d'ouvrir le contrat",
+        variant: "destructive",
       });
     }
   };
