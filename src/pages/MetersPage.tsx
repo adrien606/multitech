@@ -567,7 +567,9 @@ export default function MetersPage() {
                               ) : (
                                 <button
                                   onClick={() => setEditingClient(lot.id)}
-                                  className="text-sm font-medium hover:underline min-w-[100px] text-left"
+                                  className={`text-sm font-medium hover:underline min-w-[100px] text-left ${
+                                    !lot.clientName ? "text-destructive" : ""
+                                  }`}
                                   disabled={isUpdating}
                                 >
                                   {lot.clientName || "Cliquer pour ajouter"}
