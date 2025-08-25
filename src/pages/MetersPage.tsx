@@ -39,8 +39,8 @@ export default function MetersPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [newReading, setNewReading] = useState({ currentReading: 0 });
-  const [pricePerKwh, setPricePerKwh] = useState(0.15);
-  const [lastSavedPrice, setLastSavedPrice] = useState(0.15);
+  const [pricePerKwh, setPricePerKwh] = useState(0.36);
+  const [lastSavedPrice, setLastSavedPrice] = useState(0.36);
   const [editingLotName, setEditingLotName] = useState<string | null>(null);
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [addingPreviousReading, setAddingPreviousReading] = useState<string | null>(null);
