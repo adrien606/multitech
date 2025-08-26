@@ -522,7 +522,14 @@ export default function MetersPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {currentBuildingData?.lots.map((lot) => (
+                  {currentBuildingData?.lots
+                    .sort((a, b) => {
+                      // Extraire le numéro du nom du lot (ex: "Lot 1" -> 1)
+                      const numA = parseInt(a.name.match(/\d+/)?.[0] || '0');
+                      const numB = parseInt(b.name.match(/\d+/)?.[0] || '0');
+                      return numA - numB;
+                    })
+                    .map((lot) => (
                     <Card key={lot.id} className="bg-muted/30">
                       <CardContent className="p-3">
                         <div className="space-y-2">
