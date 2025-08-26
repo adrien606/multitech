@@ -61,21 +61,21 @@ export default function MetersPage() {
     if (selectedBuildingId) {
       const buildingMeterData = meterData[selectedBuildingId];
       if (buildingMeterData) {
-        // Si le prix en base est différent de 0.36 (notre nouveau défaut), l'utiliser
-        // Sinon, garder 0.36 et le sauvegarder
         const dbPrice = buildingMeterData.pricePerKwh;
-        if (dbPrice && dbPrice !== 0.15) {
+        // Ne mettre à jour que si le prix actuel est différent du prix en base
+        if (dbPrice && dbPrice !== pricePerKwh) {
           setPricePerKwh(dbPrice);
           setLastSavedPrice(dbPrice);
-        } else {
-          // Mettre à jour la base avec le nouveau prix par défaut
-          setPricePerKwh(0.36);
-          setLastSavedPrice(0.36);
-          updatePrice({ buildingId: selectedBuildingId, pricePerKwh: 0.36 });
+        } else if (!dbPrice || dbPrice === 0.15) {
+          // Seulement si on n'a pas encore le bon prix par défaut
+          if (pricePerKwh !== 0.36) {
+            setPricePerKwh(0.36);
+            setLastSavedPrice(0.36);
+          }
         }
       }
     }
-  }, [selectedBuildingId, meterData, updatePrice]);
+  }, [selectedBuildingId, meterData]);
 
   // Sauvegarder automatiquement le prix après un délai
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function MetersPage() {
 
       return () => clearTimeout(timeout);
     }
-  }, [pricePerKwh, selectedBuildingId, lastSavedPrice, updatePrice]);
+  }, [pricePerKwh, selectedBuildingId, lastSavedPrice]);
 
   // Obtenir le mois/année actuels
   const now = new Date();
