@@ -521,13 +521,13 @@ export default function MetersPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {currentBuildingData?.lots.map((lot) => (
                     <Card key={lot.id} className="bg-muted/30">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
-                            {/* Nom du lot modifiable */}
+                      <CardContent className="p-3">
+                        <div className="space-y-2">
+                          {/* Nom du lot modifiable */}
+                          <div className="flex items-center justify-between">
                             {editingLotName === lot.id ? (
                               <Input
                                 defaultValue={lot.name}
@@ -540,84 +540,88 @@ export default function MetersPage() {
                                     setEditingLotName(null);
                                   }
                                 }}
-                                className="w-32 h-8 font-medium"
+                                className="text-sm h-7 font-medium"
                                 autoFocus
                                 disabled={isUpdating}
                               />
                             ) : (
                               <button
                                 onClick={() => setEditingLotName(lot.id)}
-                                className="font-medium hover:underline flex items-center gap-1"
+                                className="text-sm font-medium hover:underline flex items-center gap-1"
                                 disabled={isUpdating}
                               >
                                 {lot.name}
                                 <Edit className="w-3 h-3 opacity-50" />
                               </button>
                             )}
-                            
-                            {/* Client modifiable */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Client:</span>
-                              {editingClient === lot.id ? (
-                                <Input
-                                  defaultValue={lot.clientName}
-                                  onBlur={(e) => handleUpdateClientName(lot.id, e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      handleUpdateClientName(lot.id, e.currentTarget.value);
-                                    }
-                                    if (e.key === 'Escape') {
-                                      setEditingClient(null);
-                                    }
-                                  }}
-                                  className="w-40 h-7"
-                                  autoFocus
-                                  disabled={isUpdating}
-                                />
-                              ) : (
-                                <button
-                                  onClick={() => setEditingClient(lot.id)}
-                                  className={`text-sm font-medium hover:underline min-w-[100px] text-left ${
-                                    !lot.clientName ? "text-destructive" : ""
-                                  }`}
-                                  disabled={isUpdating}
-                                >
-                                  {lot.clientName || "Cliquer pour ajouter"}
-                                </button>
-                              )}
-                            </div>
                           </div>
                           
-                           <div className="flex items-center gap-2">
-                             <Button
-                               variant={selectedLotId === lot.id ? "default" : "outline"}
-                               size="sm"
-                               onClick={() => setSelectedLotId(lot.id)}
-                               disabled={isUpdating}
-                             >
-                               {selectedLotId === lot.id ? "Sélectionné" : "Sélectionner"}
-                             </Button>
-                             <Button
-                               variant="outline"
-                               size="sm"
-                               onClick={() => handleDeleteLot(lot.id)}
-                               className="text-destructive hover:text-destructive"
-                               disabled={isUpdating}
-                             >
-                               <Trash2 className="w-4 h-4" />
-                             </Button>
-                           </div>
+                          {/* Client modifiable */}
+                          <div className="space-y-1">
+                            <span className="text-xs text-muted-foreground">Client:</span>
+                            {editingClient === lot.id ? (
+                              <Input
+                                defaultValue={lot.clientName}
+                                onBlur={(e) => handleUpdateClientName(lot.id, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleUpdateClientName(lot.id, e.currentTarget.value);
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setEditingClient(null);
+                                  }
+                                }}
+                                className="text-xs h-6 w-full"
+                                autoFocus
+                                disabled={isUpdating}
+                              />
+                            ) : (
+                              <button
+                                onClick={() => setEditingClient(lot.id)}
+                                className={`text-xs font-medium hover:underline w-full text-left truncate ${
+                                  !lot.clientName ? "text-destructive" : ""
+                                }`}
+                                disabled={isUpdating}
+                              >
+                                {lot.clientName || "Cliquer pour ajouter"}
+                              </button>
+                            )}
+                          </div>
+                          
+                          {/* Derniers relevés */}
+                          {lot.readings.length > 0 && (
+                            <div className="text-xs text-muted-foreground border-t pt-2">
+                              <div className="truncate">
+                                Derniers: {lot.readings.slice(-1).map(r => 
+                                  `${r.month}/${r.year}: ${r.consumption}kWh`
+                                ).join('')}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Boutons d'action */}
+                          <div className="flex flex-col gap-1 pt-1">
+                            <Button
+                              variant={selectedLotId === lot.id ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedLotId(lot.id)}
+                              disabled={isUpdating}
+                              className="text-xs h-7"
+                            >
+                              {selectedLotId === lot.id ? "Sélectionné" : "Sélectionner"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteLot(lot.id)}
+                              className="text-destructive hover:text-destructive text-xs h-7"
+                              disabled={isUpdating}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                      </CardHeader>
-                       {lot.readings.length > 0 && (
-                         <CardContent className="pt-0">
-                           <div className="text-xs text-muted-foreground">
-                             Derniers relevés: {lot.readings.slice(-2).map(r => 
-                               `${r.month}/${r.year}: ${r.consumption}kWh (${r.amount.toFixed(2)}€)`
-                             ).join(' • ')}
-                           </div>
-                         </CardContent>
-                       )}
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
