@@ -725,12 +725,18 @@ export default function MetersPage() {
                                  <TableHead className="text-right">Actions</TableHead>
                                </TableRow>
                              </TableHeader>
-                            <TableBody>
-                              {lot.readings.map((reading) => (
+                             <TableBody>
+                               {lot.readings
+                                 .sort((a, b) => {
+                                   // Trier par année puis par mois (plus récent en premier)
+                                   if (a.year !== b.year) return b.year - a.year;
+                                   return parseInt(b.month) - parseInt(a.month);
+                                 })
+                                 .map((reading) => (
                                 <TableRow key={reading.id}>
-                                  <TableCell>
-                                    {new Date(2024, parseInt(reading.month) - 1).toLocaleDateString('fr-FR', { month: 'long' })} {reading.year}
-                                  </TableCell>
+                                   <TableCell>
+                                     {new Date(reading.year, parseInt(reading.month) - 1).toLocaleDateString('fr-FR', { month: 'long' })} {reading.year}
+                                   </TableCell>
                                   <TableCell className="text-right font-mono">
                                     {reading.previousReading.toLocaleString('fr-FR')}
                                   </TableCell>
