@@ -592,9 +592,10 @@ export default function MetersPage() {
                           {lot.readings.length > 0 && (
                             <div className="text-xs text-muted-foreground border-t pt-2">
                               <div className="truncate">
-                                Derniers: {lot.readings.slice(-1).map(r => 
-                                  `${r.month}/${r.year}: ${r.consumption}kWh`
-                                ).join('')}
+                                Derniers: {(() => {
+                                  const last = lot.readings[lot.readings.length - 1];
+                                  return `${last.month}/${last.year}: ${last.consumption}kWh`;
+                                })()}
                               </div>
                             </div>
                           )}
@@ -719,14 +720,14 @@ export default function MetersPage() {
                                </TableRow>
                              </TableHeader>
                              <TableBody>
-                               {lot.readings
-                                 .sort((a, b) => {
-                                   // Trier par année puis par mois (plus récent en premier)
-                                   if (a.year !== b.year) return b.year - a.year;
-                                   return parseInt(b.month) - parseInt(a.month);
-                                 })
-                                 .map((reading) => (
-                                <TableRow key={reading.id}>
+                              {lot.readings
+                                .slice()
+                                .sort((a, b) => {
+                                  if (a.year !== b.year) return b.year - a.year;
+                                  return parseInt(b.month) - parseInt(a.month);
+                                })
+                                .map((reading) => (
+                                  <TableRow key={reading.id}>
                                    <TableCell>
                                      {new Date(reading.year, parseInt(reading.month) - 1).toLocaleDateString('fr-FR', { month: 'long' })} {reading.year}
                                    </TableCell>

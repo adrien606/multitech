@@ -84,15 +84,17 @@ export function useMeterData() {
           id: lot.id,
           name: lot.name,
           clientName: lot.client_name || '',
-          readings: (lot.meter_readings || []).map((reading: any) => ({
-            id: reading.id,
-            month: reading.month,
-            year: reading.year,
-            currentReading: Number(reading.current_reading),
-            previousReading: Number(reading.previous_reading),
-            consumption: Number(reading.consumption),
-            amount: Number(reading.amount)
-          }))
+          readings: (lot.meter_readings || [])
+            .map((reading: any) => ({
+              id: reading.id,
+              month: reading.month,
+              year: reading.year,
+              currentReading: Number(reading.current_reading),
+              previousReading: Number(reading.previous_reading),
+              consumption: Number(reading.consumption),
+              amount: Number(reading.amount)
+            }))
+            .sort((a: any, b: any) => (a.year - b.year) || (parseInt(a.month) - parseInt(b.month)))
         });
       });
 
