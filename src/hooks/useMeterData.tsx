@@ -127,20 +127,22 @@ export function useMeterData() {
         }));
 
         for (const update of updates) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('meter_readings' as any)
             .update({ amount: update.amount })
             .eq('id', update.id);
+          if (updateError) throw updateError;
         }
       }
 
       // Mettre à jour le prix dans la configuration
-      await supabase
+      const { error: upsertError } = await supabase
         .from('building_meter_configs' as any)
         .upsert({
           building_id: buildingId,
           price_per_kwh: newPricePerKwh
         });
+      if (upsertError) throw upsertError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meter-data'] });
@@ -156,6 +158,10 @@ export function useMeterData() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meter-data'] });
       toast.success("Prix mis à jour - tous les calculs ont été recalculés");
+    },
+    onError: (err: any) => {
+      console.error('Erreur de mise à jour du prix:', err);
+      toast.error("Impossible de mettre à jour le prix (droits insuffisants ?)");
     }
   });
 
