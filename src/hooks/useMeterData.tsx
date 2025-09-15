@@ -55,7 +55,8 @@ export function useMeterData() {
             consumption,
             amount
           )
-        `);
+        `)
+        .order('created_at', { ascending: false });
       
       if (lotsError) throw lotsError;
 
@@ -246,7 +247,9 @@ export function useMeterData() {
       const consumption = currentReading - previousReading;
       const amount = consumption * pricePerKwh;
 
-      const { error } = await supabase
+      console.log('Ajout relevé:', { lotId, month, year, currentReading, previousReading, consumption, amount });
+
+      const { data, error } = await supabase
         .from('meter_readings' as any)
         .insert({
           lot_id: lotId,
@@ -256,9 +259,16 @@ export function useMeterData() {
           previous_reading: previousReading,
           consumption,
           amount
-        });
+        })
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur insertion relevé:', error);
+        throw error;
+      }
+      
+      console.log('Relevé ajouté avec succès:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meter-data'] });
