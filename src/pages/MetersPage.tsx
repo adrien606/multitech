@@ -58,21 +58,14 @@ export default function MetersPage() {
 
   // Synchroniser le prix avec les données du bâtiment sélectionné
   useEffect(() => {
-    if (selectedBuildingId) {
+    if (selectedBuildingId && meterData[selectedBuildingId]) {
       const buildingMeterData = meterData[selectedBuildingId];
-      if (buildingMeterData) {
-        const dbPrice = buildingMeterData.pricePerKwh;
-        // Ne mettre à jour que si le prix actuel est différent du prix en base
-        if (dbPrice && dbPrice !== pricePerKwh) {
-          setPricePerKwh(dbPrice);
-          setLastSavedPrice(dbPrice);
-        } else if (!dbPrice || dbPrice === 0.15) {
-          // Seulement si on n'a pas encore le bon prix par défaut
-          if (pricePerKwh !== 0.36) {
-            setPricePerKwh(0.36);
-            setLastSavedPrice(0.36);
-          }
-        }
+      const dbPrice = buildingMeterData.pricePerKwh;
+      
+      // Utiliser le prix de la base de données s'il existe, sinon garder le prix actuel
+      if (dbPrice && dbPrice !== pricePerKwh) {
+        setPricePerKwh(dbPrice);
+        setLastSavedPrice(dbPrice);
       }
     }
   }, [selectedBuildingId, meterData]);

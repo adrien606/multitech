@@ -74,7 +74,7 @@ export function useMeterData() {
       (lots || []).forEach((lot: any) => {
         if (!buildingData[lot.building_id]) {
           buildingData[lot.building_id] = {
-            pricePerKwh: 0.15, // Prix par défaut
+            pricePerKwh: 0.36, // Prix par défaut corrigé
             lots: []
           };
         }
