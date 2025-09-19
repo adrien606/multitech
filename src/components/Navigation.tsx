@@ -36,11 +36,6 @@ const Navigation = () => {
       icon: FileText
     },
     {
-      label: 'Compteurs',
-      path: '/meters',
-      icon: Zap
-    },
-    {
       label: 'Assurance',
       path: '/insurance',
       icon: Shield

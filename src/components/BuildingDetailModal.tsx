@@ -15,11 +15,9 @@ interface BuildingDetailModalProps {
   building: Building | null;
   isOpen: boolean;
   onClose: () => void;
-  clientBilling: boolean;
-  onBillingChange: (buildingId: string, billing: boolean) => void;
 }
 
-export function BuildingDetailModal({ building, isOpen, onClose, clientBilling, onBillingChange }: BuildingDetailModalProps) {
+export function BuildingDetailModal({ building, isOpen, onClose }: BuildingDetailModalProps) {
   const { controls } = useRegulatoryControls();
   
   if (!building) return null;
@@ -76,9 +74,6 @@ export function BuildingDetailModal({ building, isOpen, onClose, clientBilling, 
   const overdueControls = buildingControls.filter(c => c.status === 'overdue').length;
   const completedThisMonth = buildingControls.filter(c => c.status === 'completed').length;
 
-  const handleBillingToggle = async (newValue: boolean) => {
-    onBillingChange(building.id, newValue);
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -104,24 +99,9 @@ export function BuildingDetailModal({ building, isOpen, onClose, clientBilling, 
               {building.description && (
                 <p className="text-muted-foreground">{building.description}</p>
               )}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  Créé le {format(new Date(building.created_at), 'dd/MM/yyyy', { locale: fr })}
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">Refacturation client:</span>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={clientBilling}
-                      onCheckedChange={handleBillingToggle}
-                    />
-                    <Badge variant={clientBilling ? "default" : "outline"} className="text-xs">
-                      <Zap className="w-3 h-3 mr-1" />
-                      {clientBilling ? "Activée" : "Désactivée"}
-                    </Badge>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                Créé le {format(new Date(building.created_at), 'dd/MM/yyyy', { locale: fr })}
               </div>
             </CardContent>
           </Card>

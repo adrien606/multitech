@@ -6,12 +6,12 @@ import { Building2, MapPin, Zap } from 'lucide-react';
 import { useBuildings, Building } from '@/hooks/useBuildings';
 import Navigation from '@/components/Navigation';
 import { BuildingDetailModal } from '@/components/BuildingDetailModal';
-import { useBillingSettings } from '@/hooks/useBillingSettings';
+
 import { toast } from "sonner";
 
 export default function BuildingsControlPage() {
   const { buildings } = useBuildings();
-  const { getBillingStatus, updateBillingStatus } = useBillingSettings();
+  
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -20,10 +20,6 @@ export default function BuildingsControlPage() {
     setIsDetailModalOpen(true);
   };
 
-  const handleBillingUpdate = (buildingId: string, clientBilling: boolean) => {
-    updateBillingStatus(buildingId, clientBilling);
-    toast.success(`Refacturation ${clientBilling ? 'activée' : 'désactivée'} pour ce bâtiment`);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,13 +62,6 @@ export default function BuildingsControlPage() {
                     <span>Terminés ce mois</span>
                     <Badge variant="outline">8</Badge>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Refacturation client</span>
-                    <Badge variant={getBillingStatus(building.id) ? "default" : "outline"} className="text-xs">
-                      <Zap className="w-3 h-3 mr-1" />
-                      {getBillingStatus(building.id) ? "Activée" : "Désactivée"}
-                    </Badge>
-                  </div>
                   <div className="pt-3 border-t">
                     <Button 
                       variant="outline" 
@@ -103,8 +92,6 @@ export default function BuildingsControlPage() {
         building={selectedBuilding}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        clientBilling={selectedBuilding ? getBillingStatus(selectedBuilding.id) : false}
-        onBillingChange={handleBillingUpdate}
       />
     </div>
   );
