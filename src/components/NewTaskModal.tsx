@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,13 +27,21 @@ interface NewTaskModalProps {
 
 export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate }: NewTaskModalProps) {
   const { profile, role } = useAuth();
+  const activeAgents = agents?.filter(agent => agent.is_active) || [];
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     buildingId: '',
     dueDate: '',
-    assignedTo: (agents && agents.length > 0) ? agents[0].full_name : 'Agent Technique',
+    assignedTo: '',
   });
+
+  // Mettre à jour l'agent sélectionné quand les agents sont chargés
+  useEffect(() => {
+    if (activeAgents.length > 0 && !formData.assignedTo) {
+      setFormData(prev => ({ ...prev, assignedTo: activeAgents[0].full_name }));
+    }
+  }, [activeAgents]);
 
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
@@ -65,7 +73,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
       description: '',
       buildingId: '',
       dueDate: '',
-      assignedTo: (agents && agents.length > 0) ? agents[0].full_name : 'Agent Technique',
+      assignedTo: activeAgents.length > 0 ? activeAgents[0].full_name : '',
     });
     setPhotos([]);
     setPhotoPreviewUrls([]);
@@ -131,7 +139,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
                 onChange={(e) => setFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
               >
-                {agents && agents.filter(agent => agent.is_active).map(agent => (
+                {activeAgents.map(agent => (
                   <option key={agent.id} value={agent.full_name}>
                     {agent.full_name}
                   </option>
