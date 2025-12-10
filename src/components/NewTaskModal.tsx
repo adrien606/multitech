@@ -53,7 +53,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
       description: formData.description,
       building_id: formData.buildingId,
       due_date: formData.dueDate,
-      assigned_to_id: selectedAgent?.id,
+      assigned_to_id: selectedAgent?.user_id,
     };
 
     onTaskCreate(taskData, photos.length > 0 ? photos : undefined);
