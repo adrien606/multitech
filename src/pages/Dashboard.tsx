@@ -7,7 +7,7 @@ import { NewTaskModal } from "@/components/NewTaskModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Filter, Users, Building, LogOut, Shield, Home, Zap } from "lucide-react";
+import { Plus, Search, Filter, Users, Building, LogOut, Shield, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
@@ -265,12 +265,6 @@ export default function Dashboard() {
                 <Button variant="outline" className="w-full sm:w-auto">
                   <Building className="w-4 h-4 mr-2" />
                   Bâtiments
-                </Button>
-              </Link>
-              <Link to="/meters">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Zap className="w-4 h-4 mr-2" />
-                  Compteurs
                 </Button>
               </Link>
               <Link to="/users">
