@@ -21,17 +21,24 @@ interface BuildingTasksChartProps {
 }
 
 export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps) {
+  const now = new Date();
+
   // Calculer les données par bâtiment
   const chartData = buildings.map(building => {
     const buildingTasks = tasks.filter(task => task.building_id === building.id);
+    
+    const pastTasks = buildingTasks.filter(task => new Date(task.due_date) < now);
+    const futureTasks = buildingTasks.filter(task => new Date(task.due_date) >= now);
 
     return {
       name: building.name.length > 15 ? building.name.substring(0, 15) + '...' : building.name,
       fullName: building.name,
-      interventions: buildingTasks.length,
+      passées: pastTasks.length,
+      futures: futureTasks.length,
+      total: buildingTasks.length,
     };
-  }).filter(data => data.interventions > 0)
-    .sort((a, b) => b.interventions - a.interventions);
+  }).filter(data => data.total > 0) // Ne garder que les bâtiments avec des tâches
+    .sort((a, b) => b.total - a.total); // Trier par nombre total décroissant
 
   if (chartData.length === 0) {
     return (
@@ -51,15 +58,25 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
     );
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium text-foreground mb-1">{data.fullName}</p>
-          <p className="text-sm text-muted-foreground">
-            Interventions: <span className="font-medium text-foreground">{data.interventions}</span>
-          </p>
+          <p className="font-medium text-foreground mb-2">{data.fullName}</p>
+          <div className="space-y-1 text-sm">
+            <p className="text-muted-foreground">
+              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-past))' }}></span>
+              Passées: <span className="font-medium text-foreground">{data.passées}</span>
+            </p>
+            <p className="text-muted-foreground">
+              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-future))' }}></span>
+              Futures: <span className="font-medium text-foreground">{data.futures}</span>
+            </p>
+            <p className="text-muted-foreground border-t border-border pt-1 mt-1">
+              Total: <span className="font-medium text-foreground">{data.total}</span>
+            </p>
+          </div>
         </div>
       );
     }
@@ -100,10 +117,19 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
                 allowDecimals={false}
               />
               <Tooltip content={<CustomTooltip />} />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+              />
               <Bar 
-                dataKey="interventions" 
-                name="Interventions" 
-                fill="hsl(217, 35%, 45%)" 
+                dataKey="passées" 
+                name="Passées" 
+                fill="hsl(215, 15%, 55%)" 
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar 
+                dataKey="futures" 
+                name="Futures" 
+                fill="hsl(142, 70%, 45%)" 
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
