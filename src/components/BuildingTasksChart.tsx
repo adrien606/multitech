@@ -27,8 +27,8 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
   const chartData = buildings.map(building => {
     const buildingTasks = tasks.filter(task => task.building_id === building.id);
     
-    const pastTasks = buildingTasks.filter(task => new Date(task.due_date) < now);
-    const futureTasks = buildingTasks.filter(task => new Date(task.due_date) >= now);
+    const pastTasks = buildingTasks.filter(task => task.status !== 'pending');
+    const futureTasks = buildingTasks.filter(task => task.status === 'pending');
 
     return {
       name: building.name.length > 15 ? building.name.substring(0, 15) + '...' : building.name,
