@@ -5,9 +5,7 @@ import {
   CheckCircle, 
   Users, 
   FileText,
-  Home,
-  Zap,
-  Shield
+  Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,11 +32,6 @@ const Navigation = () => {
       label: 'Documents',
       path: '/regulatory-controls/documents',
       icon: FileText
-    },
-    {
-      label: 'Assurance',
-      path: '/insurance',
-      icon: Shield
     }
   ];
 
