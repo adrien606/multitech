@@ -4,6 +4,7 @@ import { TaskStats } from "@/components/TaskStats";
 import { BuildingSelector } from "@/components/BuildingSelector";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
 import { NewTaskModal } from "@/components/NewTaskModal";
+import { BuildingTasksChart } from "@/components/BuildingTasksChart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -293,6 +294,12 @@ export default function Dashboard() {
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Statistiques */}
         <TaskStats tasks={compatibleTasks} />
+
+        {/* Graphique des interventions par bâtiment */}
+        <BuildingTasksChart 
+          tasks={tasks} 
+          buildings={buildings}
+        />
 
         {/* Filtres */}
         <Card>
