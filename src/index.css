@@ -53,6 +53,10 @@ All colors MUST be HSL.
     --input: 215 20% 92%;
     --ring: 217 35% 45%;
 
+    /* Chart colors */
+    --chart-past: 215 15% 55%;
+    --chart-future: 142 70% 45%;
+
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;

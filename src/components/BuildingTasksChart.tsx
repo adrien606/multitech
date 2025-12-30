@@ -66,11 +66,11 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
           <p className="font-medium text-foreground mb-2">{data.fullName}</p>
           <div className="space-y-1 text-sm">
             <p className="text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-1))' }}></span>
+              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-past))' }}></span>
               Passées: <span className="font-medium text-foreground">{data.passées}</span>
             </p>
             <p className="text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-2))' }}></span>
+              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-future))' }}></span>
               Futures: <span className="font-medium text-foreground">{data.futures}</span>
             </p>
             <p className="text-muted-foreground border-t border-border pt-1 mt-1">
@@ -123,13 +123,13 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
               <Bar 
                 dataKey="passées" 
                 name="Passées" 
-                fill="hsl(var(--chart-1))" 
+                fill="hsl(215, 15%, 55%)" 
                 radius={[4, 4, 0, 0]}
               />
               <Bar 
                 dataKey="futures" 
                 name="Futures" 
-                fill="hsl(var(--chart-2))" 
+                fill="hsl(142, 70%, 45%)" 
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
