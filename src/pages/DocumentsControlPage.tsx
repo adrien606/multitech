@@ -888,6 +888,7 @@ export default function DocumentsControlPage() {
           <DialogContent className="max-w-5xl h-[85vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="truncate pr-8">{viewDocumentName}</DialogTitle>
+              <DialogDescription className="sr-only">Aperçu du document</DialogDescription>
             </DialogHeader>
             <div className="flex-1 min-h-0">
               {viewDocumentLoading ? (
@@ -895,11 +896,28 @@ export default function DocumentsControlPage() {
                   <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               ) : viewDocumentUrl ? (
-                <iframe
-                  src={viewDocumentUrl}
+                <object
+                  data={viewDocumentUrl}
+                  type="application/pdf"
                   className="w-full h-full rounded-md border"
                   title={viewDocumentName}
-                />
+                >
+                  <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+                    <p>Votre navigateur ne peut pas afficher ce PDF directement.</p>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        const a = document.createElement('a');
+                        a.href = viewDocumentUrl;
+                        a.download = viewDocumentName;
+                        a.click();
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Télécharger le document
+                    </Button>
+                  </div>
+                </object>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   Impossible de charger le document
