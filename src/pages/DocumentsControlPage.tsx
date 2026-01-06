@@ -201,16 +201,12 @@ export default function DocumentsControlPage() {
       setViewDocumentName(doc.original_filename);
       setIsViewModalOpen(true);
 
-      const { data, error } = await supabase.storage
+      // Utiliser l'URL publique du bucket (le bucket est public)
+      const { data } = supabase.storage
         .from('control-documents')
-        .download(doc.file_path);
+        .getPublicUrl(doc.file_path);
 
-      if (error) throw error;
-
-      // Créer une URL blob avec le bon type MIME
-      const blob = new Blob([data], { type: doc.file_type || 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      setViewDocumentUrl(url);
+      setViewDocumentUrl(data.publicUrl);
     } catch (error) {
       console.error('Error viewing document:', error);
       toast({
@@ -226,9 +222,6 @@ export default function DocumentsControlPage() {
 
   // Fermer le modal de visualisation
   const closeViewModal = () => {
-    if (viewDocumentUrl) {
-      URL.revokeObjectURL(viewDocumentUrl);
-    }
     setViewDocumentUrl('');
     setViewDocumentName('');
     setIsViewModalOpen(false);
@@ -371,16 +364,12 @@ export default function DocumentsControlPage() {
       setViewDocumentName(contract.original_filename);
       setIsViewModalOpen(true);
 
-      const { data, error } = await supabase.storage
+      // Utiliser l'URL publique du bucket
+      const { data } = supabase.storage
         .from('control-documents')
-        .download(contract.file_path);
+        .getPublicUrl(contract.file_path);
 
-      if (error) throw error;
-
-      // Créer une URL blob avec le bon type MIME
-      const blob = new Blob([data], { type: contract.file_type || 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      setViewDocumentUrl(url);
+      setViewDocumentUrl(data.publicUrl);
     } catch (error) {
       console.error('Error viewing contract:', error);
       toast({
