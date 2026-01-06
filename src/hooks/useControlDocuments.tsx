@@ -14,6 +14,7 @@ export interface ControlDocument {
   validated_by?: string;
   validated_at?: string;
   notes?: string;
+  document_year?: number;
   created_at: string;
   updated_at: string;
   // Informations jointes
@@ -92,6 +93,7 @@ export const useControlDocuments = () => {
         validated_by: doc.validated_by,
         validated_at: doc.validated_at,
         notes: doc.notes,
+        document_year: (doc as any).document_year,
         created_at: doc.created_at,
         updated_at: doc.updated_at,
         building_id: (doc.regulatory_controls as any)?.building_id || '',
@@ -150,14 +152,20 @@ export const useControlDocuments = () => {
     }
   };
 
-  const renameDocument = async (id: string, newName: string) => {
+  const renameDocument = async (id: string, newName: string, documentYear?: number) => {
     try {
+      const updateData: any = { 
+        original_filename: newName,
+        updated_at: new Date().toISOString() 
+      };
+      
+      if (documentYear !== undefined) {
+        updateData.document_year = documentYear;
+      }
+
       const { data, error } = await supabase
         .from('control_documents')
-        .update({ 
-          original_filename: newName,
-          updated_at: new Date().toISOString() 
-        })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();

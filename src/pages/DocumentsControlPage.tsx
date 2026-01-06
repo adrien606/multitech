@@ -34,6 +34,7 @@ export default function DocumentsControlPage() {
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [documentToRename, setDocumentToRename] = useState<any>(null);
   const [newDocumentName, setNewDocumentName] = useState('');
+  const [newDocumentYear, setNewDocumentYear] = useState<string>('');
 
   // État pour le renommage de contrat
   const [isContractRenameModalOpen, setIsContractRenameModalOpen] = useState(false);
@@ -231,6 +232,7 @@ export default function DocumentsControlPage() {
   const openRenameModal = (doc: any) => {
     setDocumentToRename(doc);
     setNewDocumentName(doc.original_filename);
+    setNewDocumentYear(doc.document_year?.toString() || '');
     setIsRenameModalOpen(true);
   };
 
@@ -238,7 +240,8 @@ export default function DocumentsControlPage() {
   const handleRenameDocument = async () => {
     if (!documentToRename || !newDocumentName.trim()) return;
     
-    const { error } = await renameDocument(documentToRename.id, newDocumentName.trim());
+    const yearValue = newDocumentYear ? parseInt(newDocumentYear, 10) : undefined;
+    const { error } = await renameDocument(documentToRename.id, newDocumentName.trim(), yearValue);
     
     if (error) {
       toast({
@@ -248,12 +251,13 @@ export default function DocumentsControlPage() {
       });
     } else {
       toast({
-        title: "Document renommé",
-        description: `Le fichier a été renommé en "${newDocumentName.trim()}"`,
+        title: "Document modifié",
+        description: `Le document a été mis à jour`,
       });
       setIsRenameModalOpen(false);
       setDocumentToRename(null);
       setNewDocumentName('');
+      setNewDocumentYear('');
     }
   };
 
@@ -452,6 +456,11 @@ export default function DocumentsControlPage() {
                           {new Date(document.created_at).toLocaleDateString('fr-FR')}
                         </span>
                         <span>{formatFileSize(document.file_size)}</span>
+                        {document.document_year && (
+                          <Badge variant="secondary" className="text-xs">
+                            {document.document_year}
+                          </Badge>
+                        )}
                         {document.control_type_name && (
                           <span className="text-xs bg-muted px-2 py-1 rounded">
                             {document.control_type_name}
@@ -763,20 +772,35 @@ export default function DocumentsControlPage() {
         <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Renommer le document</DialogTitle>
+              <DialogTitle>Modifier le document</DialogTitle>
               <DialogDescription>
-                Modifiez le nom du document ci-dessous.
+                Modifiez les informations du document ci-dessous.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-              <Label htmlFor="document-name">Nom du document</Label>
-              <Input
-                id="document-name"
-                value={newDocumentName}
-                onChange={(e) => setNewDocumentName(e.target.value)}
-                className="mt-2"
-                placeholder="Nom du document"
-              />
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="document-name">Nom du document</Label>
+                <Input
+                  id="document-name"
+                  value={newDocumentName}
+                  onChange={(e) => setNewDocumentName(e.target.value)}
+                  className="mt-2"
+                  placeholder="Nom du document"
+                />
+              </div>
+              <div>
+                <Label htmlFor="document-year">Année du document</Label>
+                <Input
+                  id="document-year"
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  value={newDocumentYear}
+                  onChange={(e) => setNewDocumentYear(e.target.value)}
+                  className="mt-2"
+                  placeholder="Ex: 2024"
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsRenameModalOpen(false)}>
@@ -784,9 +808,9 @@ export default function DocumentsControlPage() {
               </Button>
               <Button 
                 onClick={handleRenameDocument}
-                disabled={!newDocumentName.trim() || newDocumentName === documentToRename?.original_filename}
+                disabled={!newDocumentName.trim() || (newDocumentName === documentToRename?.original_filename && newDocumentYear === (documentToRename?.document_year?.toString() || ''))}
               >
-                Renommer
+                Enregistrer
               </Button>
             </DialogFooter>
           </DialogContent>
