@@ -36,6 +36,12 @@ export default function DocumentsControlPage() {
   const [newDocumentName, setNewDocumentName] = useState('');
   const [newDocumentYear, setNewDocumentYear] = useState<string>('');
 
+  // État pour la visualisation de document
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewDocumentUrl, setViewDocumentUrl] = useState<string>('');
+  const [viewDocumentName, setViewDocumentName] = useState<string>('');
+  const [viewDocumentLoading, setViewDocumentLoading] = useState(false);
+
   // État pour le renommage de contrat
   const [isContractRenameModalOpen, setIsContractRenameModalOpen] = useState(false);
   const [contractToRename, setContractToRename] = useState<any>(null);
@@ -191,15 +197,19 @@ export default function DocumentsControlPage() {
   // Fonction pour visualiser un document
   const viewDocument = async (doc: any) => {
     try {
+      setViewDocumentLoading(true);
+      setViewDocumentName(doc.original_filename);
+      setIsViewModalOpen(true);
+
       const { data, error } = await supabase.storage
         .from('control-documents')
-        .createSignedUrl(doc.file_path, 3600); // URL valide pendant 1 heure
+        .download(doc.file_path);
 
       if (error) throw error;
 
-      // Ouvrir le document dans un nouvel onglet
-      window.open(data.signedUrl, '_blank');
-
+      // Créer une URL blob pour l'affichage
+      const url = URL.createObjectURL(data);
+      setViewDocumentUrl(url);
     } catch (error) {
       console.error('Error viewing document:', error);
       toast({
@@ -207,7 +217,20 @@ export default function DocumentsControlPage() {
         description: "Impossible d'ouvrir le document",
         variant: "destructive",
       });
+      setIsViewModalOpen(false);
+    } finally {
+      setViewDocumentLoading(false);
     }
+  };
+
+  // Fermer le modal de visualisation
+  const closeViewModal = () => {
+    if (viewDocumentUrl) {
+      URL.revokeObjectURL(viewDocumentUrl);
+    }
+    setViewDocumentUrl('');
+    setViewDocumentName('');
+    setIsViewModalOpen(false);
   };
 
   // Fonction pour supprimer un document
@@ -343,13 +366,18 @@ export default function DocumentsControlPage() {
 
   const viewContract = async (contract: any) => {
     try {
+      setViewDocumentLoading(true);
+      setViewDocumentName(contract.original_filename);
+      setIsViewModalOpen(true);
+
       const { data, error } = await supabase.storage
         .from('control-documents')
-        .createSignedUrl(contract.file_path, 3600);
+        .download(contract.file_path);
 
       if (error) throw error;
 
-      window.open(data.signedUrl, '_blank');
+      const url = URL.createObjectURL(data);
+      setViewDocumentUrl(url);
     } catch (error) {
       console.error('Error viewing contract:', error);
       toast({
@@ -357,6 +385,9 @@ export default function DocumentsControlPage() {
         description: "Impossible d'ouvrir le contrat",
         variant: "destructive",
       });
+      setIsViewModalOpen(false);
+    } finally {
+      setViewDocumentLoading(false);
     }
   };
 
@@ -846,6 +877,32 @@ export default function DocumentsControlPage() {
                 Renommer
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de visualisation de document */}
+        <Dialog open={isViewModalOpen} onOpenChange={(open) => !open && closeViewModal()}>
+          <DialogContent className="max-w-5xl h-[85vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="truncate pr-8">{viewDocumentName}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 min-h-0">
+              {viewDocumentLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : viewDocumentUrl ? (
+                <iframe
+                  src={viewDocumentUrl}
+                  className="w-full h-full rounded-md border"
+                  title={viewDocumentName}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Impossible de charger le document
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
 
