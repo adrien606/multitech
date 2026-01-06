@@ -207,8 +207,9 @@ export default function DocumentsControlPage() {
 
       if (error) throw error;
 
-      // Créer une URL blob pour l'affichage
-      const url = URL.createObjectURL(data);
+      // Créer une URL blob avec le bon type MIME
+      const blob = new Blob([data], { type: doc.file_type || 'application/pdf' });
+      const url = URL.createObjectURL(blob);
       setViewDocumentUrl(url);
     } catch (error) {
       console.error('Error viewing document:', error);
@@ -376,7 +377,9 @@ export default function DocumentsControlPage() {
 
       if (error) throw error;
 
-      const url = URL.createObjectURL(data);
+      // Créer une URL blob avec le bon type MIME
+      const blob = new Blob([data], { type: contract.file_type || 'application/pdf' });
+      const url = URL.createObjectURL(blob);
       setViewDocumentUrl(url);
     } catch (error) {
       console.error('Error viewing contract:', error);
