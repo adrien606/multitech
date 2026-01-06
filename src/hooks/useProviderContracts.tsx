@@ -151,6 +151,26 @@ export const useProviderContracts = () => {
     }
   };
 
+  const renameContract = async (id: string, newName: string) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('provider_contracts')
+        .update({ 
+          original_filename: newName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchContracts();
+      return { error: null };
+    } catch (error) {
+      console.error('Error renaming contract:', error);
+      return { error: 'Erreur lors du renommage du contrat' };
+    }
+  };
+
   const deleteContract = async (id: string, filePath: string) => {
     try {
       // Delete from storage first
@@ -205,6 +225,7 @@ export const useProviderContracts = () => {
     error,
     refetch,
     updateContractStatus: updateContract,
+    renameContract,
     deleteContract,
     formatFileSize
   };

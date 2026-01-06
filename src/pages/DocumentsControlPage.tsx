@@ -22,7 +22,7 @@ import { Building } from '@/types';
 
 export default function DocumentsControlPage() {
   const { documents, stats, loading, error, formatFileSize, refetch, deleteDocument, renameDocument } = useControlDocuments();
-  const { contracts, loading: contractsLoading, deleteContract, formatFileSize: formatContractFileSize, refetch: refetchContracts, updateContractStatus } = useProviderContracts();
+  const { contracts, loading: contractsLoading, deleteContract, renameContract, formatFileSize: formatContractFileSize, refetch: refetchContracts, updateContractStatus } = useProviderContracts();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isContractUploadModalOpen, setIsContractUploadModalOpen] = useState(false);
   const [isContractEditModalOpen, setIsContractEditModalOpen] = useState(false);
@@ -34,6 +34,11 @@ export default function DocumentsControlPage() {
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [documentToRename, setDocumentToRename] = useState<any>(null);
   const [newDocumentName, setNewDocumentName] = useState('');
+
+  // État pour le renommage de contrat
+  const [isContractRenameModalOpen, setIsContractRenameModalOpen] = useState(false);
+  const [contractToRename, setContractToRename] = useState<any>(null);
+  const [newContractName, setNewContractName] = useState('');
 
   // États pour les filtres
   const [buildings, setBuildings] = useState<Building[]>([]);
@@ -267,6 +272,36 @@ export default function DocumentsControlPage() {
         title: "Contrat supprimé",
         description: `Le fichier ${contract.original_filename} a été supprimé`,
       });
+    }
+  };
+
+  // Fonction pour ouvrir le modal de renommage de contrat
+  const openContractRenameModal = (contract: any) => {
+    setContractToRename(contract);
+    setNewContractName(contract.original_filename);
+    setIsContractRenameModalOpen(true);
+  };
+
+  // Fonction pour renommer un contrat
+  const handleRenameContract = async () => {
+    if (!contractToRename || !newContractName.trim()) return;
+    
+    const { error } = await renameContract(contractToRename.id, newContractName.trim());
+    
+    if (error) {
+      toast({
+        title: "Erreur de renommage",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Contrat renommé",
+        description: `Le fichier a été renommé en "${newContractName.trim()}"`,
+      });
+      setIsContractRenameModalOpen(false);
+      setContractToRename(null);
+      setNewContractName('');
     }
   };
 
@@ -620,6 +655,14 @@ export default function DocumentsControlPage() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
+                        title="Renommer le contrat"
+                        onClick={() => openContractRenameModal(contract)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
                         title="Visualiser le contrat"
                         onClick={() => viewContract(contract)}
                       >
@@ -742,6 +785,39 @@ export default function DocumentsControlPage() {
               <Button 
                 onClick={handleRenameDocument}
                 disabled={!newDocumentName.trim() || newDocumentName === documentToRename?.original_filename}
+              >
+                Renommer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de renommage de contrat */}
+        <Dialog open={isContractRenameModalOpen} onOpenChange={setIsContractRenameModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Renommer le contrat</DialogTitle>
+              <DialogDescription>
+                Modifiez le nom du contrat ci-dessous.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label htmlFor="contract-name">Nom du contrat</Label>
+              <Input
+                id="contract-name"
+                value={newContractName}
+                onChange={(e) => setNewContractName(e.target.value)}
+                className="mt-2"
+                placeholder="Nom du contrat"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsContractRenameModalOpen(false)}>
+                Annuler
+              </Button>
+              <Button 
+                onClick={handleRenameContract}
+                disabled={!newContractName.trim() || newContractName === contractToRename?.original_filename}
               >
                 Renommer
               </Button>
