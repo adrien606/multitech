@@ -3,9 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2, File, Filter, Edit } from 'lucide-react';
+import { FileText, Upload, Download, Calendar, Building2, Loader2, Eye, Trash2, File, Filter, Edit, Pencil } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useControlDocuments } from '@/hooks/useControlDocuments';
 import { useProviderContracts } from '@/hooks/useProviderContracts';
@@ -18,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Building } from '@/types';
 
 export default function DocumentsControlPage() {
-  const { documents, stats, loading, error, formatFileSize, refetch, deleteDocument } = useControlDocuments();
+  const { documents, stats, loading, error, formatFileSize, refetch, deleteDocument, renameDocument } = useControlDocuments();
   const { contracts, loading: contractsLoading, deleteContract, formatFileSize: formatContractFileSize, refetch: refetchContracts, updateContractStatus } = useProviderContracts();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isContractUploadModalOpen, setIsContractUploadModalOpen] = useState(false);
@@ -26,6 +29,11 @@ export default function DocumentsControlPage() {
   const [selectedContract, setSelectedContract] = useState(null);
   const [regulatoryControls, setRegulatoryControls] = useState<Array<{ id: string; building_name: string; control_type_name: string }>>([]);
   const { toast } = useToast();
+
+  // État pour le renommage de document
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [documentToRename, setDocumentToRename] = useState<any>(null);
+  const [newDocumentName, setNewDocumentName] = useState('');
 
   // États pour les filtres
   const [buildings, setBuildings] = useState<Building[]>([]);
@@ -214,6 +222,36 @@ export default function DocumentsControlPage() {
     }
   };
 
+  // Fonction pour ouvrir le modal de renommage
+  const openRenameModal = (doc: any) => {
+    setDocumentToRename(doc);
+    setNewDocumentName(doc.original_filename);
+    setIsRenameModalOpen(true);
+  };
+
+  // Fonction pour renommer un document
+  const handleRenameDocument = async () => {
+    if (!documentToRename || !newDocumentName.trim()) return;
+    
+    const { error } = await renameDocument(documentToRename.id, newDocumentName.trim());
+    
+    if (error) {
+      toast({
+        title: "Erreur de renommage",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Document renommé",
+        description: `Le fichier a été renommé en "${newDocumentName.trim()}"`,
+      });
+      setIsRenameModalOpen(false);
+      setDocumentToRename(null);
+      setNewDocumentName('');
+    }
+  };
+
   // Fonction pour supprimer un contrat
   const handleDeleteContract = async (contract: any) => {
     const { error } = await deleteContract(contract.id, contract.file_path);
@@ -391,6 +429,14 @@ export default function DocumentsControlPage() {
                     <Badge variant="outline">
                       {document.file_type === 'application/pdf' ? 'PDF' : document.file_type}
                     </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      title="Renommer le document"
+                      onClick={() => openRenameModal(document)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -669,6 +715,39 @@ export default function DocumentsControlPage() {
           contract={selectedContract}
           updateContractStatus={updateContractStatus}
         />
+
+        {/* Modal de renommage de document */}
+        <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Renommer le document</DialogTitle>
+              <DialogDescription>
+                Modifiez le nom du document ci-dessous.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label htmlFor="document-name">Nom du document</Label>
+              <Input
+                id="document-name"
+                value={newDocumentName}
+                onChange={(e) => setNewDocumentName(e.target.value)}
+                className="mt-2"
+                placeholder="Nom du document"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsRenameModalOpen(false)}>
+                Annuler
+              </Button>
+              <Button 
+                onClick={handleRenameDocument}
+                disabled={!newDocumentName.trim() || newDocumentName === documentToRename?.original_filename}
+              >
+                Renommer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </div>

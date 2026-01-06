@@ -150,6 +150,32 @@ export const useControlDocuments = () => {
     }
   };
 
+  const renameDocument = async (id: string, newName: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('control_documents')
+        .update({ 
+          original_filename: newName,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Recharger la liste
+      await fetchDocuments();
+      
+      return { data, error: null };
+    } catch (err) {
+      console.error('Error renaming document:', err);
+      return { data: null, error: err instanceof Error ? err.message : 'Erreur lors du renommage' };
+    }
+  };
+
   const deleteDocument = async (id: string, filePath: string) => {
     try {
       // Supprimer le fichier du storage
@@ -201,6 +227,7 @@ export const useControlDocuments = () => {
     error,
     refetch: fetchDocuments,
     updateDocumentStatus,
+    renameDocument,
     deleteDocument,
     formatFileSize,
   };
