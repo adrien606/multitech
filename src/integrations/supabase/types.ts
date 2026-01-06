@@ -128,6 +128,7 @@ export type Database = {
       control_documents: {
         Row: {
           created_at: string
+          document_year: number | null
           file_path: string
           file_size: number
           file_type: string
@@ -144,6 +145,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          document_year?: number | null
           file_path: string
           file_size: number
           file_type: string
@@ -160,6 +162,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          document_year?: number | null
           file_path?: string
           file_size?: number
           file_type?: string
