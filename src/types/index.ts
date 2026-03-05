@@ -16,6 +16,7 @@ export interface Task {
   buildingId: string;
   buildingName: string;
   status: TaskStatus;
+  priority: number;
   dueDate: Date;
   createdAt: Date;
   assignedTo: string;
