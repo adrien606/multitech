@@ -22,6 +22,7 @@ interface NewTaskModalProps {
     building_id: string;
     due_date: string;
     assigned_to_id?: string;
+    priority?: number;
   }, files?: File[]) => void;
 }
 
@@ -34,6 +35,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
     buildingId: '',
     dueDate: '',
     assignedTo: '',
+    priority: 2,
   });
 
   // Mettre à jour l'agent sélectionné quand les agents sont chargés
@@ -62,6 +64,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
       building_id: formData.buildingId,
       due_date: formData.dueDate,
       assigned_to_id: selectedAgent?.user_id,
+      priority: formData.priority,
     };
 
     onTaskCreate(taskData, photos.length > 0 ? photos : undefined);
@@ -74,6 +77,7 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
       buildingId: '',
       dueDate: '',
       assignedTo: activeAgents.length > 0 ? activeAgents[0].full_name : '',
+      priority: 2,
     });
     setPhotos([]);
     setPhotoPreviewUrls([]);
@@ -158,6 +162,30 @@ export function NewTaskModal({ isOpen, onClose, buildings, agents, onTaskCreate 
               className="min-h-[100px]"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Priorité *</Label>
+            <div className="flex gap-3">
+              {[
+                { value: 1, label: 'Urgente', color: 'bg-destructive text-destructive-foreground' },
+                { value: 2, label: 'Normale', color: 'bg-status-progress text-status-progress-foreground' },
+                { value: 3, label: 'Basse', color: 'bg-muted text-muted-foreground' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, priority: option.value }))}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium border-2 transition-all ${
+                    formData.priority === option.value
+                      ? `${option.color} border-transparent ring-2 ring-ring ring-offset-2`
+                      : 'bg-background text-foreground border-input hover:bg-accent'
+                  }`}
+                >
+                  {option.value} - {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

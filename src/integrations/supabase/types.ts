@@ -738,6 +738,7 @@ export type Database = {
           description: string
           due_date: string
           id: string
+          priority: number
           proof_photo: string | null
           status: string
           title: string
@@ -750,6 +751,7 @@ export type Database = {
           description: string
           due_date: string
           id?: string
+          priority?: number
           proof_photo?: string | null
           status?: string
           title: string
@@ -762,6 +764,7 @@ export type Database = {
           description?: string
           due_date?: string
           id?: string
+          priority?: number
           proof_photo?: string | null
           status?: string
           title?: string

@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Task } from "@/types";
 import { TaskStatusBadge } from "./TaskStatusBadge";
-import { Calendar, MapPin, MessageSquare, Camera, Eye, User, Trash2 } from "lucide-react";
+import { Calendar, MapPin, MessageSquare, Camera, Eye, User, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -40,7 +41,16 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
               </div>
             </div>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-2">
+            {(task as any).priority === 1 && (
+              <Badge variant="destructive" className="flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Urgent
+              </Badge>
+            )}
+            {(task as any).priority === 3 && (
+              <Badge variant="secondary">Basse</Badge>
+            )}
             <TaskStatusBadge status={task.status} />
           </div>
         </div>

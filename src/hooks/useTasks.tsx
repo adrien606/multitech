@@ -28,6 +28,7 @@ export interface Task {
   building_id: string;
   building_name?: string;
   status: TaskStatus;
+  priority: number;
   due_date: string;
   assigned_to_id?: string;
   assigned_to_name?: string;
@@ -86,6 +87,7 @@ export const useTasks = () => {
             photos: photos || [],
             comments: comments || [],
             status: task.status as TaskStatus,
+            priority: task.priority ?? 2,
           } as Task;
         })
       );
@@ -105,6 +107,7 @@ export const useTasks = () => {
     building_id: string;
     due_date: string;
     assigned_to_id?: string;
+    priority?: number;
   }) => {
     try {
       const { data, error } = await supabase
@@ -121,6 +124,7 @@ export const useTasks = () => {
         building_name: undefined,
         assigned_to_name: undefined,
         status: data.status as TaskStatus,
+        priority: data.priority ?? 2,
         photos: [],
         comments: []
       };

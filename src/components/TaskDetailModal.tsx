@@ -302,7 +302,20 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <DialogTitle className="text-xl mb-2">{task.title}</DialogTitle>
-              <TaskStatusBadge status={task.status} />
+              <div className="flex items-center gap-2">
+                <TaskStatusBadge status={task.status} />
+                {(task as any).priority === 1 && (
+                  <Badge variant="destructive" className="flex items-center gap-1">
+                    <span>🔴</span> Urgent
+                  </Badge>
+                )}
+                {(task as any).priority === 2 && (
+                  <Badge variant="secondary">Normale</Badge>
+                )}
+                {(task as any).priority === 3 && (
+                  <Badge variant="outline">Basse</Badge>
+                )}
+              </div>
             </div>
             <Button variant="outline" onClick={handleGeneratePDF}>
               <Download className="w-4 h-4 mr-2" />

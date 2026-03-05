@@ -8,7 +8,7 @@ import { BuildingTasksChart } from "@/components/BuildingTasksChart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Filter, Users, Building, LogOut, Shield, Home } from "lucide-react";
+import { Plus, Search, Filter, Users, Building, LogOut, Shield, Home, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
@@ -36,6 +36,7 @@ export default function Dashboard() {
     buildingId: task.building_id,
     buildingName: task.building_name || 'Bâtiment inconnu',
     assignedTo: task.assigned_to_name || 'Non assigné',
+    priority: task.priority ?? 2,
     dueDate: new Date(task.due_date),
     createdAt: new Date(task.created_at),
     photos: task.photos?.map(photo => ({
@@ -115,6 +116,7 @@ export default function Dashboard() {
     building_id: string;
     due_date: string;
     assigned_to_id?: string;
+    priority?: number;
   }, files?: File[]) => {
     try {
       const result = await createTask(taskData);
@@ -350,6 +352,35 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Tâches urgentes (priorité 1) */}
+        {(() => {
+          const urgentTasks = filteredTasks.filter(t => t.priority === 1 && t.status !== 'validated');
+          if (urgentTasks.length === 0) return null;
+          return (
+            <Card className="border-destructive/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="w-5 h-5" />
+                  Tâches urgentes ({urgentTasks.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {urgentTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onStatusChange={handleStatusChange}
+                      onViewDetails={handleViewDetails}
+                      onDelete={handleDeleteTask}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Liste des tâches */}
         <Card>
