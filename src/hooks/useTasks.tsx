@@ -307,6 +307,35 @@ export const useTasks = () => {
     }
   };
 
+  const updateTaskPriority = async (taskId: string, priority: number) => {
+    try {
+      // Mise à jour optimiste
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId ? { ...task, priority } : task
+        )
+      );
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({ priority })
+        .eq('id', taskId)
+        .select()
+        .single();
+
+      if (error) {
+        // Restaurer en cas d'erreur
+        fetchTasks(false);
+        throw error;
+      }
+      
+      return { data, error: null };
+    } catch (err) {
+      console.error('Error updating task priority:', err);
+      return { data: null, error: err instanceof Error ? err.message : 'Erreur lors de la mise à jour de la priorité' };
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -318,6 +347,7 @@ export const useTasks = () => {
     refetch: fetchTasks,
     createTask,
     updateTaskStatus,
+    updateTaskPriority,
     addComment,
     addPhotos,
     deleteTask,
