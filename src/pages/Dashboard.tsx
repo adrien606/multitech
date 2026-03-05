@@ -21,7 +21,7 @@ export default function Dashboard() {
   const { profile, role, signOut } = useAuth();
   const { agents, loading: agentsLoading } = useAgents();
   const { buildings, loading: buildingsLoading } = useBuildings();
-  const { tasks, loading: tasksLoading, createTask, updateTaskStatus, addComment, addPhotos, deleteTask } = useTasks();
+  const { tasks, loading: tasksLoading, createTask, updateTaskStatus, updateTaskPriority, addComment, addPhotos, deleteTask } = useTasks();
   
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
@@ -419,6 +419,18 @@ export default function Dashboard() {
         onStatusChange={handleStatusChange}
         onAddComment={handleAddComment}
         onAddPhotos={handleAddPhotos}
+        onPriorityChange={async (taskId, priority) => {
+          const result = await updateTaskPriority(taskId, priority);
+          if (result.error) {
+            toast.error(result.error);
+          } else {
+            // Mise à jour optimiste du selectedTask
+            if (selectedTask && selectedTask.id === taskId) {
+              setSelectedTask({ ...selectedTask, priority });
+            }
+            toast.success('Priorité mise à jour');
+          }
+        }}
       />
 
       <NewTaskModal

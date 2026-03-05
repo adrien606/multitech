@@ -21,9 +21,10 @@ interface TaskDetailModalProps {
   onStatusChange: (taskId: string, status: Task['status'], comment?: string) => void;
   onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, photoFile?: File) => void;
   onAddPhotos?: (taskId: string, photos: Omit<TaskPhoto, 'id'>[], files: File[]) => void;
+  onPriorityChange?: (taskId: string, priority: number) => void;
 }
 
-export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddComment, onAddPhotos }: TaskDetailModalProps) {
+export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddComment, onAddPhotos, onPriorityChange }: TaskDetailModalProps) {
   const { profile, role } = useAuth();
   const { uploading } = useStorageUpload();
   const [newComment, setNewComment] = useState("");
@@ -365,6 +366,35 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
             <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
               {task.description}
             </p>
+          </div>
+
+          {/* Priorité modifiable */}
+          <div>
+            <h3 className="font-medium mb-2">Priorité</h3>
+            <div className="flex gap-3">
+              {[
+                { value: 1, label: 'Urgente', color: 'bg-destructive text-destructive-foreground' },
+                { value: 2, label: 'Normale', color: 'bg-status-progress text-status-progress-foreground' },
+                { value: 3, label: 'Basse', color: 'bg-muted text-muted-foreground' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    if (onPriorityChange && (task as any).priority !== option.value) {
+                      onPriorityChange(task.id, option.value);
+                    }
+                  }}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium border-2 transition-all ${
+                    (task as any).priority === option.value
+                      ? `${option.color} border-transparent ring-2 ring-ring ring-offset-2`
+                      : 'bg-background text-foreground border-input hover:bg-accent'
+                  }`}
+                >
+                  {option.value} - {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Photos */}
