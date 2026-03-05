@@ -48,6 +48,12 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
                 Urgent
               </Badge>
             )}
+            {(task as any).priority === 2 && (
+              <Badge variant="secondary">Normale</Badge>
+            )}
+            {(task as any).priority === 3 && (
+              <Badge variant="outline">Basse</Badge>
+            )}
             {(task as any).priority === 3 && (
               <Badge variant="secondary">Basse</Badge>
             )}
