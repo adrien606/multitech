@@ -532,7 +532,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                 </>
               )}
 
-              {task.status === 'validation_requested' && (
+              {task.status === 'validation_requested' && role !== 'agent' && (
                 <>
                   <Button onClick={() => onStatusChange(task.id, 'validated', `Tâche validée par ${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`)}>
                     Valider la tâche
@@ -544,6 +544,14 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
                     Remettre en cours
                   </Button>
                 </>
+              )}
+              {task.status === 'validation_requested' && role === 'agent' && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => onStatusChange(task.id, 'progress', `Tâche remise en cours par ${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Remettre en cours
+                </Button>
               )}
               
               {task.status === 'validated' && (
