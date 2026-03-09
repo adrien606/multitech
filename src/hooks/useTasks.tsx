@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStorageUpload } from './useStorageUpload';
 
-export type TaskStatus = 'pending' | 'progress' | 'validated';
+export type TaskStatus = 'pending' | 'progress' | 'validation_requested' | 'validated';
 
 export interface TaskPhoto {
   id: string;

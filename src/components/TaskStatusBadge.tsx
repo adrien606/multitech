@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@/types";
-import { Clock, Play, CheckCircle } from "lucide-react";
+import { Clock, Play, CheckCircle, ShieldCheck } from "lucide-react";
 
 interface TaskStatusBadgeProps {
   status: TaskStatus;
@@ -18,6 +18,11 @@ const statusConfig = {
     icon: Play,
     variant: "progress" as const,
   },
+  validation_requested: {
+    label: "Demande de validation",
+    icon: ShieldCheck,
+    variant: "validationRequested" as const,
+  },
   validated: {
     label: "Validée",
     icon: CheckCircle,
@@ -27,6 +32,7 @@ const statusConfig = {
 
 export function TaskStatusBadge({ status, className }: TaskStatusBadgeProps) {
   const config = statusConfig[status];
+  if (!config) return null;
   const Icon = config.icon;
 
   return (

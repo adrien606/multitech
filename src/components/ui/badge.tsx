@@ -19,6 +19,8 @@ const badgeVariants = cva(
           "border-transparent bg-status-pending text-status-pending-foreground hover:bg-status-pending/80",
         progress:
           "border-transparent bg-status-progress text-status-progress-foreground hover:bg-status-progress/80",
+        validationRequested:
+          "border-transparent bg-status-validation-requested text-status-validation-requested-foreground hover:bg-status-validation-requested/80",
         validated:
           "border-transparent bg-status-validated text-status-validated-foreground hover:bg-status-validated/80",
         overdue:
