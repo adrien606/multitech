@@ -145,7 +145,7 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
               </Button>
             )}
 
-            {task.status === 'validation_requested' && (
+            {task.status === 'validation_requested' && !isAgent && (
               <Button
                 variant="default"
                 size="sm"
