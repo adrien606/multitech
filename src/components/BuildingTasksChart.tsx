@@ -27,18 +27,20 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
   const chartData = buildings.map(building => {
     const buildingTasks = tasks.filter(task => task.building_id === building.id);
     
-    const pastTasks = buildingTasks.filter(task => task.status !== 'pending');
+    const pastTasks = buildingTasks.filter(task => task.status !== 'pending' && task.status !== 'validation_requested');
     const futureTasks = buildingTasks.filter(task => task.status === 'pending');
+    const validationTasks = buildingTasks.filter(task => task.status === 'validation_requested');
 
     return {
       name: building.name.length > 15 ? building.name.substring(0, 15) + '...' : building.name,
       fullName: building.name,
       passées: pastTasks.length,
       futures: futureTasks.length,
+      validation: validationTasks.length,
       total: buildingTasks.length,
     };
-  }).filter(data => data.total > 0) // Ne garder que les bâtiments avec des tâches
-    .sort((a, b) => b.total - a.total); // Trier par nombre total décroissant
+  }).filter(data => data.total > 0)
+    .sort((a, b) => b.total - a.total);
 
   if (chartData.length === 0) {
     return (
