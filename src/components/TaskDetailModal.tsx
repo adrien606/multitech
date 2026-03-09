@@ -37,7 +37,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
   
   if (!task) return null;
 
-  const isOverdue = new Date() > task.dueDate && task.status !== 'validated';
+  const isOverdue = new Date() > task.dueDate && task.status !== 'validated' && task.status !== 'validation_requested';
 
   const handleGeneratePDF = async () => {
     const doc = new jsPDF();
