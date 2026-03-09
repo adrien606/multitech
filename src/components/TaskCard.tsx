@@ -135,6 +135,17 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
               <Button
                 variant="secondary"
                 size="sm"
+                onClick={() => onStatusChange(task.id, 'validation_requested')}
+                className="flex-1 sm:flex-initial"
+              >
+                Demander validation
+              </Button>
+            )}
+
+            {task.status === 'validation_requested' && (
+              <Button
+                variant="default"
+                size="sm"
                 onClick={() => onStatusChange(task.id, 'validated')}
                 className="flex-1 sm:flex-initial"
               >
