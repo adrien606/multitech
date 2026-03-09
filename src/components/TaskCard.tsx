@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Task } from "@/types";
 import { TaskStatusBadge } from "./TaskStatusBadge";
 import { Calendar, MapPin, MessageSquare, Camera, Eye, User, Trash2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -16,6 +17,8 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: TaskCardProps) {
+  const { role } = useAuth();
+  const isAgent = role === 'agent';
   const isOverdue = new Date() > task.dueDate && task.status !== 'validated' && task.status !== 'validation_requested';
 
   return (
@@ -142,7 +145,7 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
               </Button>
             )}
 
-            {task.status === 'validation_requested' && (
+            {task.status === 'validation_requested' && !isAgent && (
               <Button
                 variant="default"
                 size="sm"
