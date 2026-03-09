@@ -54,9 +54,6 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
             {(task as any).priority === 3 && (
               <Badge variant="outline">Basse</Badge>
             )}
-            {(task as any).priority === 3 && (
-              <Badge variant="secondary">Basse</Badge>
-            )}
             <TaskStatusBadge status={task.status} />
           </div>
         </div>
