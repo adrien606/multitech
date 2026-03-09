@@ -67,17 +67,21 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium text-foreground mb-2">{data.fullName}</p>
           <div className="space-y-1 text-sm">
-            <p className="text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-past))' }}></span>
-              Passées: <span className="font-medium text-foreground">{data.passées}</span>
-            </p>
-            <p className="text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-future))' }}></span>
-              Futures: <span className="font-medium text-foreground">{data.futures}</span>
-            </p>
-            <p className="text-muted-foreground border-t border-border pt-1 mt-1">
-              Total: <span className="font-medium text-foreground">{data.total}</span>
-            </p>
+             <p className="text-muted-foreground">
+               <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-past))' }}></span>
+               Passées: <span className="font-medium text-foreground">{data.passées}</span>
+             </p>
+             <p className="text-muted-foreground">
+               <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--status-validation-requested))' }}></span>
+               En attente de validation: <span className="font-medium text-foreground">{data.validation}</span>
+             </p>
+             <p className="text-muted-foreground">
+               <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-future))' }}></span>
+               Futures: <span className="font-medium text-foreground">{data.futures}</span>
+             </p>
+             <p className="text-muted-foreground border-t border-border pt-1 mt-1">
+               Total: <span className="font-medium text-foreground">{data.total}</span>
+             </p>
           </div>
         </div>
       );
