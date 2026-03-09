@@ -17,6 +17,8 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: TaskCardProps) {
+  const { role } = useAuth();
+  const isAgent = role === 'agent';
   const isOverdue = new Date() > task.dueDate && task.status !== 'validated' && task.status !== 'validation_requested';
 
   return (
