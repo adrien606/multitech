@@ -27,18 +27,20 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
   const chartData = buildings.map(building => {
     const buildingTasks = tasks.filter(task => task.building_id === building.id);
     
-    const pastTasks = buildingTasks.filter(task => task.status !== 'pending');
+    const pastTasks = buildingTasks.filter(task => task.status !== 'pending' && task.status !== 'validation_requested');
     const futureTasks = buildingTasks.filter(task => task.status === 'pending');
+    const validationTasks = buildingTasks.filter(task => task.status === 'validation_requested');
 
     return {
       name: building.name.length > 15 ? building.name.substring(0, 15) + '...' : building.name,
       fullName: building.name,
       passées: pastTasks.length,
       futures: futureTasks.length,
+      validation: validationTasks.length,
       total: buildingTasks.length,
     };
-  }).filter(data => data.total > 0) // Ne garder que les bâtiments avec des tâches
-    .sort((a, b) => b.total - a.total); // Trier par nombre total décroissant
+  }).filter(data => data.total > 0)
+    .sort((a, b) => b.total - a.total);
 
   if (chartData.length === 0) {
     return (
@@ -65,17 +67,21 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium text-foreground mb-2">{data.fullName}</p>
           <div className="space-y-1 text-sm">
-            <p className="text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-past))' }}></span>
-              Passées: <span className="font-medium text-foreground">{data.passées}</span>
-            </p>
-            <p className="text-muted-foreground">
-              <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-future))' }}></span>
-              Futures: <span className="font-medium text-foreground">{data.futures}</span>
-            </p>
-            <p className="text-muted-foreground border-t border-border pt-1 mt-1">
-              Total: <span className="font-medium text-foreground">{data.total}</span>
-            </p>
+             <p className="text-muted-foreground">
+               <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-past))' }}></span>
+               Passées: <span className="font-medium text-foreground">{data.passées}</span>
+             </p>
+             <p className="text-muted-foreground">
+               <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--status-validation-requested))' }}></span>
+               En attente de validation: <span className="font-medium text-foreground">{data.validation}</span>
+             </p>
+             <p className="text-muted-foreground">
+               <span className="inline-block w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: 'hsl(var(--chart-future))' }}></span>
+               Futures: <span className="font-medium text-foreground">{data.futures}</span>
+             </p>
+             <p className="text-muted-foreground border-t border-border pt-1 mt-1">
+               Total: <span className="font-medium text-foreground">{data.total}</span>
+             </p>
           </div>
         </div>
       );
@@ -130,6 +136,12 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
                 dataKey="futures" 
                 name="Futures" 
                 fill="hsl(142, 70%, 45%)" 
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar 
+                dataKey="validation" 
+                name="Attente validation" 
+                fill="hsl(280, 60%, 55%)" 
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
