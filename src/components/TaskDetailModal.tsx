@@ -75,7 +75,8 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
     
     // Statut avec couleur
     const statusText = task.status === "pending" ? "En attente" : 
-                      task.status === "progress" ? "En cours" : "Validée";
+                      task.status === "progress" ? "En cours" : 
+                      task.status === "validation_requested" ? "Demande de validation" : "Validée";
     doc.text(`Statut : ${statusText}`, 20, yPos);
     yPos += 15;
     
