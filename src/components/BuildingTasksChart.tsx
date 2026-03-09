@@ -138,6 +138,12 @@ export function BuildingTasksChart({ tasks, buildings }: BuildingTasksChartProps
                 fill="hsl(142, 70%, 45%)" 
                 radius={[4, 4, 0, 0]}
               />
+              <Bar 
+                dataKey="validation" 
+                name="Attente validation" 
+                fill="hsl(280, 60%, 55%)" 
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
