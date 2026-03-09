@@ -16,7 +16,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: TaskCardProps) {
-  const isOverdue = new Date() > task.dueDate && task.status !== 'validated';
+  const isOverdue = new Date() > task.dueDate && task.status !== 'validated' && task.status !== 'validation_requested';
 
   return (
     <Card className={`transition-all hover:shadow-md ${isOverdue ? 'border-destructive/30' : ''}`}>
