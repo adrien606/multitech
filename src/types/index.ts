@@ -7,7 +7,7 @@ export interface Building {
   createdAt: Date;
 }
 
-export type TaskStatus = 'pending' | 'progress' | 'validated';
+export type TaskStatus = 'pending' | 'progress' | 'validation_requested' | 'validated';
 
 export interface Task {
   id: string;

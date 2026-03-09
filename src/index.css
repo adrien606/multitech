@@ -45,6 +45,8 @@ All colors MUST be HSL.
     --status-pending-foreground: 45 100% 15%;
     --status-progress: 217 90% 60%;
     --status-progress-foreground: 0 0% 98%;
+    --status-validation-requested: 280 60% 55%;
+    --status-validation-requested-foreground: 0 0% 98%;
     --status-validated: 142 70% 45%;
     --status-validated-foreground: 0 0% 98%;
 

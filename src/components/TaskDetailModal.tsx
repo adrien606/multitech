@@ -37,7 +37,7 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
   
   if (!task) return null;
 
-  const isOverdue = new Date() > task.dueDate && task.status !== 'validated';
+  const isOverdue = new Date() > task.dueDate && task.status !== 'validated' && task.status !== 'validation_requested';
 
   const handleGeneratePDF = async () => {
     const doc = new jsPDF();
@@ -75,7 +75,8 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
     
     // Statut avec couleur
     const statusText = task.status === "pending" ? "En attente" : 
-                      task.status === "progress" ? "En cours" : "Validée";
+                      task.status === "progress" ? "En cours" : 
+                      task.status === "validation_requested" ? "Demande de validation" : "Validée";
     doc.text(`Statut : ${statusText}`, 20, yPos);
     yPos += 15;
     
@@ -519,14 +520,28 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
               
               {task.status === 'progress' && (
                 <>
-                  <Button onClick={() => onStatusChange(task.id, 'validated', `Tâche validée par ${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`)}>
-                    Marquer comme validée
+                  <Button onClick={() => onStatusChange(task.id, 'validation_requested', `Demande de validation par ${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`)}>
+                    Demander validation
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => onStatusChange(task.id, 'pending', `Tâche remise en attente par ${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`)}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Remettre en attente
+                  </Button>
+                </>
+              )}
+
+              {task.status === 'validation_requested' && (
+                <>
+                  <Button onClick={() => onStatusChange(task.id, 'validated', `Tâche validée par ${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`)}>
+                    Valider la tâche
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => onStatusChange(task.id, 'progress', `Tâche remise en cours par ${profile?.full_name || 'Utilisateur'} (${getRoleLabel(role || 'agent')})`)}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Remettre en cours
                   </Button>
                 </>
               )}

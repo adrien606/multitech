@@ -16,7 +16,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: TaskCardProps) {
-  const isOverdue = new Date() > task.dueDate && task.status !== 'validated';
+  const isOverdue = new Date() > task.dueDate && task.status !== 'validated' && task.status !== 'validation_requested';
 
   return (
     <Card className={`transition-all hover:shadow-md ${isOverdue ? 'border-destructive/30' : ''}`}>
@@ -53,9 +53,6 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
             )}
             {(task as any).priority === 3 && (
               <Badge variant="outline">Basse</Badge>
-            )}
-            {(task as any).priority === 3 && (
-              <Badge variant="secondary">Basse</Badge>
             )}
             <TaskStatusBadge status={task.status} />
           </div>
@@ -137,6 +134,17 @@ export function TaskCard({ task, onStatusChange, onViewDetails, onDelete }: Task
             {task.status === 'progress' && (
               <Button
                 variant="secondary"
+                size="sm"
+                onClick={() => onStatusChange(task.id, 'validation_requested')}
+                className="flex-1 sm:flex-initial"
+              >
+                Demander validation
+              </Button>
+            )}
+
+            {task.status === 'validation_requested' && (
+              <Button
+                variant="default"
                 size="sm"
                 onClick={() => onStatusChange(task.id, 'validated')}
                 className="flex-1 sm:flex-initial"

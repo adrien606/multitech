@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task } from "@/types";
-import { Clock, Play, CheckCircle, AlertCircle } from "lucide-react";
+import { Clock, Play, CheckCircle, AlertCircle, ShieldCheck } from "lucide-react";
 
 interface TaskStatsProps {
   tasks: Task[];
@@ -10,8 +10,9 @@ export function TaskStats({ tasks }: TaskStatsProps) {
   const stats = {
     pending: tasks.filter(t => t.status === 'pending').length,
     progress: tasks.filter(t => t.status === 'progress').length,
+    validation_requested: tasks.filter(t => t.status === 'validation_requested').length,
     validated: tasks.filter(t => t.status === 'validated').length,
-    overdue: tasks.filter(t => new Date() > t.dueDate && t.status !== 'validated').length,
+    overdue: tasks.filter(t => new Date() > t.dueDate && t.status !== 'validated' && t.status !== 'validation_requested').length,
   };
 
   const statCards = [
@@ -30,6 +31,13 @@ export function TaskStats({ tasks }: TaskStatsProps) {
       bgColor: "bg-status-progress/10",
     },
     {
+      title: "Demande validation",
+      value: stats.validation_requested,
+      icon: ShieldCheck,
+      color: "text-status-validation-requested",
+      bgColor: "bg-status-validation-requested/10",
+    },
+    {
       title: "Validées",
       value: stats.validated,
       icon: CheckCircle,
@@ -46,7 +54,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       {statCards.map((stat) => {
         const Icon = stat.icon;
         return (

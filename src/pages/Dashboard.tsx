@@ -346,6 +346,7 @@ export default function Dashboard() {
                   <option value="all">Tous les statuts</option>
                   <option value="pending">En attente</option>
                   <option value="progress">En cours</option>
+                  <option value="validation_requested">Demande de validation</option>
                   <option value="validated">Validées</option>
                 </select>
               </div>

@@ -58,6 +58,8 @@ export default {
 					'pending-foreground': 'hsl(var(--status-pending-foreground))',
 					progress: 'hsl(var(--status-progress))',
 					'progress-foreground': 'hsl(var(--status-progress-foreground))',
+					'validation-requested': 'hsl(var(--status-validation-requested))',
+					'validation-requested-foreground': 'hsl(var(--status-validation-requested-foreground))',
 					validated: 'hsl(var(--status-validated))',
 					'validated-foreground': 'hsl(var(--status-validated-foreground))'
 				},
