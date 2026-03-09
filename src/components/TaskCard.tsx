@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Task } from "@/types";
 import { TaskStatusBadge } from "./TaskStatusBadge";
 import { Calendar, MapPin, MessageSquare, Camera, Eye, User, Trash2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
