@@ -45,6 +45,18 @@ export const useTasks = () => {
   const [error, setError] = useState<string | null>(null);
   const { uploadFile, uploadMultipleFiles } = useStorageUpload();
 
+  const ensureAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Try to refresh the session
+      const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+      if (!refreshed) {
+        throw new Error('Votre session a expiré. Veuillez vous reconnecter.');
+      }
+    }
+    return true;
+  };
+
   const fetchTasks = async (showLoadingState = true) => {
     try {
       if (showLoadingState) {
@@ -110,6 +122,8 @@ export const useTasks = () => {
     priority?: number;
   }) => {
     try {
+      await ensureAuth();
+      
       const { data, error } = await supabase
         .from('tasks')
         .insert([taskData])
@@ -142,6 +156,8 @@ export const useTasks = () => {
 
   const updateTaskStatus = async (id: string, status: TaskStatus, proofPhoto?: string) => {
     try {
+      await ensureAuth();
+      
       // Mise à jour optimiste AVANT la requête pour un changement instantané
       setTasks(prevTasks => 
         prevTasks.map(task => 
@@ -190,6 +206,7 @@ export const useTasks = () => {
     photo_filename?: string;
   }, photoFile?: File) => {
     try {
+      await ensureAuth();
       let finalCommentData = { ...commentData };
       
       // Si une photo est fournie, l'uploader d'abord
@@ -239,7 +256,7 @@ export const useTasks = () => {
 
   const addPhotos = async (taskId: string, files: File[]) => {
     try {
-      // Upload tous les fichiers vers Supabase Storage
+      await ensureAuth();
       const uploadResults = await uploadMultipleFiles(files, 'task-photos');
       
       // Insérer les informations des photos dans la base de données
