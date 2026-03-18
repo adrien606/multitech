@@ -45,6 +45,18 @@ export const useTasks = () => {
   const [error, setError] = useState<string | null>(null);
   const { uploadFile, uploadMultipleFiles } = useStorageUpload();
 
+  const ensureAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Try to refresh the session
+      const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+      if (!refreshed) {
+        throw new Error('Votre session a expiré. Veuillez vous reconnecter.');
+      }
+    }
+    return true;
+  };
+
   const fetchTasks = async (showLoadingState = true) => {
     try {
       if (showLoadingState) {
