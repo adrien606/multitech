@@ -122,7 +122,7 @@ export const useTasks = () => {
     priority?: number;
   }) => {
     try {
-      const { data, error } = await supabase
+      await ensureAuth();
         .from('tasks')
         .insert([taskData])
         .select()
