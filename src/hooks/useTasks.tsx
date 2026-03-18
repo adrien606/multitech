@@ -204,6 +204,7 @@ export const useTasks = () => {
     photo_filename?: string;
   }, photoFile?: File) => {
     try {
+      await ensureAuth();
       let finalCommentData = { ...commentData };
       
       // Si une photo est fournie, l'uploader d'abord
