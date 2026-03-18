@@ -63,7 +63,7 @@ export default function Dashboard() {
       task.description.toLowerCase().includes(searchQuery.toLowerCase());
     
     return matchesBuilding && matchesStatus && matchesSearch;
-  });
+  }).sort((a, b) => (a.priority ?? 3) - (b.priority ?? 3));
 
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus, comment?: string) => {
     try {
