@@ -154,6 +154,8 @@ export const useTasks = () => {
 
   const updateTaskStatus = async (id: string, status: TaskStatus, proofPhoto?: string) => {
     try {
+      await ensureAuth();
+      
       // Mise à jour optimiste AVANT la requête pour un changement instantané
       setTasks(prevTasks => 
         prevTasks.map(task => 
