@@ -254,7 +254,7 @@ export const useTasks = () => {
 
   const addPhotos = async (taskId: string, files: File[]) => {
     try {
-      // Upload tous les fichiers vers Supabase Storage
+      await ensureAuth();
       const uploadResults = await uploadMultipleFiles(files, 'task-photos');
       
       // Insérer les informations des photos dans la base de données
