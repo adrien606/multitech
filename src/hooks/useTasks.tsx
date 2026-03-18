@@ -123,6 +123,8 @@ export const useTasks = () => {
   }) => {
     try {
       await ensureAuth();
+      
+      const { data, error } = await supabase
         .from('tasks')
         .insert([taskData])
         .select()
