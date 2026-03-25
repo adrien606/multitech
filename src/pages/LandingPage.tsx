@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Wrench, CheckCircle, Users, Building, FileText } from "lucide-react";
+import { Wrench, CheckCircle, Users, Building } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function LandingPage() {
@@ -24,7 +24,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="font-semibold mb-2">Identifiez votre besoin</h3>
                 <p className="text-sm text-muted-foreground">
-                  Maintenance préventive/curative ou contrôles réglementaires obligatoires
+                  Maintenance préventive ou curative de vos bâtiments
                 </p>
               </div>
               <div className="flex flex-col items-center">
@@ -33,7 +33,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="font-semibold mb-2">Choisissez l'application</h3>
                 <p className="text-sm text-muted-foreground">
-                  Maintenance pour les tâches ou Facility Manager pour la conformité
+                  Accédez à l'application Maintenance depuis cette page
                 </p>
               </div>
               <div className="flex flex-col items-center">
@@ -49,12 +49,11 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Applications */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* App Maintenance */}
-          <Card className="hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-300">
+        {/* Application */}
+        <div className="max-w-lg mx-auto">
+          <Card className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50">
             <CardHeader className="text-center pb-4">
-              <Wrench className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+              <Wrench className="w-16 h-16 text-primary mx-auto mb-4" />
               <CardTitle className="text-2xl">Application Maintenance</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -64,15 +63,15 @@ export default function LandingPage() {
               
               <div className="space-y-3 text-left">
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span className="text-sm">Planification des interventions</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <Users className="w-5 h-5 text-primary flex-shrink-0" />
                   <span className="text-sm">Gestion des équipes techniques</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Building className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <Building className="w-5 h-5 text-primary flex-shrink-0" />
                   <span className="text-sm">Suivi par bâtiment et équipement</span>
                 </div>
               </div>
@@ -81,42 +80,6 @@ export default function LandingPage() {
                 <Button asChild className="w-full" size="lg">
                   <Link to="/auth">
                     Accéder à Maintenance
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* App Facility Manager */}
-          <Card className="hover:shadow-xl transition-all duration-300 border-2 border-green-400 hover:border-green-500">
-            <CardHeader className="text-center pb-4">
-              <Shield className="w-16 h-16 text-green-600 mx-auto mb-4" />
-              <CardTitle className="text-2xl">Facility Manager</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Contrôles réglementaires et conformité obligatoire
-              </p>
-              
-              <div className="space-y-3 text-left">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Contrôles périodiques obligatoires</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Gestion documentaire complète</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Building className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Conformité réglementaire assurée</span>
-                </div>
-              </div>
-              
-              <div className="pt-4">
-                <Button asChild className="w-full bg-green-600 hover:bg-green-700" size="lg">
-                  <Link to="/regulatory-controls">
-                    Accéder à Facility Manager
                   </Link>
                 </Button>
               </div>
