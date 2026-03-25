@@ -8,7 +8,7 @@ import { BuildingTasksChart } from "@/components/BuildingTasksChart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Filter, Users, Building, LogOut, AlertTriangle } from "lucide-react";
+import { Plus, Search, Filter, Users, Building, LogOut, AlertTriangle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
@@ -258,12 +258,6 @@ export default function Dashboard() {
                   Bâtiments
                 </Button>
               </Link>
-              <Link to="/buildings">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Building className="w-4 h-4 mr-2" />
-                  Bâtiments
-                </Button>
-              </Link>
               <Link to="/users">
                 <Button variant="outline" className="w-full sm:w-auto">
                   <Users className="w-4 h-4 mr-2" />
@@ -363,6 +357,38 @@ export default function Dashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {urgentTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onStatusChange={handleStatusChange}
+                      onViewDetails={handleViewDetails}
+                      onDelete={handleDeleteTask}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
+        {/* Tâches en retard */}
+        {(() => {
+          const overdueTasks = filteredTasks.filter(t => {
+            const isOverdue = new Date() > t.dueDate && t.status !== 'validated' && t.status !== 'validation_requested';
+            return isOverdue && t.priority !== 1; // Exclure les urgentes déjà affichées ci-dessus
+          });
+          if (overdueTasks.length === 0) return null;
+          return (
+            <Card className="border-orange-500/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-orange-600">
+                  <Clock className="w-5 h-5" />
+                  Tâches en retard ({overdueTasks.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {overdueTasks.map((task) => (
                     <TaskCard
                       key={task.id}
                       task={task}

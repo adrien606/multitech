@@ -155,6 +155,9 @@ export const useTasks = () => {
   };
 
   const updateTaskStatus = async (id: string, status: TaskStatus, proofPhoto?: string) => {
+    // Sauvegarder l'état précédent pour restauration
+    const previousTask = tasks.find(t => t.id === id);
+    
     try {
       await ensureAuth();
       
@@ -181,14 +184,19 @@ export const useTasks = () => {
 
       if (error) {
         // En cas d'erreur, restaurer l'état précédent
-        setTasks(prevTasks => 
-          prevTasks.map(task => 
-            task.id === id 
-              ? { ...task, status: task.status === status ? 'pending' : task.status }
-              : task
-          )
+        if (previousTask) {
+          setTasks(prevTasks => 
+            prevTasks.map(task => 
+              task.id === id ? previousTask : task
+            )
+          );
+        }
+        console.error('Supabase update error:', error.code, error.message, error.details);
+        throw new Error(
+          error.code === '42501' 
+            ? 'Vous n\'avez pas les droits pour modifier cette tâche. Vérifiez qu\'elle vous est bien assignée.'
+            : `Impossible de mettre à jour: ${error.message}`
         );
-        throw error;
       }
       
       return { data, error: null };
