@@ -24,7 +24,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="font-semibold mb-2">Identifiez votre besoin</h3>
                 <p className="text-sm text-muted-foreground">
-                  Maintenance préventive/curative ou contrôles réglementaires obligatoires
+                  Maintenance préventive ou curative de vos bâtiments
                 </p>
               </div>
               <div className="flex flex-col items-center">
