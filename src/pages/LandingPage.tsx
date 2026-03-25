@@ -33,7 +33,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="font-semibold mb-2">Choisissez l'application</h3>
                 <p className="text-sm text-muted-foreground">
-                  Maintenance pour les tâches ou Facility Manager pour la conformité
+                  Accédez à l'application Maintenance depuis cette page
                 </p>
               </div>
               <div className="flex flex-col items-center">
