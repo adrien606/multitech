@@ -404,32 +404,39 @@ export default function Dashboard() {
         })()}
 
         {/* Liste des tâches */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Tâches ({filteredTasks.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredTasks.length > 0 ? (
-              <div className="space-y-4">
-                {filteredTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onStatusChange={handleStatusChange}
-                    onViewDetails={handleViewDetails}
-                    onDelete={handleDeleteTask}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Aucune tâche trouvée avec les filtres sélectionnés.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {(() => {
+          const displayTasks = statusFilter === 'validated' 
+            ? filteredTasks 
+            : filteredTasks.filter(t => t.status !== 'validated');
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Tâches ({displayTasks.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {displayTasks.length > 0 ? (
+                  <div className="space-y-4">
+                    {displayTasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onStatusChange={handleStatusChange}
+                        onViewDetails={handleViewDetails}
+                        onDelete={handleDeleteTask}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Aucune tâche trouvée avec les filtres sélectionnés.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()}
       </div>
 
       {/* Modals */}
