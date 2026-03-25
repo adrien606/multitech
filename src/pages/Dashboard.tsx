@@ -252,16 +252,10 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/">
+              <Link to="/buildings">
                 <Button variant="outline" className="w-full sm:w-auto">
-                  <Home className="w-4 h-4 mr-2" />
-                  Accueil
-                </Button>
-              </Link>
-              <Link to="/regulatory-controls">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Contrôles Réglementaires
+                  <Building className="w-4 h-4 mr-2" />
+                  Bâtiments
                 </Button>
               </Link>
               <Link to="/buildings">
