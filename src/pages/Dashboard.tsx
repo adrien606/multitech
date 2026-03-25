@@ -258,12 +258,6 @@ export default function Dashboard() {
                   Bâtiments
                 </Button>
               </Link>
-              <Link to="/buildings">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Building className="w-4 h-4 mr-2" />
-                  Bâtiments
-                </Button>
-              </Link>
               <Link to="/users">
                 <Button variant="outline" className="w-full sm:w-auto">
                   <Users className="w-4 h-4 mr-2" />
