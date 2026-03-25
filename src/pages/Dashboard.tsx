@@ -8,7 +8,7 @@ import { BuildingTasksChart } from "@/components/BuildingTasksChart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Filter, Users, Building, LogOut, Shield, Home, AlertTriangle } from "lucide-react";
+import { Plus, Search, Filter, Users, Building, LogOut, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
@@ -252,16 +252,10 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/">
+              <Link to="/buildings">
                 <Button variant="outline" className="w-full sm:w-auto">
-                  <Home className="w-4 h-4 mr-2" />
-                  Accueil
-                </Button>
-              </Link>
-              <Link to="/regulatory-controls">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Contrôles Réglementaires
+                  <Building className="w-4 h-4 mr-2" />
+                  Bâtiments
                 </Button>
               </Link>
               <Link to="/buildings">
