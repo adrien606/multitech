@@ -8,7 +8,7 @@ import { BuildingTasksChart } from "@/components/BuildingTasksChart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Filter, Users, Building, LogOut, AlertTriangle } from "lucide-react";
+import { Plus, Search, Filter, Users, Building, LogOut, AlertTriangle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgents } from "@/hooks/useAgents";
