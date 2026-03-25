@@ -408,17 +408,23 @@ export function TaskDetailModal({ task, isOpen, onClose, onStatusChange, onAddCo
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                  {task.photos.map((photo, index) => (
                    <div key={photo.id} className="space-y-2">
-                     <div className="w-full h-32 rounded-lg border overflow-hidden bg-gray-50 flex items-center justify-center">
+                     <a
+                       href={photo.url}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="block w-full h-32 rounded-lg border overflow-hidden bg-muted flex items-center justify-center"
+                     >
                        <img
                          src={photo.url}
                          alt={photo.filename}
-                         className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                         onClick={() => window.open(photo.url, '_blank')}
+                         className="w-full h-full object-cover hover:opacity-80 transition-opacity"
                          onError={(e) => {
-                           console.warn('Erreur de chargement de l\'image:', photo.url);
+                           const target = e.target as HTMLImageElement;
+                           target.style.display = 'none';
+                           target.parentElement!.innerHTML = '<span class="text-xs text-muted-foreground p-2 text-center">📷 Photo indisponible<br/>Appuyez pour ouvrir</span>';
                          }}
                        />
-                     </div>
+                     </a>
                      <p className="text-xs text-muted-foreground truncate">
                        📷 {photo.filename}
                      </p>
