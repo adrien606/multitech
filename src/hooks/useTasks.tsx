@@ -180,9 +180,9 @@ export const useTasks = () => {
         .update(updateData)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) {
+      if (error || !data) {
         // En cas d'erreur, restaurer l'état précédent
         if (previousTask) {
           setTasks(prevTasks => 
@@ -191,11 +191,11 @@ export const useTasks = () => {
             )
           );
         }
-        console.error('Supabase update error:', error.code, error.message, error.details);
+        if (error) {
+          console.error('Supabase update error:', error.code, error.message, error.details);
+        }
         throw new Error(
-          error.code === '42501' 
-            ? 'Vous n\'avez pas les droits pour modifier cette tâche. Vérifiez qu\'elle vous est bien assignée.'
-            : `Impossible de mettre à jour: ${error.message}`
+          'Vous n\'avez pas les droits pour modifier cette tâche. Vérifiez qu\'elle vous est bien assignée.'
         );
       }
       
