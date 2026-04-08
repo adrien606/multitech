@@ -180,7 +180,7 @@ export const useTasks = () => {
         .update(updateData)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         // En cas d'erreur, restaurer l'état précédent
